@@ -16,6 +16,7 @@ describe('readingMinutes', () => {
   it('rounds up', () => expect(readingMinutes(230, 220)).toBe(2));
   it('is at least 1 for any words', () => expect(readingMinutes(5)).toBe(1));
   it('is 0 for no words', () => expect(readingMinutes(0)).toBe(0));
+  it('uses 220 wpm as the default', () => expect(readingMinutes(230)).toBe(2));
 });
 
 describe('remainingMinutes', () => {
