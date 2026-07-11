@@ -86,6 +86,18 @@ export function App() {
             onClick={() => { store.setPanels({ aiVisible: !store.get().panels.aiVisible }); schedulePersist(); }}>
             <span class="codicon codicon-layout-sidebar-right" aria-hidden="true" />
           </button>
+          <button class="md-btn" aria-label="Refresh document" onClick={() => post({ type: 'refresh' })}>
+            <span class="codicon codicon-refresh" aria-hidden="true" />
+          </button>
+          <select aria-label="Pagination level" value={String(s.effectiveLevel)}
+            onChange={(e) => post({ type: 'setPaginationLevel', level: Number((e.target as HTMLSelectElement).value) })}>
+            <option value="1">Heading 1</option>
+            <option value="2">Heading 2</option>
+            <option value="3">Heading 3</option>
+            <option value="4">Heading 4</option>
+            <option value="5">Heading 5</option>
+            <option value="6">Heading 6</option>
+          </select>
           <span style={{ flex: 1 }} />
           <ViewControls config={s.config} onChange={(c) => { store.setConfig(c); schedulePersist(); }} />
         </div>
