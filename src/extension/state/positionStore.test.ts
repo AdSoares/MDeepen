@@ -13,19 +13,28 @@ function fakeMemento() {
 describe('DocStateStore', () => {
   it('returns defaults for an unknown uri', () => {
     const s = new DocStateStore(fakeMemento());
-    expect(s.get('file:///a.md')).toEqual({ index: 0, readIds: [] });
+    expect(s.get('file:///a.md')).toEqual({ index: 0, read: [] });
   });
   it('persists and reads back per-uri state', async () => {
     const mem = fakeMemento();
     const s = new DocStateStore(mem);
-    await s.set('file:///a.md', { index: 4, readIds: ['page-1', 'page-7'] });
-    expect(new DocStateStore(mem).get('file:///a.md')).toEqual({ index: 4, readIds: ['page-1', 'page-7'] });
+    await s.set('file:///a.md', { index: 4, read: [{ id: 'page-1', title: 'A' }, { id: 'page-7', title: 'B' }] });
+    expect(new DocStateStore(mem).get('file:///a.md')).toEqual({
+      index: 4,
+      read: [{ id: 'page-1', title: 'A' }, { id: 'page-7', title: 'B' }],
+    });
   });
   it('falls back to the legacy positions key for the index', () => {
     const mem = fakeMemento();
     mem._raw['mdeepen.positions'] = { 'file:///old.md': 3 };
     const s = new DocStateStore(mem);
-    expect(s.get('file:///old.md')).toEqual({ index: 3, readIds: [] });
+    expect(s.get('file:///old.md')).toEqual({ index: 3, read: [] });
+  });
+  it('normalizes the previous readIds shape', () => {
+    const mem = fakeMemento();
+    mem._raw['mdeepen.docState'] = { 'file:///a.md': { index: 1, readIds: ['page-3'] } };
+    const s = new DocStateStore(mem);
+    expect(s.get('file:///a.md')).toEqual({ index: 1, read: [{ id: 'page-3', title: '' }] });
   });
 });
 

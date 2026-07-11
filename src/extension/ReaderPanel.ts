@@ -52,6 +52,10 @@ export class ReaderPanel {
     }, null, this.disposables);
   }
 
+  private readMarks(): { id: string; title: string }[] {
+    return this.readIds.map((id) => ({ id, title: this.pages.find((p) => p.id === id)?.title ?? '' }));
+  }
+
   private post(msg: HostToWebview): void {
     if (this.disposed) return;
     this.panel.webview.postMessage(msg);
@@ -70,7 +74,7 @@ export class ReaderPanel {
       case 'activeSectionChanged':
         if (!Number.isInteger(msg.index) || msg.index < 0) break;
         this.activeIndex = msg.index;
-        await this.docStore.set(this.uri.toString(), { index: this.activeIndex, readIds: this.readIds });
+        await this.docStore.set(this.uri.toString(), { index: this.activeIndex, read: this.readMarks() });
         break;
       case 'setPaginationLevel':
         this.level = msg.level;
@@ -85,7 +89,7 @@ export class ReaderPanel {
       case 'sectionRead':
         if (typeof msg.id === 'string' && this.pages.some((p) => p.id === msg.id) && !this.readIds.includes(msg.id)) {
           this.readIds.push(msg.id);
-          await this.docStore.set(this.uri.toString(), { index: this.activeIndex, readIds: this.readIds });
+          await this.docStore.set(this.uri.toString(), { index: this.activeIndex, read: this.readMarks() });
         }
         break;
       case 'uiStateChanged':
@@ -139,7 +143,8 @@ export class ReaderPanel {
     if (kind === 'init') {
       const uriString = this.uri.toString();
       const doc = this.docStore.get(uriString);
-      this.readIds = remapReadIds(doc.readIds, result.pages, result.pages);
+      const pseudoOldPages = doc.read.map((r) => ({ id: r.id, title: r.title, level: 0, startLine: 0, endLine: 0, content: '', wordCount: 0 }));
+      this.readIds = remapReadIds(doc.read.map((r) => r.id), pseudoOldPages, result.pages);
       this.activeIndex = Math.min(doc.index, Math.max(0, result.pages.length - 1));
       this.post({
         type: 'init',
@@ -156,7 +161,7 @@ export class ReaderPanel {
       const uriString = this.uri.toString();
       this.activeIndex = reconcileIndex(oldPages, result.pages, this.activeIndex);
       this.readIds = remapReadIds(this.readIds, oldPages, result.pages);
-      await this.docStore.set(uriString, { index: this.activeIndex, readIds: this.readIds });
+      await this.docStore.set(uriString, { index: this.activeIndex, read: this.readMarks() });
       this.post({
         type: 'sectionsUpdated',
         pages: result.pages,

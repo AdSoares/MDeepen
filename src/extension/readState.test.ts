@@ -26,4 +26,10 @@ describe('remapReadIds', () => {
     const after = [p('page-2', 'B'), p('page-9', 'A')];
     expect(remapReadIds(['page-5', 'page-0', 'page-5'], before, after)).toEqual(['page-2', 'page-9']);
   });
+  it('remaps via stored titles when ids shifted between sessions', () => {
+    const stored = [{ id: 'page-5', title: 'Retries' }];
+    const pseudoOld = stored.map((r) => ({ id: r.id, title: r.title, level: 0, startLine: 0, endLine: 0, content: '', wordCount: 0 }));
+    const after = [p('page-0', 'Intro'), p('page-8', 'Retries')];
+    expect(remapReadIds(stored.map((r) => r.id), pseudoOld, after)).toEqual(['page-8']);
+  });
 });
