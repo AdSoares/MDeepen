@@ -19,6 +19,15 @@ describe('extractHeadings', () => {
   it('returns empty for a document with no headings', () => {
     expect(extractHeadings('just text\nmore text')).toEqual([]);
   });
+
+  it('recognizes ATX headings indented 1-3 spaces', () => {
+    const md = '# A\n\n   ## Indented\n\ntext';
+    expect(extractHeadings(md).map((h) => h.title)).toEqual(['A', 'Indented']);
+  });
+  it('treats 4-space-indented # as code, not a heading', () => {
+    const md = '# A\n\n    # Not a heading\n\ntext';
+    expect(extractHeadings(md).map((h) => h.title)).toEqual(['A']);
+  });
 });
 
 describe('buildTree', () => {

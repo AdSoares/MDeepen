@@ -6,7 +6,7 @@ export interface Heading {
   line: number;
 }
 
-const ATX = /^(#{1,6})\s+(.*?)\s*#*\s*$/;
+const ATX = /^ {0,3}(#{1,6})\s+(.*?)\s*#*\s*$/;
 const FENCE = /^(\s*)(```|~~~)/;
 
 export function extractHeadings(markdown: string): Heading[] {
