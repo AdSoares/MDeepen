@@ -41,8 +41,15 @@ export async function renderMermaidIn(root: HTMLElement): Promise<void> {
   }
 
   if (!initialized) {
-    mermaid.initialize({ startOnLoad: false, theme: isDark() ? 'dark' : 'default', securityLevel: 'strict' });
-    initialized = true;
+    try {
+      mermaid.initialize({ startOnLoad: false, theme: isDark() ? 'dark' : 'default', securityLevel: 'strict' });
+      initialized = true;
+    } catch {
+      for (const node of nodes) {
+        node.replaceWith(errorBox(node.dataset.src ?? '', '⚠ Diagram renderer failed to initialize. Source preserved below.'));
+      }
+      return;
+    }
   }
 
   for (const node of nodes) {
