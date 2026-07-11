@@ -1,8 +1,12 @@
 import type { Page } from '../shared/types';
 
-export function classifyLink(href: string): 'external' | 'anchor' | 'local' {
+export function classifyLink(href: string): 'external' | 'anchor' | 'local' | 'blocked' {
   if (/^(https?:|mailto:)/i.test(href)) return 'external';
   if (href.startsWith('#')) return 'anchor';
+  // A URL scheme is letter followed by letters/digits/+/-/. then ':'. A single
+  // letter + ':' (e.g. Windows drive C:) is NOT a scheme in this heuristic.
+  const scheme = /^([a-z][a-z0-9+.-]+):/i.exec(href);
+  if (scheme) return 'blocked';
   return 'local';
 }
 

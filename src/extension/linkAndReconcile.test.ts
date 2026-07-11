@@ -13,6 +13,16 @@ describe('classifyLink', () => {
   });
   it('detects anchors', () => expect(classifyLink('#section')).toBe('anchor'));
   it('treats relative paths as local', () => expect(classifyLink('./other.md')).toBe('local'));
+  it('blocks dangerous schemes', () => {
+    expect(classifyLink('javascript:alert(1)')).toBe('blocked');
+    expect(classifyLink('vscode://x')).toBe('blocked');
+    expect(classifyLink('data:text/html,x')).toBe('blocked');
+  });
+  it('still treats scheme-less relative paths as local', () => {
+    expect(classifyLink('./a.md')).toBe('local');
+    expect(classifyLink('sub/b.md')).toBe('local');
+    expect(classifyLink('C:/x')).toBe('local'); // windows drive letter, not a URL scheme
+  });
 });
 
 describe('reconcileIndex', () => {

@@ -48,7 +48,8 @@ export function Content({ page, fileName, index, total, focus, onPrev, onNext, o
         const href = a.getAttribute('href')!;
         const kind = classifyLink(href);
         if (kind === 'anchor') { onAnchor(decodeURIComponent(href.slice(1))); return; } // in-page anchors navigate within the reader
-        post({ type: 'openLink', href, kind });
+        if (kind === 'blocked') return; // dangerous scheme — do nothing
+        post({ type: 'openLink', href, kind: kind as 'external' | 'local' });
       };
     });
   }, [page?.id, page?.content]);
