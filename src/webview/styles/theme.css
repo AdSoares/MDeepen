@@ -1,0 +1,20 @@
+:root {
+  --md-warn: #cca700; --md-success: #89d185; --md-info: #3794ff; --md-ai: #9d7cd8;
+  --md-serif: 'Source Serif 4', Georgia, serif;
+  --md-ui: 'Inter', var(--vscode-font-family, system-ui);
+  --md-mono: 'JetBrains Mono', var(--vscode-editor-font-family, monospace);
+}
+* { box-sizing: border-box; }
+body { margin: 0; color: var(--vscode-editor-foreground); background: var(--vscode-editor-background); font-family: var(--md-ui); font-size: 13px; }
+.mdeepen-root { display: flex; flex-direction: column; height: 100vh; }
+.mdeepen-body { display: flex; flex: 1; min-height: 0; }
+.mdeepen-outline { width: 252px; background: var(--vscode-sideBar-background); border-right: 1px solid var(--vscode-panel-border); overflow: auto; }
+.mdeepen-content { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.mdeepen-ai { width: 340px; background: var(--vscode-sideBar-background); border-left: 1px solid var(--vscode-panel-border); overflow: auto; }
+.mdeepen-status { height: 25px; display: flex; align-items: center; gap: 12px; padding: 0 12px; font-size: 11px; background: var(--vscode-statusBar-background); color: var(--vscode-statusBar-foreground); }
+.mdeepen-reading { max-width: var(--md-col, 700px); margin: 0 auto; padding: 38px 40px; font-family: var(--md-serif); font-size: var(--md-fs, 15.5px); line-height: var(--md-lh, 1.72); overflow: auto; flex: 1; }
+.mdeepen-navfoot { height: 52px; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; border-top: 1px solid var(--vscode-panel-border); }
+button.md-btn { font-family: var(--md-ui); border: none; border-radius: 5px; padding: 5px 12px; cursor: pointer; background: var(--vscode-button-secondaryBackground); color: var(--vscode-button-foreground); }
+button.md-btn.primary { background: var(--vscode-button-background); }
+.hidden { display: none !important; }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
