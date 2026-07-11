@@ -17,4 +17,6 @@ body { margin: 0; color: var(--vscode-editor-foreground); background: var(--vsco
 button.md-btn { font-family: var(--md-ui); border: none; border-radius: 5px; padding: 5px 12px; cursor: pointer; background: var(--vscode-button-secondaryBackground); color: var(--vscode-button-foreground); }
 button.md-btn.primary { background: var(--vscode-button-background); }
 .hidden { display: none !important; }
+.mdeepen-root[data-focus="true"] .mdeepen-reading { max-width: 600px; font-size: 17px; }
+.focus-progress { height: 3px; background: var(--vscode-button-background); transition: width .2s; }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }

@@ -5,6 +5,7 @@ import { progressPercent, remainingMinutes, readingMinutes } from '../shared/pro
 import { Outline } from './panels/Outline';
 import { Content } from './panels/Content';
 import { AiPanel } from './panels/AiPanel';
+import { ViewControls } from './panels/ViewControls';
 
 const store = createReaderState();
 
@@ -27,7 +28,13 @@ export function App() {
   const pct = progressPercent(s.activeIndex, s.pages.length);
 
   return (
-    <div class="mdeepen-root" style={{ '--md-fs': `${s.config.fontSize}px`, '--md-lh': String(s.config.lineHeight), '--md-col': `${s.config.columnWidth}px` }}>
+    <div class="mdeepen-root" data-theme={s.config.theme} data-focus={String(s.panels.focus)} style={{ '--md-fs': `${s.config.fontSize}px`, '--md-lh': String(s.config.lineHeight), '--md-col': `${s.config.columnWidth}px` }}>
+      {s.panels.focus && <div class="focus-progress" style={{ width: `${pct}%` }} />}
+      {!s.panels.focus && (
+        <div style={{ height: '34px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', borderBottom: '1px solid var(--vscode-panel-border)' }}>
+          <ViewControls config={s.config} onChange={(c) => store.setConfig(c)} />
+        </div>
+      )}
       <div class="mdeepen-body">
         <div class={`mdeepen-outline ${s.panels.outlineVisible && !s.panels.focus ? '' : 'hidden'}`}>
           <Outline outline={s.outline} activeIndex={s.activeIndex} pages={s.pages} onSelect={setIndex} />
