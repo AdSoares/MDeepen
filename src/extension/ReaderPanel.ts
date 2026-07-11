@@ -1,0 +1,154 @@
+import * as vscode from 'vscode';
+import { sectionize } from './parser/sectionize';
+import { classifyLink, reconcileIndex } from './linkAndReconcile';
+import { PositionStore } from './state/positionStore';
+import type { ReaderConfig, Page } from '../shared/types';
+import type { HostToWebview, WebviewToHost } from '../shared/messages';
+
+const DEFAULT_CONFIG: ReaderConfig = { fontSize: 15.5, columnWidth: 700, lineHeight: 1.72, theme: 'auto' };
+const DEFAULT_LEVEL = 2;
+
+export class ReaderPanel {
+  private static readonly panels = new Map<string, ReaderPanel>();
+
+  private level = DEFAULT_LEVEL;
+  private pages: Page[] = [];
+  private activeIndex = 0;
+  private readonly disposables: vscode.Disposable[] = [];
+
+  static open(context: vscode.ExtensionContext, uri: vscode.Uri, store: PositionStore): void {
+    const key = uri.toString();
+    const existing = ReaderPanel.panels.get(key);
+    if (existing) {
+      existing.panel.reveal();
+      return;
+    }
+    ReaderPanel.panels.set(key, new ReaderPanel(context, uri, store));
+  }
+
+  private constructor(
+    private readonly context: vscode.ExtensionContext,
+    private readonly uri: vscode.Uri,
+    private readonly store: PositionStore,
+    private readonly panel = vscode.window.createWebviewPanel(
+      'mdeepenReader',
+      `MDeepen · ${uri.path.split('/').pop()}`,
+      vscode.ViewColumn.Active,
+      { enableScripts: true, retainContextWhenHidden: true },
+    ),
+  ) {
+    this.panel.webview.html = this.html();
+    this.panel.webview.onDidReceiveMessage((m) => this.onMessage(m as WebviewToHost), null, this.disposables);
+    this.panel.onDidDispose(() => this.dispose(), null, this.disposables);
+
+    vscode.workspace.onDidChangeTextDocument((e) => {
+      if (e.document.uri.toString() === this.uri.toString()) this.reparse('sectionsUpdated');
+    }, null, this.disposables);
+  }
+
+  private post(msg: HostToWebview): void {
+    this.panel.webview.postMessage(msg);
+  }
+
+  private async readText(): Promise<string> {
+    const doc = await vscode.workspace.openTextDocument(this.uri);
+    return doc.getText();
+  }
+
+  private async onMessage(msg: WebviewToHost): Promise<void> {
+    switch (msg.type) {
+      case 'ready':
+        await this.reparse('init');
+        break;
+      case 'activeSectionChanged':
+        this.activeIndex = msg.index;
+        await this.store.set(this.uri.toString(), msg.index);
+        break;
+      case 'setPaginationLevel':
+        this.level = msg.level;
+        await this.reparse('sectionsUpdated');
+        break;
+      case 'refresh':
+        await this.reparse('sectionsUpdated');
+        break;
+      case 'openLink':
+        await this.openLink(msg.href);
+        break;
+    }
+  }
+
+  private async openLink(href: string): Promise<void> {
+    const kind = classifyLink(href);
+    if (kind === 'external') {
+      await vscode.env.openExternal(vscode.Uri.parse(href));
+    } else if (kind === 'local') {
+      const target = vscode.Uri.joinPath(this.uri, '..', href);
+      await vscode.window.showTextDocument(target);
+    }
+    // anchors are handled inside the webview.
+  }
+
+  private async reparse(kind: 'init' | 'sectionsUpdated'): Promise<void> {
+    const text = await this.readText();
+    const oldPages = this.pages;
+    const result = sectionize(text, this.level);
+    this.pages = result.pages;
+
+    if (kind === 'init') {
+      const restored = this.store.get(this.uri.toString());
+      this.activeIndex = Math.min(restored, Math.max(0, result.pages.length - 1));
+      this.post({
+        type: 'init',
+        fileName: this.uri.path.split('/').pop() ?? 'document.md',
+        pages: result.pages,
+        outline: result.outline,
+        effectiveLevel: result.effectiveLevel,
+        restoredIndex: this.activeIndex,
+        config: DEFAULT_CONFIG,
+      });
+    } else {
+      this.activeIndex = reconcileIndex(oldPages, result.pages, this.activeIndex);
+      this.post({
+        type: 'sectionsUpdated',
+        pages: result.pages,
+        outline: result.outline,
+        effectiveLevel: result.effectiveLevel,
+        keepIndex: this.activeIndex,
+      });
+    }
+  }
+
+  private html(): string {
+    const webview = this.panel.webview;
+    const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'dist', 'webview', 'main.js'));
+    const codiconUri = webview.asWebviewUri(
+      vscode.Uri.joinPath(this.context.extensionUri, 'dist', 'webview', 'codicons', 'codicon.css'),
+    );
+    const nonce = String(Date.now());
+    const csp = [
+      `default-src 'none'`,
+      `img-src ${webview.cspSource} https: data:`,
+      `style-src ${webview.cspSource} 'unsafe-inline'`,
+      `font-src ${webview.cspSource}`,
+      `script-src 'nonce-${nonce}'`,
+    ].join('; ');
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="${csp}" />
+  <link href="${codiconUri}" rel="stylesheet" />
+  <title>MDeepen</title>
+</head>
+<body>
+  <div id="app"></div>
+  <script type="module" nonce="${nonce}" src="${scriptUri}"></script>
+</body>
+</html>`;
+  }
+
+  private dispose(): void {
+    ReaderPanel.panels.delete(this.uri.toString());
+    while (this.disposables.length) this.disposables.pop()?.dispose();
+  }
+}
