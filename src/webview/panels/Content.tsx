@@ -29,7 +29,7 @@ export function Content({ page, fileName, index, total, focus, onPrev, onNext, o
 
     // Lazy syntax highlight.
     if (el.querySelector('pre code')) {
-      import('highlight.js').then(({ default: hljs }) => {
+      import('highlight.js/lib/common').then(({ default: hljs }) => {
         el.querySelectorAll<HTMLElement>('pre code').forEach((c) => hljs.highlightElement(c));
       });
     }
