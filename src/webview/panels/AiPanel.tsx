@@ -4,7 +4,7 @@ export function AiPanel() {
     <div style={{ padding: '16px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
         <span class="codicon codicon-sparkle" style={{ color: 'var(--md-ai)' }} aria-hidden="true" />
-        <strong>AI features are off</strong>
+        <h2 style={{ margin: 0, fontSize: '13px', fontWeight: 600 }}>AI features are off</h2>
       </div>
       <p style={{ color: 'var(--vscode-descriptionForeground)', fontSize: '12px' }}>
         Reading, pagination and navigation all work without AI. These features are unavailable in this build:

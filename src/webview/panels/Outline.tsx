@@ -34,7 +34,13 @@ function Row({ node, activeIndex, pages, readIds, onSelect }: { node: OutlineNod
         <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{node.title}</span>
         {isRead && <span class="codicon codicon-check" style={{ color: 'var(--md-success)' }} aria-label="read" />}
       </div>
-      {node.children.map((c) => <Row key={c.id} node={c} activeIndex={activeIndex} pages={pages} readIds={readIds} onSelect={onSelect} />)}
+      {node.children.length > 0 && (
+        <div role="group">
+          {node.children.map((c) => (
+            <Row key={c.id} node={c} activeIndex={activeIndex} pages={pages} readIds={readIds} onSelect={onSelect} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

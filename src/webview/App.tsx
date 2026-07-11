@@ -71,7 +71,11 @@ export function App() {
 
   return (
     <div class="mdeepen-root" data-theme={s.config.theme} data-focus={String(s.panels.focus)} style={{ '--md-fs': `${s.config.fontSize}px`, '--md-lh': String(s.config.lineHeight), '--md-col': s.config.columnWidth === 0 ? '100%' : `${s.config.columnWidth}px`, '--md-outline-w': `${s.panels.outlineWidth}px`, '--md-ai-w': `${s.panels.aiWidth}px` }}>
-      {s.panels.focus && <div class="focus-progress" style={{ width: `${pct}%` }} />}
+      {s.panels.focus && (
+        <div class="focus-progress" role="progressbar" aria-label="Reading progress"
+          aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}
+          style={{ width: `${pct}%` }} />
+      )}
       {!s.panels.focus && (
         <div style={{ height: '34px', display: 'flex', alignItems: 'center', justifyContent: 'flex-start', borderBottom: '1px solid var(--vscode-panel-border)' }}>
           <button class="md-btn" aria-label="Toggle outline panel" aria-pressed={s.panels.outlineVisible}

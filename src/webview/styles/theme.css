@@ -42,6 +42,15 @@ button.md-btn.primary { background: var(--vscode-button-background); }
   --vscode-descriptionForeground: #767676;
   --md-warn: #bf8803; --md-success: #388a34; --md-info: #1a85ff; --md-ai: #8250df;
 }
+.mdeepen-root select {
+  background: var(--vscode-input-background);
+  color: var(--vscode-input-foreground);
+  border: 1px solid var(--vscode-input-border, var(--vscode-panel-border));
+  border-radius: 5px;
+  padding: 2px 6px;
+  font-family: var(--md-ui);
+  font-size: 11px;
+}
 .md-resizer { width: 6px; cursor: col-resize; flex: 0 0 6px; background: transparent; }
 .md-resizer:hover, .md-resizer:active { background: var(--vscode-focusBorder); opacity: .6; }
 button.md-btn[aria-pressed="false"] { opacity: .55; }
