@@ -18,7 +18,7 @@ export function resolveEffectiveLevel(headings: Heading[], desired: number): num
 }
 
 function wordCount(text: string): number {
-  const stripped = text.replace(/```[\s\S]*?```/g, ' ').replace(/[#>*_`~\-]/g, ' ');
+  const stripped = text.replace(/```[\s\S]*?```|~~~[\s\S]*?~~~/g, ' ').replace(/[#>*_`~\-]/g, ' ');
   const words = stripped.split(/\s+/).filter(Boolean);
   return words.length;
 }
@@ -36,13 +36,13 @@ export function sectionize(markdown: string, desiredLevel: number): SectionizeRe
   // Intro page: content before the first boundary.
   const firstBoundaryLine = boundaries.length > 0 ? boundaries[0].line : lines.length;
   const introText = lines.slice(0, firstBoundaryLine).join('\n');
-  if (introText.trim().length > 0) {
+  if (introText.trim().length > 0 || boundaries.length === 0) {
     pages.push({
       id: 'page-intro',
       title: 'Introduction',
       level: 0,
       startLine: 0,
-      endLine: firstBoundaryLine - 1,
+      endLine: Math.max(0, firstBoundaryLine - 1),
       content: introText,
       wordCount: wordCount(introText),
     });

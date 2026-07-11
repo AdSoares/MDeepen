@@ -67,4 +67,23 @@ describe('sectionize', () => {
     expect(r.pages[0].startLine).toBe(0);
     expect(r.pages[1].startLine).toBe(r.pages[0].endLine + 1);
   });
+
+  it('returns a single empty intro page for an empty document', () => {
+    const r = sectionize('', 2);
+    expect(r.pages).toHaveLength(1);
+    expect(r.pages[0].level).toBe(0);
+    expect(r.pages[0].wordCount).toBe(0);
+  });
+
+  it('excludes fenced code (``` and ~~~) from word count', () => {
+    const md = '## S\n\nreal words here\n\n```\ncode tokens\n```\n\n~~~\nmore code\n~~~';
+    const r = sectionize(md, 2);
+    expect(r.pages[0].wordCount).toBe(4); // "S" + "real words here"
+  });
+
+  it('intro page is contiguous with the first boundary page', () => {
+    const md = 'preamble\n\n## First\n\nx';
+    const r = sectionize(md, 2);
+    expect(r.pages[1].startLine).toBe(r.pages[0].endLine + 1);
+  });
 });
