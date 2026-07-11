@@ -18,11 +18,14 @@ interface Props {
 
 export function Content({ page, fileName, index, total, focus, onPrev, onNext, onToggleFocus }: Props) {
   const ref = useRef<HTMLDivElement>(null);
+  const prevPageId = useRef<string | undefined>(undefined);
 
   useEffect(() => {
     const el = ref.current;
     if (!el || !page) return;
     el.innerHTML = renderMarkdown(page.content);
+    if (prevPageId.current !== page.id) el.scrollTop = 0;
+    prevPageId.current = page.id;
 
     // Lazy syntax highlight.
     if (el.querySelector('pre code')) {
