@@ -16,7 +16,7 @@ export class ReaderPanel {
   private activeIndex = 0;
   private readonly disposables: vscode.Disposable[] = [];
   private disposed = false;
-  private reparseSeq = 0;
+  private queue: Promise<void> = Promise.resolve();
 
   static open(context: vscode.ExtensionContext, uri: vscode.Uri, store: PositionStore): void {
     const key = uri.toString();
@@ -97,8 +97,17 @@ export class ReaderPanel {
     // anchors are handled inside the webview.
   }
 
-  private async reparse(kind: 'init' | 'sectionsUpdated'): Promise<void> {
-    const seq = ++this.reparseSeq;
+  private reparse(kind: 'init' | 'sectionsUpdated'): Promise<void> {
+    this.queue = this.queue
+      .then(() => this.doReparse(kind))
+      .catch((e) => {
+        console.error('MDeepen: reparse failed', e);
+      });
+    return this.queue;
+  }
+
+  private async doReparse(kind: 'init' | 'sectionsUpdated'): Promise<void> {
+    if (this.disposed) return;
     let text: string;
     try {
       text = await this.readText();
@@ -108,7 +117,7 @@ export class ReaderPanel {
       }
       return;
     }
-    if (this.disposed || seq !== this.reparseSeq) return;
+    if (this.disposed) return;
     const oldPages = this.pages;
     const result = sectionize(text, this.level);
     this.pages = result.pages;
