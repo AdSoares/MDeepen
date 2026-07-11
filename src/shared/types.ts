@@ -29,3 +29,10 @@ export interface ReaderConfig {
   lineHeight: number;       // unitless
   theme: 'auto' | 'light' | 'dark';
 }
+
+export interface PanelsState {
+  outlineVisible: boolean;
+  aiVisible: boolean;
+  outlineWidth: number; // px, 180..400
+  aiWidth: number;      // px, 260..480
+}

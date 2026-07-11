@@ -20,8 +20,20 @@ describe('message type guards', () => {
       outline: [],
       effectiveLevel: 2,
       restoredIndex: 0,
+      readIds: [],
+      panels: { outlineVisible: true, aiVisible: true, outlineWidth: 252, aiWidth: 340 },
       config: { fontSize: 15.5, columnWidth: 700, lineHeight: 1.72, theme: 'auto' },
     };
     expect(isHostToWebview(msg)).toBe(true);
+  });
+  it('accepts sectionRead and uiStateChanged webview->host messages', () => {
+    expect(isWebviewToHost({ type: 'sectionRead', id: 'page-3' })).toBe(true);
+    expect(
+      isWebviewToHost({
+        type: 'uiStateChanged',
+        config: { fontSize: 15.5, columnWidth: 0, lineHeight: 1.72, theme: 'auto' },
+        panels: { outlineVisible: false, aiVisible: true, outlineWidth: 200, aiWidth: 340 },
+      }),
+    ).toBe(true);
   });
 });

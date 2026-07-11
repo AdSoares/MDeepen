@@ -135,6 +135,8 @@ export class ReaderPanel {
         outline: result.outline,
         effectiveLevel: result.effectiveLevel,
         restoredIndex: this.activeIndex,
+        readIds: [],
+        panels: { outlineVisible: true, aiVisible: true, outlineWidth: 252, aiWidth: 340 },
         config: DEFAULT_CONFIG,
       });
     } else {
@@ -145,6 +147,7 @@ export class ReaderPanel {
         outline: result.outline,
         effectiveLevel: result.effectiveLevel,
         keepIndex: this.activeIndex,
+        readIds: [],
       });
     }
   }
