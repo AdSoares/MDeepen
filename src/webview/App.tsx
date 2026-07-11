@@ -6,6 +6,7 @@ import { Outline } from './panels/Outline';
 import { Content } from './panels/Content';
 import { AiPanel } from './panels/AiPanel';
 import { ViewControls } from './panels/ViewControls';
+import { findBySlug } from './anchors';
 
 const store = createReaderState();
 
@@ -54,6 +55,7 @@ export function App() {
           onPrev={() => setIndex(s.activeIndex - 1)}
           onNext={() => setIndex(s.activeIndex + 1)}
           onToggleFocus={() => store.setPanels({ focus: !s.panels.focus })}
+          onAnchor={(fragment: string) => { const t = findBySlug(store.get().outline, fragment); if (t) setIndex(t.pageIndex); }}
         />
         <div class={`mdeepen-ai ${s.panels.aiVisible && !s.panels.focus ? '' : 'hidden'}`}>
           <AiPanel />

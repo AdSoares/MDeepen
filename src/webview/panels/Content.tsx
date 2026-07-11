@@ -14,9 +14,10 @@ interface Props {
   onPrev: () => void;
   onNext: () => void;
   onToggleFocus: () => void;
+  onAnchor: (fragment: string) => void;
 }
 
-export function Content({ page, fileName, index, total, focus, onPrev, onNext, onToggleFocus }: Props) {
+export function Content({ page, fileName, index, total, focus, onPrev, onNext, onToggleFocus, onAnchor }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const prevPageId = useRef<string | undefined>(undefined);
 
@@ -47,7 +48,7 @@ export function Content({ page, fileName, index, total, focus, onPrev, onNext, o
         e.preventDefault();
         const href = a.getAttribute('href')!;
         const kind = classifyLink(href);
-        if (kind === 'anchor') return; // in-page anchors could scroll; left as-is for Slice 1
+        if (kind === 'anchor') { onAnchor(decodeURIComponent(href.slice(1))); return; } // in-page anchors navigate within the reader
         post({ type: 'openLink', href, kind });
       };
     });
