@@ -8,7 +8,7 @@ Read Markdown, deeper. A paginated, section-based Markdown reader for VS Code.
 - Section pagination (default `##`, with fallback) + Previous/Next + `Alt+←/→`.
 - Reading progress and estimated time; last position remembered per file.
 - Full Markdown rendering (GFM tables, task lists, code blocks with copy, links) and Mermaid diagrams.
-- Reading and focus modes; adjustable font size, column width, line spacing, theme.
+- Reading and focus modes (`Ctrl+Shift+F11` toggles focus mode); adjustable font size, column width, line spacing, theme.
 - AI features are intentionally off in this slice.
 
 ## Develop

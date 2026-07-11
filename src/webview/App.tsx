@@ -54,7 +54,6 @@ export function App() {
           focus={s.panels.focus}
           onPrev={() => setIndex(s.activeIndex - 1)}
           onNext={() => setIndex(s.activeIndex + 1)}
-          onToggleFocus={() => store.setPanels({ focus: !s.panels.focus })}
           onAnchor={(fragment: string) => { const t = findBySlug(store.get().outline, fragment); if (t) setIndex(t.pageIndex); }}
         />
         <div class={`mdeepen-ai ${s.panels.aiVisible && !s.panels.focus ? '' : 'hidden'}`}>

@@ -1,9 +1,11 @@
 import * as vscode from 'vscode';
+import { randomUUID } from 'node:crypto';
 import { sectionize } from './parser/sectionize';
 import { classifyLink, reconcileIndex } from './linkAndReconcile';
 import { PositionStore } from './state/positionStore';
 import type { ReaderConfig, Page } from '../shared/types';
 import type { HostToWebview, WebviewToHost } from '../shared/messages';
+import { isWebviewToHost } from '../shared/messages';
 
 const DEFAULT_CONFIG: ReaderConfig = { fontSize: 15.5, columnWidth: 700, lineHeight: 1.72, theme: 'auto' };
 const DEFAULT_LEVEL = 2;
@@ -40,7 +42,7 @@ export class ReaderPanel {
     ),
   ) {
     this.panel.webview.html = this.html();
-    this.panel.webview.onDidReceiveMessage((m) => this.onMessage(m as WebviewToHost), null, this.disposables);
+    this.panel.webview.onDidReceiveMessage((m) => { if (isWebviewToHost(m)) void this.onMessage(m); }, null, this.disposables);
     this.panel.onDidDispose(() => this.dispose(), null, this.disposables);
 
     vscode.workspace.onDidChangeTextDocument((e) => {
@@ -64,6 +66,7 @@ export class ReaderPanel {
         await this.reparse('init');
         break;
       case 'activeSectionChanged':
+        if (!Number.isInteger(msg.index) || msg.index < 0) break;
         this.activeIndex = msg.index;
         await this.store.set(this.uri.toString(), msg.index);
         break;
@@ -152,7 +155,7 @@ export class ReaderPanel {
     const codiconUri = webview.asWebviewUri(
       vscode.Uri.joinPath(this.context.extensionUri, 'dist', 'webview', 'codicons', 'codicon.css'),
     );
-    const nonce = String(Date.now());
+    const nonce = randomUUID().replace(/-/g, '');
     const csp = [
       `default-src 'none'`,
       `img-src ${webview.cspSource} https: data:`,

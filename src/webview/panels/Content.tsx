@@ -13,11 +13,10 @@ interface Props {
   focus: boolean;
   onPrev: () => void;
   onNext: () => void;
-  onToggleFocus: () => void;
   onAnchor: (fragment: string) => void;
 }
 
-export function Content({ page, fileName, index, total, focus, onPrev, onNext, onToggleFocus, onAnchor }: Props) {
+export function Content({ page, fileName, index, total, focus, onPrev, onNext, onAnchor }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const prevPageId = useRef<string | undefined>(undefined);
 
