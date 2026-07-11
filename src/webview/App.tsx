@@ -7,9 +7,20 @@ import { Outline } from './panels/Outline';
 import { Content } from './panels/Content';
 import { AiPanel } from './panels/AiPanel';
 import { ViewControls } from './panels/ViewControls';
+import { Resizer } from './panels/Resizer';
 import { findBySlug } from './anchors';
 
 const store = createReaderState();
+
+let persistTimer: number | undefined;
+function schedulePersist() {
+  window.clearTimeout(persistTimer);
+  persistTimer = window.setTimeout(() => {
+    const { config, panels } = store.get();
+    const { focus: _focus, ...persistedPanels } = panels;
+    post({ type: 'uiStateChanged', config, panels: persistedPanels });
+  }, 500);
+}
 
 export function App() {
   const [, force] = useState(0);
@@ -24,7 +35,7 @@ export function App() {
     const onKey = (e: KeyboardEvent) => {
       if (e.altKey && e.key === 'ArrowRight') { e.preventDefault(); setIndex(store.get().activeIndex + 1); }
       else if (e.altKey && e.key === 'ArrowLeft') { e.preventDefault(); setIndex(store.get().activeIndex - 1); }
-      else if (e.key === 'F11' && e.shiftKey && e.ctrlKey) { e.preventDefault(); store.setPanels({ focus: !store.get().panels.focus }); }
+      else if (e.key === 'F11' && e.shiftKey && e.ctrlKey) { e.preventDefault(); store.setPanels({ focus: !store.get().panels.focus }); schedulePersist(); }
     };
     window.addEventListener('keydown', onKey);
     return () => { unsub(); window.removeEventListener('keydown', onKey); };
@@ -47,26 +58,29 @@ export function App() {
   const pct = progressPercent(s.activeIndex, s.pages.length);
 
   return (
-    <div class="mdeepen-root" data-theme={s.config.theme} data-focus={String(s.panels.focus)} style={{ '--md-fs': `${s.config.fontSize}px`, '--md-lh': String(s.config.lineHeight), '--md-col': s.config.columnWidth === 0 ? '100%' : `${s.config.columnWidth}px` }}>
+    <div class="mdeepen-root" data-theme={s.config.theme} data-focus={String(s.panels.focus)} style={{ '--md-fs': `${s.config.fontSize}px`, '--md-lh': String(s.config.lineHeight), '--md-col': s.config.columnWidth === 0 ? '100%' : `${s.config.columnWidth}px`, '--md-outline-w': `${s.panels.outlineWidth}px`, '--md-ai-w': `${s.panels.aiWidth}px` }}>
       {s.panels.focus && <div class="focus-progress" style={{ width: `${pct}%` }} />}
       {!s.panels.focus && (
         <div style={{ height: '34px', display: 'flex', alignItems: 'center', justifyContent: 'flex-start', borderBottom: '1px solid var(--vscode-panel-border)' }}>
           <button class="md-btn" aria-label="Toggle outline panel" aria-pressed={s.panels.outlineVisible}
-            onClick={() => store.setPanels({ outlineVisible: !store.get().panels.outlineVisible })}>
+            onClick={() => { store.setPanels({ outlineVisible: !store.get().panels.outlineVisible }); schedulePersist(); }}>
             <span class="codicon codicon-layout-sidebar-left" aria-hidden="true" />
           </button>
           <button class="md-btn" aria-label="Toggle AI panel" aria-pressed={s.panels.aiVisible}
-            onClick={() => store.setPanels({ aiVisible: !store.get().panels.aiVisible })}>
+            onClick={() => { store.setPanels({ aiVisible: !store.get().panels.aiVisible }); schedulePersist(); }}>
             <span class="codicon codicon-layout-sidebar-right" aria-hidden="true" />
           </button>
           <span style={{ flex: 1 }} />
-          <ViewControls config={s.config} onChange={(c) => store.setConfig(c)} />
+          <ViewControls config={s.config} onChange={(c) => { store.setConfig(c); schedulePersist(); }} />
         </div>
       )}
       <div class="mdeepen-body">
         <div class={`mdeepen-outline ${s.panels.outlineVisible && !s.panels.focus ? '' : 'hidden'}`}>
           <Outline outline={s.outline} activeIndex={s.activeIndex} pages={s.pages} readIds={s.readIds} onSelect={setIndex} />
         </div>
+        {s.panels.outlineVisible && !s.panels.focus && (
+          <Resizer kind="outline" currentWidth={s.panels.outlineWidth} onResize={(w) => { store.setPanels({ outlineWidth: w }); schedulePersist(); }} />
+        )}
         <Content
           page={page}
           fileName={s.fileName}
@@ -77,6 +91,9 @@ export function App() {
           onNext={() => setIndex(s.activeIndex + 1)}
           onAnchor={(fragment: string) => { const t = findBySlug(store.get().outline, fragment); if (t) setIndex(t.pageIndex); }}
         />
+        {s.panels.aiVisible && !s.panels.focus && (
+          <Resizer kind="ai" currentWidth={s.panels.aiWidth} onResize={(w) => { store.setPanels({ aiWidth: w }); schedulePersist(); }} />
+        )}
         <div class={`mdeepen-ai ${s.panels.aiVisible && !s.panels.focus ? '' : 'hidden'}`}>
           <AiPanel />
         </div>
@@ -86,7 +103,7 @@ export function App() {
         <span>{page ? `${page.title}` : ''}</span>
         <span>{page ? `${readingMinutes(page.wordCount)} min` : ''}</span>
         <span style={{ marginLeft: 'auto' }}>{remainingMinutes(s.pages, s.activeIndex)} min left</span>
-        <span style={{ cursor: 'pointer' }} onClick={() => store.setPanels({ focus: !s.panels.focus })}>Focus</span>
+        <span style={{ cursor: 'pointer' }} onClick={() => { store.setPanels({ focus: !s.panels.focus }); schedulePersist(); }}>Focus</span>
       </div>
     </div>
   );
