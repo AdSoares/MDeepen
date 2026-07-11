@@ -8,13 +8,15 @@ export interface ReaderState {
   effectiveLevel: number;
   activeIndex: number;
   config: ReaderConfig;
-  panels: { outlineVisible: boolean; aiVisible: boolean; focus: boolean };
+  readIds: Set<string>;
+  panels: { outlineVisible: boolean; aiVisible: boolean; outlineWidth: number; aiWidth: number; focus: boolean };
 }
 
 const initial: ReaderState = {
   fileName: '', pages: [], outline: [], effectiveLevel: 2, activeIndex: 0,
   config: { fontSize: 15.5, columnWidth: 700, lineHeight: 1.72, theme: 'auto' },
-  panels: { outlineVisible: true, aiVisible: true, focus: false },
+  readIds: new Set(),
+  panels: { outlineVisible: true, aiVisible: true, outlineWidth: 252, aiWidth: 340, focus: false },
 };
 
 const clamp = (i: number, len: number): number => Math.min(Math.max(i, 0), Math.max(0, len - 1));
@@ -41,6 +43,8 @@ export function createReaderState() {
         ...state, fileName: m.fileName, pages: m.pages, outline: m.outline,
         effectiveLevel: m.effectiveLevel, config: m.config,
         activeIndex: clamp(m.restoredIndex, m.pages.length),
+        readIds: new Set(m.readIds),
+        panels: { ...m.panels, focus: false },
       };
       emit();
     },
@@ -48,7 +52,15 @@ export function createReaderState() {
       state = {
         ...state, pages: m.pages, outline: m.outline, effectiveLevel: m.effectiveLevel,
         activeIndex: clamp(m.keepIndex, m.pages.length),
+        readIds: new Set(m.readIds),
       };
+      emit();
+    },
+    markRead(id: string) {
+      if (state.readIds.has(id)) return;
+      const readIds = new Set(state.readIds);
+      readIds.add(id);
+      state = { ...state, readIds };
       emit();
     },
   };

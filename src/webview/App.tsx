@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'preact/hooks';
 import { createReaderState } from './store';
 import { post, onMessage } from './vscodeApi';
+import { READ_DWELL_MS } from './layout';
 import { progressPercent, remainingMinutes, readingMinutes } from '../shared/progress';
 import { Outline } from './panels/Outline';
 import { Content } from './panels/Content';
@@ -32,6 +33,17 @@ export function App() {
   const s = store.get();
   const setIndex = (i: number) => { store.setActiveIndex(i); post({ type: 'activeSectionChanged', index: store.get().activeIndex }); };
   const page = s.pages[s.activeIndex];
+  useEffect(() => {
+    if (!page || store.get().readIds.has(page.id)) return;
+    const id = page.id;
+    const timer = window.setTimeout(() => {
+      if (store.get().pages[store.get().activeIndex]?.id !== id) return;
+      if (store.get().readIds.has(id)) return;
+      store.markRead(id);
+      post({ type: 'sectionRead', id });
+    }, READ_DWELL_MS);
+    return () => window.clearTimeout(timer);
+  }, [page?.id]);
   const pct = progressPercent(s.activeIndex, s.pages.length);
 
   return (
@@ -44,7 +56,7 @@ export function App() {
       )}
       <div class="mdeepen-body">
         <div class={`mdeepen-outline ${s.panels.outlineVisible && !s.panels.focus ? '' : 'hidden'}`}>
-          <Outline outline={s.outline} activeIndex={s.activeIndex} pages={s.pages} onSelect={setIndex} />
+          <Outline outline={s.outline} activeIndex={s.activeIndex} pages={s.pages} readIds={s.readIds} onSelect={setIndex} />
         </div>
         <Content
           page={page}

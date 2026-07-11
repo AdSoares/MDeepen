@@ -6,12 +6,13 @@ interface Props {
   outline: OutlineNode[];
   activeIndex: number;
   pages: Page[];
+  readIds: Set<string>;
   onSelect: (pageIndex: number) => void;
 }
 
-function Row({ node, activeIndex, onSelect }: { node: OutlineNode; activeIndex: number; onSelect: (i: number) => void }) {
+function Row({ node, activeIndex, pages, readIds, onSelect }: { node: OutlineNode; activeIndex: number; pages: Page[]; readIds: Set<string>; onSelect: (i: number) => void }) {
   const isActive = node.pageIndex === activeIndex;
-  const isRead = node.pageIndex < activeIndex;
+  const isRead = readIds.has(pages[node.pageIndex]?.id ?? '');
   return (
     <div>
       <div
@@ -33,15 +34,14 @@ function Row({ node, activeIndex, onSelect }: { node: OutlineNode; activeIndex: 
         <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{node.title}</span>
         {isRead && <span class="codicon codicon-check" style={{ color: 'var(--md-success)' }} aria-label="read" />}
       </div>
-      {node.children.map((c) => <Row key={c.id} node={c} activeIndex={activeIndex} onSelect={onSelect} />)}
+      {node.children.map((c) => <Row key={c.id} node={c} activeIndex={activeIndex} pages={pages} readIds={readIds} onSelect={onSelect} />)}
     </div>
   );
 }
 
-export function Outline({ outline, activeIndex, pages, onSelect }: Props) {
+export function Outline({ outline, activeIndex, pages, readIds, onSelect }: Props) {
   const [query, setQuery] = useState('');
   const filtered = filterOutline(outline, query);
-  const readCount = Math.min(activeIndex, Math.max(0, pages.length - 1));
   return (
     <div>
       <div style={{ padding: '10px 12px', fontSize: '11px', letterSpacing: '.06em', color: 'var(--vscode-descriptionForeground)' }}>
@@ -57,10 +57,10 @@ export function Outline({ outline, activeIndex, pages, onSelect }: Props) {
         />
       </div>
       <div role="tree">
-        {filtered.map((n) => <Row key={n.id} node={n} activeIndex={activeIndex} onSelect={onSelect} />)}
+        {filtered.map((n) => <Row key={n.id} node={n} activeIndex={activeIndex} pages={pages} readIds={readIds} onSelect={onSelect} />)}
       </div>
       <div style={{ padding: '8px 12px', fontSize: '11px', color: 'var(--vscode-descriptionForeground)' }}>
-        {pages.length} sections · {readCount} read
+        {pages.length} sections · {readIds.size} read
       </div>
     </div>
   );

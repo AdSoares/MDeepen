@@ -2,6 +2,7 @@ export const COL_MIN = 480;
 export const COL_MAX = 1400;
 export const COL_STEP = 100;
 export const COL_FULL = 0; // sentinel: no max-width
+export const READ_DWELL_MS = 5000;
 
 export function stepColumnWidth(current: number, delta: 1 | -1): number {
   if (current === COL_FULL) return delta > 0 ? COL_FULL : COL_MAX;
