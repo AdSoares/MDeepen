@@ -15,6 +15,8 @@ export class ReaderPanel {
   private pages: Page[] = [];
   private activeIndex = 0;
   private readonly disposables: vscode.Disposable[] = [];
+  private disposed = false;
+  private reparseSeq = 0;
 
   static open(context: vscode.ExtensionContext, uri: vscode.Uri, store: PositionStore): void {
     const key = uri.toString();
@@ -47,6 +49,7 @@ export class ReaderPanel {
   }
 
   private post(msg: HostToWebview): void {
+    if (this.disposed) return;
     this.panel.webview.postMessage(msg);
   }
 
@@ -82,14 +85,30 @@ export class ReaderPanel {
     if (kind === 'external') {
       await vscode.env.openExternal(vscode.Uri.parse(href));
     } else if (kind === 'local') {
-      const target = vscode.Uri.joinPath(this.uri, '..', href);
-      await vscode.window.showTextDocument(target);
+      const filePart = href.split('#')[0];
+      if (!filePart) return; // pure fragment — handled inside the webview
+      const target = vscode.Uri.joinPath(this.uri, '..', filePart);
+      try {
+        await vscode.window.showTextDocument(target);
+      } catch {
+        vscode.window.showErrorMessage(`MDeepen: could not open ${filePart}`);
+      }
     }
     // anchors are handled inside the webview.
   }
 
   private async reparse(kind: 'init' | 'sectionsUpdated'): Promise<void> {
-    const text = await this.readText();
+    const seq = ++this.reparseSeq;
+    let text: string;
+    try {
+      text = await this.readText();
+    } catch {
+      if (!this.disposed) {
+        vscode.window.showErrorMessage(`MDeepen: could not read ${this.uri.fsPath}`);
+      }
+      return;
+    }
+    if (this.disposed || seq !== this.reparseSeq) return;
     const oldPages = this.pages;
     const result = sectionize(text, this.level);
     this.pages = result.pages;
@@ -148,6 +167,7 @@ export class ReaderPanel {
   }
 
   private dispose(): void {
+    this.disposed = true;
     ReaderPanel.panels.delete(this.uri.toString());
     while (this.disposables.length) this.disposables.pop()?.dispose();
   }
