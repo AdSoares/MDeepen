@@ -1,0 +1,1120 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{background:#e7e4dd;font-family:Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased;color:#1a1a1a}
+  a{color:#2a6fdb;text-decoration:none}
+  a:hover{text-decoration:underline}
+  @keyframes mdblink{0%,49%{opacity:1}50%,100%{opacity:0}}
+  @keyframes mdspin{to{transform:rotate(360deg)}}
+  @keyframes mdshimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
+  @keyframes mdpulse{0%,100%{opacity:.45}50%{opacity:.9}}
+  .mdsk{background:linear-gradient(90deg,rgba(128,128,128,.10) 25%,rgba(128,128,128,.22) 37%,rgba(128,128,128,.10) 63%);background-size:800px 100%;animation:mdshimmer 1.4s infinite linear;border-radius:4px}
+  .mdscroll::-webkit-scrollbar{width:10px;height:10px}
+  .mdscroll::-webkit-scrollbar-thumb{background:rgba(128,128,128,.35);border-radius:10px;border:2px solid transparent;background-clip:content-box}
+  .mdscroll::-webkit-scrollbar-track{background:transparent}
+</style>
+</helmet>
+
+<div style="{{ rootStyle }}">
+
+  <!-- ===== GALLERY HEADER ===== -->
+  <div style="max-width:1400px;margin:0 auto;padding:44px 40px 8px">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:24px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:16px">
+        <div style="width:52px;height:52px;border-radius:12px;background:#0f1115;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(0,0,0,.22)">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4daafc" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2 2 0 0 1 6 4h6v15H6a2 2 0 0 0-2 1.5z"/><path d="M20 5.5A2 2 0 0 0 18 4h-6v15h6a2 2 0 0 1 2 1.5z"/><path d="M14.5 9.5l2 2 3-3.5"/></svg>
+        </div>
+        <div>
+          <div style="font-size:26px;font-weight:700;letter-spacing:-.02em;line-height:1">MDeepen</div>
+          <div style="font-size:13px;color:#5c5952;margin-top:5px">Markdown Intelligence Reader — VS Code extension · hi-fi design gallery</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px">
+        <div style="display:inline-flex;background:#d9d5cc;border-radius:9px;padding:3px;gap:2px">
+          <button onClick="{{ setDark }}" style="{{ darkBtnStyle }}">Dark</button>
+          <button onClick="{{ setLight }}" style="{{ lightBtnStyle }}">Light</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- index -->
+    <div style="margin-top:22px;display:flex;flex-wrap:wrap;gap:6px 7px;font-size:11.5px">
+      <sc-for list="{{ index }}" as="it" hint-placeholder-count="19">
+        <a href="{{ it.href }}" style="display:inline-flex;align-items:center;gap:6px;padding:5px 10px;background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:20px;color:#3a3730;font-weight:500;box-shadow:0 1px 2px rgba(0,0,0,.04)"><span style="font:600 10px JetBrains Mono,monospace;color:#a8a496">{{ it.id }}</span>{{ it.label }}</a>
+      </sc-for>
+    </div>
+  </div>
+
+  <div id="cards" style="max-width:1400px;margin:0 auto;padding:20px 40px 80px;display:flex;flex-direction:column;gap:44px">
+
+  <!-- ========== S1 · READER (3-PANEL, INTERACTIVE) ========== -->
+  <div id="s1" style="scroll-margin-top:20px;display:flex;flex-direction:column;gap:12px">
+    <div style="display:flex;align-items:baseline;gap:11px">
+      <span style="font:600 11px JetBrains Mono,monospace;background:#0f1115;color:#fff;padding:4px 9px;border-radius:6px">S1</span>
+      <span style="font-size:15px;font-weight:700;color:#1a1a1a">Reader — three-panel layout</span>
+      <span style="font-size:12.5px;color:#7a766d">Interactive · click sections, run AI actions, ask a question</span>
+    </div>
+
+    <div style="width:1240px;max-width:100%;border-radius:11px;overflow:hidden;box-shadow:var(--md-chrome-shadow);border:1px solid rgba(0,0,0,.12);background:var(--vscode-editor-background,#1f1f1f);font-family:Inter,sans-serif">
+
+      <!-- title bar -->
+      <div style="height:37px;background:var(--vscode-titleBar-activeBackground,#181818);display:flex;align-items:center;padding:0 14px;border-bottom:1px solid var(--vscode-panel-border,#2b2b2b)">
+        <div style="display:flex;gap:8px">
+          <span style="width:12px;height:12px;border-radius:50%;background:#ff5f57"></span>
+          <span style="width:12px;height:12px;border-radius:50%;background:#febc2e"></span>
+          <span style="width:12px;height:12px;border-radius:50%;background:#28c840"></span>
+        </div>
+        <div style="flex:1;text-align:center;font-size:12px;color:var(--vscode-titleBar-activeForeground,#ccc);opacity:.85">order-service.md — MDeepen — Visual Studio Code</div>
+        <div style="display:flex;gap:14px;color:var(--vscode-activityBar-inactiveForeground,#868686)">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16"/></svg>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/><path d="M15 4v16"/></svg>
+        </div>
+      </div>
+
+      <div style="display:flex;height:668px">
+
+        <!-- activity bar -->
+        <div style="width:48px;background:var(--vscode-activityBar-background,#181818);display:flex;flex-direction:column;align-items:center;padding:10px 0;border-right:1px solid var(--vscode-panel-border,#2b2b2b)">
+          <div style="display:flex;flex-direction:column;gap:18px;color:var(--vscode-activityBar-inactiveForeground,#868686)">
+            <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/></svg>
+            <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="6"/><path d="m20 20-4.3-4.3"/></svg>
+            <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="6" r="2.4"/><circle cx="6" cy="18" r="2.4"/><circle cx="17" cy="9" r="2.4"/><path d="M6 8.4v7.2M8.3 7.2 15 8.7M17 11.4c0 3-3 3.6-5 3.6"/></svg>
+            <div style="position:relative;color:var(--vscode-activityBar-foreground,#d7d7d7)">
+              <span style="position:absolute;left:-11px;top:1px;width:2px;height:21px;background:var(--vscode-activityBar-foreground,#d7d7d7);border-radius:2px"></span>
+              <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 5.5A2 2 0 0 1 6 4h6v15H6a2 2 0 0 0-2 1.5z"/><path d="M20 5.5A2 2 0 0 0 18 4h-6v15h6a2 2 0 0 1 2 1.5z"/></svg>
+            </div>
+          </div>
+          <div style="margin-top:auto;display:flex;flex-direction:column;gap:18px;color:var(--vscode-activityBar-inactiveForeground,#868686)">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="3.4"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/></svg>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1"/></svg>
+          </div>
+        </div>
+
+        <!-- sidebar: outline -->
+        <div style="width:252px;background:var(--vscode-sideBar-background,#181818);border-right:1px solid var(--vscode-panel-border,#2b2b2b);display:flex;flex-direction:column">
+          <div style="padding:13px 16px 9px;font-size:11px;letter-spacing:.06em;font-weight:600;color:var(--vscode-descriptionForeground,#9d9d9d);display:flex;justify-content:space-between;align-items:center">
+            <span>MDEEPEN · OUTLINE</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+          </div>
+          <div style="padding:0 12px 10px">
+            <div style="display:flex;align-items:center;gap:7px;background:var(--vscode-input-background,#313131);border:1px solid var(--vscode-input-border,#3c3c3c);border-radius:5px;padding:5px 9px">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--vscode-input-placeholderForeground,#989898)" stroke-width="1.7"><circle cx="11" cy="11" r="6"/><path d="m20 20-4.3-4.3"/></svg>
+              <span style="font-size:12px;color:var(--vscode-input-placeholderForeground,#989898)">Filter sections</span>
+            </div>
+          </div>
+          <div class="mdscroll" style="flex:1;overflow:auto;padding:0 8px">
+            <sc-for list="{{ secItems }}" as="sec" hint-placeholder-count="6">
+              <div onClick="{{ go }}" data-i="{{ $index }}" style="{{ sec.rowStyle }}">
+                <span style="width:15px;text-align:center;color:var(--vscode-descriptionForeground,#9d9d9d)">
+                  <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M8 5l8 7-8 7"/></svg>
+                </span>
+                <span style="font:600 10px JetBrains Mono,monospace;color:var(--vscode-descriptionForeground,#9d9d9d)">{{ sec.n }}</span>
+                <span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ sec.title }}</span>
+                <sc-if value="{{ sec.isRead }}" hint-placeholder-val="{{ false }}">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--md-success,#89d185)" stroke-width="2.4"><path d="M5 12l5 5 9-11"/></svg>
+                </sc-if>
+              </div>
+            </sc-for>
+          </div>
+          <div style="padding:11px 14px;border-top:1px solid var(--vscode-panel-border,#2b2b2b);font-size:11px;color:var(--vscode-descriptionForeground,#9d9d9d)">6 sections · 2 read</div>
+        </div>
+
+        <!-- editor / content -->
+        <div style="flex:1;min-width:0;display:flex;flex-direction:column;background:var(--vscode-editor-background,#1f1f1f)">
+          <!-- breadcrumb -->
+          <div style="height:34px;display:flex;align-items:center;gap:7px;padding:0 20px;border-bottom:1px solid var(--vscode-panel-border,#2b2b2b);font-size:12px;color:var(--vscode-descriptionForeground,#9d9d9d)">
+            <span>order-service.md</span>
+            <span style="opacity:.5">›</span>
+            <span style="color:var(--vscode-editor-foreground,#ccc)">{{ activeSection.title }}</span>
+          </div>
+          <!-- content -->
+          <div class="mdscroll" style="flex:1;overflow:auto">
+            <div style="max-width:700px;margin:0 auto;padding:38px 40px 20px">
+              <sc-for list="{{ activeBlocks }}" as="b" hint-placeholder-count="5">
+                <sc-if value="{{ b.isH1 }}" hint-placeholder-val="{{ false }}"><h1 style="font:600 27px/1.25 'Source Serif 4',Georgia,serif;margin:0 0 14px;letter-spacing:-.01em;color:var(--vscode-editor-foreground,#ccc)">{{ b.text }}</h1></sc-if>
+                <sc-if value="{{ b.isH2 }}" hint-placeholder-val="{{ false }}"><h2 style="font:600 18px/1.35 Inter,sans-serif;margin:30px 0 10px;color:var(--vscode-editor-foreground,#ccc)">{{ b.text }}</h2></sc-if>
+                <sc-if value="{{ b.isLead }}" hint-placeholder-val="{{ false }}"><p style="font:400 17px/1.72 'Source Serif 4',Georgia,serif;margin:0 0 15px;color:var(--vscode-editor-foreground,#ccc)">{{ b.text }}</p></sc-if>
+                <sc-if value="{{ b.isP }}" hint-placeholder-val="{{ true }}"><p style="font:400 15.5px/1.72 'Source Serif 4',Georgia,serif;margin:0 0 15px;color:var(--vscode-editor-foreground,#ccc)">{{ b.text }}</p></sc-if>
+                <sc-if value="{{ b.isNote }}" hint-placeholder-val="{{ false }}"><div style="border-left:3px solid var(--vscode-focusBorder,#0078d4);background:var(--vscode-textBlockQuote-background,rgba(128,128,128,.06));padding:12px 15px;border-radius:0 8px 8px 0;margin:0 0 16px;font:400 14px/1.6 Inter,sans-serif;color:var(--vscode-editor-foreground,#ccc)">{{ b.text }}</div></sc-if>
+                <sc-if value="{{ b.isNoteWarn }}" hint-placeholder-val="{{ false }}"><div style="border-left:3px solid var(--md-warn,#cca700);background:var(--vscode-textBlockQuote-background,rgba(128,128,128,.06));padding:12px 15px;border-radius:0 8px 8px 0;margin:0 0 16px;font:400 14px/1.6 Inter,sans-serif;color:var(--vscode-editor-foreground,#ccc)">{{ b.text }}</div></sc-if>
+                <sc-if value="{{ b.isCode }}" hint-placeholder-val="{{ false }}"><pre style="background:var(--vscode-textCodeBlock-background,rgba(128,128,128,.1));border:1px solid var(--vscode-widget-border,#333);border-radius:8px;padding:14px 16px;overflow:auto;margin:0 0 16px;font:400 12.5px/1.6 JetBrains Mono,monospace;color:var(--vscode-editor-foreground,#ccc);white-space:pre">{{ b.text }}</pre></sc-if>
+                <sc-if value="{{ b.isUl }}" hint-placeholder-val="{{ false }}"><ul style="font:400 15.5px/1.7 'Source Serif 4',Georgia,serif;margin:0 0 15px;padding-left:22px;color:var(--vscode-editor-foreground,#ccc)"><sc-for list="{{ b.items }}" as="it" hint-placeholder-count="3"><li style="margin:5px 0">{{ it }}</li></sc-for></ul></sc-if>
+                <sc-if value="{{ b.isOl }}" hint-placeholder-val="{{ false }}"><ol style="font:400 15.5px/1.7 'Source Serif 4',Georgia,serif;margin:0 0 15px;padding-left:22px;color:var(--vscode-editor-foreground,#ccc)"><sc-for list="{{ b.items }}" as="it" hint-placeholder-count="3"><li style="margin:5px 0">{{ it }}</li></sc-for></ol></sc-if>
+              </sc-for>
+            </div>
+          </div>
+          <!-- prev/next footer -->
+          <div style="height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 22px;border-top:1px solid var(--vscode-panel-border,#2b2b2b);background:var(--vscode-editor-background,#1f1f1f)">
+            <button onClick="{{ prev }}" style="display:flex;align-items:center;gap:7px;background:var(--vscode-button-secondaryBackground,#313131);color:var(--vscode-button-secondaryForeground,#ccc);border:none;border-radius:6px;padding:7px 13px;font-size:12.5px;font-weight:500;cursor:pointer;font-family:Inter,sans-serif">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 5l-7 7 7 7"/></svg>Previous
+            </button>
+            <span style="font-size:12px;color:var(--vscode-descriptionForeground,#9d9d9d)">{{ sectionLabel }}</span>
+            <button onClick="{{ next }}" style="display:flex;align-items:center;gap:7px;background:var(--vscode-button-background,#0078d4);color:var(--vscode-button-foreground,#fff);border:none;border-radius:6px;padding:7px 13px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">
+              Next section<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5l7 7-7 7"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- AI panel -->
+        <div style="width:340px;background:var(--vscode-sideBar-background,#181818);border-left:1px solid var(--vscode-panel-border,#2b2b2b);display:flex;flex-direction:column">
+          <div style="padding:12px 15px;border-bottom:1px solid var(--vscode-panel-border,#2b2b2b);display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="width:22px;height:22px;border-radius:6px;background:var(--md-ai,#9d7cd8);display:flex;align-items:center;justify-content:center">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8"><path d="M12 3l1.8 4.2L18 9l-4.2 1.8L12 15l-1.8-4.2L6 9l4.2-1.8z"/><path d="M18 15l.9 2.1 2.1.9-2.1.9L18 21l-.9-2.1L15 18l2.1-.9z"/></svg>
+                </span>
+                <span style="font-size:13px;font-weight:600;color:var(--vscode-editor-foreground,#ccc)">MDeepen AI</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:9px;color:var(--vscode-descriptionForeground,#9d9d9d)">
+                <svg onClick="{{ clearChat }}" style="cursor:pointer" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13"/></svg>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:7px">
+              <div style="display:inline-flex;align-items:center;gap:6px;font-size:11px;padding:3px 8px;border:1px solid var(--vscode-widget-border,#333);border-radius:20px;color:var(--vscode-editor-foreground,#ccc)">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="8" r="3.2"/><path d="M6 20a6 6 0 0 1 12 0"/></svg>Technical persona
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+              </div>
+              <div style="display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:3px 8px;background:color-mix(in srgb,var(--md-success,#89d185) 18%,transparent);color:var(--md-success,#89d185);border-radius:20px;font-weight:600">
+                <span style="width:6px;height:6px;border-radius:50%;background:currentColor"></span>Local · Ollama
+              </div>
+            </div>
+          </div>
+
+          <!-- quick actions -->
+          <div style="padding:11px 14px 4px;display:flex;gap:7px">
+            <button onClick="{{ runSummarize }}" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;padding:9px 4px;background:var(--vscode-editorWidget-background,#202020);border:1px solid var(--vscode-widget-border,#333);border-radius:7px;cursor:pointer;font-family:Inter,sans-serif;color:var(--vscode-editor-foreground,#ccc)">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 6h16M4 11h16M4 16h9"/></svg>
+              <span style="font-size:10.5px;font-weight:500">Summarize</span>
+            </button>
+            <button onClick="{{ runExplain }}" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;padding:9px 4px;background:var(--vscode-editorWidget-background,#202020);border:1px solid var(--vscode-widget-border,#333);border-radius:7px;cursor:pointer;font-family:Inter,sans-serif;color:var(--vscode-editor-foreground,#ccc)">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.7M12 17h.01"/></svg>
+              <span style="font-size:10.5px;font-weight:500">Explain</span>
+            </button>
+            <button onClick="{{ runDiagram }}" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;padding:9px 4px;background:var(--vscode-editorWidget-background,#202020);border:1px solid var(--vscode-widget-border,#333);border-radius:7px;cursor:pointer;font-family:Inter,sans-serif;color:var(--vscode-editor-foreground,#ccc)">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="7" height="5" rx="1"/><rect x="14" y="15" width="7" height="5" rx="1"/><path d="M6.5 9v3a2 2 0 0 0 2 2h9"/></svg>
+              <span style="font-size:10.5px;font-weight:500">Diagram</span>
+            </button>
+          </div>
+
+          <!-- chat history -->
+          <div ref="{{ chatRef }}" class="mdscroll" style="flex:1;overflow:auto;padding:12px 14px;display:flex;flex-direction:column;gap:13px">
+            <sc-for list="{{ msgs }}" as="m" hint-placeholder-count="2">
+              <sc-if value="{{ m.isUser }}" hint-placeholder-val="{{ true }}">
+                <div style="align-self:flex-end;max-width:88%;background:var(--vscode-list-activeSelectionBackground,#04395e);color:var(--vscode-editor-foreground,#ccc);padding:8px 12px;border-radius:12px 12px 3px 12px;font-size:12.5px;line-height:1.5" dangerouslySetInnerHTML="{{ m.html }}"></div>
+              </sc-if>
+              <sc-if value="{{ m.isAI }}" hint-placeholder-val="{{ true }}">
+                <div style="display:flex;gap:9px">
+                  <span style="flex:none;width:22px;height:22px;border-radius:6px;background:var(--md-ai,#9d7cd8);display:flex;align-items:center;justify-content:center;margin-top:1px">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9"><path d="M12 3l1.8 4.2L18 9l-4.2 1.8L12 15l-1.8-4.2L6 9z"/></svg>
+                  </span>
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:12.5px;line-height:1.6;color:var(--vscode-editor-foreground,#ccc)" dangerouslySetInnerHTML="{{ m.html }}"></div>
+                    <sc-if value="{{ m.hasSources }}" hint-placeholder-val="{{ true }}">
+                      <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:8px">
+                        <sc-for list="{{ m.sources }}" as="src" hint-placeholder-count="2">
+                          <span style="display:inline-flex;align-items:center;gap:5px;font-size:10.5px;padding:2px 7px;background:var(--vscode-editorWidget-background,#202020);border:1px solid var(--vscode-widget-border,#333);border-radius:5px;color:var(--vscode-textLink-foreground,#4daafc);cursor:pointer">
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 15 20 4M20 4h-5M20 4v5M13 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/></svg>
+                            §{{ src.s }} {{ src.t }}
+                          </span>
+                        </sc-for>
+                      </div>
+                    </sc-if>
+                    <div style="display:flex;gap:13px;margin-top:9px;color:var(--vscode-descriptionForeground,#9d9d9d)">
+                      <svg style="cursor:pointer" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg>
+                      <svg style="cursor:pointer" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 12a8 8 0 0 1 14-5l2 2M20 5v4h-4"/></svg>
+                      <svg style="cursor:pointer" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M7 11V6a2 2 0 0 1 2-2l3 7v9H6l-2-8h3M17 20V11"/></svg>
+                      <svg style="cursor:pointer" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M17 13V18a2 2 0 0 1-2 2l-3-7V4h6l2 8h-3M7 4v9"/></svg>
+                    </div>
+                  </div>
+                </div>
+              </sc-if>
+            </sc-for>
+
+            <sc-if value="{{ streaming }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;gap:9px">
+                <span style="flex:none;width:22px;height:22px;border-radius:6px;background:var(--md-ai,#9d7cd8);display:flex;align-items:center;justify-content:center;margin-top:1px">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9"><path d="M12 3l1.8 4.2L18 9l-4.2 1.8L12 15l-1.8-4.2L6 9z"/></svg>
+                </span>
+                <div style="flex:1;font-size:12.5px;line-height:1.6;color:var(--vscode-editor-foreground,#ccc)"><span dangerouslySetInnerHTML="{{ streamHtml }}"></span><span style="display:inline-block;width:7px;height:14px;background:var(--md-ai,#9d7cd8);vertical-align:-2px;margin-left:2px;animation:mdblink 1s infinite"></span></div>
+              </div>
+            </sc-if>
+          </div>
+
+          <!-- streaming stop bar -->
+          <sc-if value="{{ streaming }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:0 14px 6px">
+              <button onClick="{{ stop }}" style="width:100%;display:flex;align-items:center;justify-content:center;gap:7px;padding:7px;background:transparent;border:1px solid var(--vscode-widget-border,#333);border-radius:7px;cursor:pointer;font-size:12px;font-weight:500;color:var(--vscode-editor-foreground,#ccc);font-family:Inter,sans-serif">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>Stop generating
+              </button>
+            </div>
+          </sc-if>
+
+          <!-- input -->
+          <div style="padding:8px 14px 14px;border-top:1px solid var(--vscode-panel-border,#2b2b2b)">
+            <div style="display:flex;gap:6px;margin-bottom:9px;flex-wrap:wrap">
+              <span style="font-size:10.5px;padding:4px 9px;background:var(--vscode-editorWidget-background,#202020);border:1px solid var(--vscode-widget-border,#333);border-radius:20px;color:var(--vscode-descriptionForeground,#9d9d9d);cursor:pointer">What are the failure modes?</span>
+              <span style="font-size:10.5px;padding:4px 9px;background:var(--vscode-editorWidget-background,#202020);border:1px solid var(--vscode-widget-border,#333);border-radius:20px;color:var(--vscode-descriptionForeground,#9d9d9d);cursor:pointer">Show an example</span>
+            </div>
+            <div style="display:flex;align-items:flex-end;gap:8px;background:var(--vscode-input-background,#313131);border:1px solid var(--vscode-input-border,#3c3c3c);border-radius:9px;padding:8px 10px">
+              <input onKeyDown="{{ ask }}" placeholder="Ask about this document…" style="flex:1;background:none;border:none;outline:none;color:var(--vscode-input-foreground,#ccc);font-size:12.5px;font-family:Inter,sans-serif"/>
+              <span style="width:26px;height:26px;border-radius:6px;background:var(--vscode-button-background,#0078d4);display:flex;align-items:center;justify-content:center;cursor:pointer">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- status bar -->
+      <div style="height:25px;background:var(--vscode-statusBar-background,#181818);border-top:1px solid var(--vscode-panel-border,#2b2b2b);display:flex;align-items:center;padding:0 12px;gap:16px;font-size:11px;color:var(--vscode-statusBar-foreground,#ccc)">
+        <span style="display:flex;align-items:center;gap:6px">
+          <span style="width:70px;height:4px;border-radius:3px;background:var(--vscode-widget-border,#333);overflow:hidden;display:inline-block"><span style="display:block;height:100%;width:{{ progressLabel }};background:var(--vscode-button-background,#0078d4)"></span></span>
+          {{ progressLabel }} read
+        </span>
+        <span style="opacity:.5">|</span>
+        <span>{{ readTime }}</span>
+        <span style="margin-left:auto;display:flex;align-items:center;gap:5px"><span style="width:6px;height:6px;border-radius:50%;background:var(--md-success,#89d185)"></span>Ollama · llama3.1</span>
+        <span style="opacity:.5">|</span>
+        <span style="display:flex;align-items:center;gap:5px;cursor:pointer"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 5v14M5 12h14"/></svg>Focus</span>
+        <span style="display:flex;align-items:center;gap:5px;cursor:pointer"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="5" width="18" height="12" rx="1"/><path d="M8 21h8"/></svg>Present</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== S2 · EMPTY STATE ========== -->
+  <div id="s2" style="scroll-margin-top:20px;display:flex;flex-direction:column;gap:12px">
+    <div style="display:flex;align-items:baseline;gap:11px">
+      <span style="font:600 11px JetBrains Mono,monospace;background:#0f1115;color:#fff;padding:4px 9px;border-radius:6px">S2</span>
+      <span style="font-size:15px;font-weight:700">Empty state — no document open</span>
+      <span style="font-size:12.5px;color:#7a766d">Welcome, recent files, quick commands, AI status</span>
+    </div>
+    <div style="width:1000px;max-width:100%;border-radius:11px;overflow:hidden;box-shadow:var(--md-chrome-shadow);border:1px solid rgba(0,0,0,.12);background:var(--vscode-editor-background,#1f1f1f)">
+      <div style="height:37px;background:var(--vscode-titleBar-activeBackground,#181818);display:flex;align-items:center;padding:0 14px;border-bottom:1px solid var(--vscode-panel-border,#2b2b2b)">
+        <div style="display:flex;gap:8px"><span style="width:12px;height:12px;border-radius:50%;background:#ff5f57"></span><span style="width:12px;height:12px;border-radius:50%;background:#febc2e"></span><span style="width:12px;height:12px;border-radius:50%;background:#28c840"></span></div>
+        <div style="flex:1;text-align:center;font-size:12px;color:var(--vscode-titleBar-activeForeground,#ccc);opacity:.85">MDeepen — Visual Studio Code</div>
+      </div>
+      <div style="display:flex;height:540px">
+        <div style="width:48px;background:var(--vscode-activityBar-background,#181818);border-right:1px solid var(--vscode-panel-border,#2b2b2b);display:flex;flex-direction:column;align-items:center;padding:12px 0;gap:18px;color:var(--vscode-activityBar-inactiveForeground,#868686)">
+          <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/></svg>
+          <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="6"/><path d="m20 20-4.3-4.3"/></svg>
+          <span style="color:var(--vscode-activityBar-foreground,#d7d7d7)"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 5.5A2 2 0 0 1 6 4h6v15H6a2 2 0 0 0-2 1.5z"/><path d="M20 5.5A2 2 0 0 0 18 4h-6v15h6a2 2 0 0 1 2 1.5z"/></svg></span>
+        </div>
+        <div style="flex:1;display:flex;align-items:center;justify-content:center;background:var(--vscode-editor-background,#1f1f1f)">
+          <div style="width:520px;max-width:90%;text-align:center">
+            <div style="width:64px;height:64px;border-radius:16px;background:color-mix(in srgb,var(--md-info,#3794ff) 14%,transparent);display:flex;align-items:center;justify-content:center;margin:0 auto 20px">
+              <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="var(--md-info,#3794ff)" stroke-width="1.6"><path d="M4 5.5A2 2 0 0 1 6 4h6v15H6a2 2 0 0 0-2 1.5z"/><path d="M20 5.5A2 2 0 0 0 18 4h-6v15h6a2 2 0 0 1 2 1.5z"/><path d="M14.5 9.5l2 2 3-3.5"/></svg>
+            </div>
+            <div style="font:600 23px 'Source Serif 4',serif;color:var(--vscode-editor-foreground,#ccc);margin-bottom:8px">Read Markdown, deeper.</div>
+            <div style="font-size:13.5px;line-height:1.6;color:var(--vscode-descriptionForeground,#9d9d9d);max-width:400px;margin:0 auto 22px">Paginated reading, an outline you can navigate, and an AI assistant that explains, summarizes and diagrams — without leaving the editor.</div>
+            <div style="display:flex;gap:10px;justify-content:center;margin-bottom:26px">
+              <button style="display:flex;align-items:center;gap:8px;background:var(--vscode-button-background,#0078d4);color:var(--vscode-button-foreground,#fff);border:none;border-radius:7px;padding:10px 18px;font-size:13px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6a2 2 0 0 1 2-2h4l2 2h6a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/></svg>Open Markdown file</button>
+              <button style="display:flex;align-items:center;gap:8px;background:var(--vscode-button-secondaryBackground,#313131);color:var(--vscode-button-secondaryForeground,#ccc);border:none;border-radius:7px;padding:10px 18px;font-size:13px;font-weight:500;cursor:pointer;font-family:Inter,sans-serif">View example</button>
+            </div>
+            <div style="text-align:left;max-width:400px;margin:0 auto">
+              <div style="font-size:10.5px;letter-spacing:.06em;font-weight:600;color:var(--vscode-descriptionForeground,#9d9d9d);margin-bottom:8px">RECENT</div>
+              <div style="display:flex;flex-direction:column;gap:2px">
+                <div style="display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:6px;background:var(--vscode-list-hoverBackground,#2a2d2e);font-size:12.5px;color:var(--vscode-editor-foreground,#ccc)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--vscode-descriptionForeground,#9d9d9d)" stroke-width="1.5"><path d="M6 3h8l4 4v14H6z"/></svg>order-service.md<span style="margin-left:auto;font-size:11px;color:var(--vscode-descriptionForeground,#9d9d9d)">docs/architecture</span></div>
+                <div style="display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:6px;font-size:12.5px;color:var(--vscode-editor-foreground,#ccc)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--vscode-descriptionForeground,#9d9d9d)" stroke-width="1.5"><path d="M6 3h8l4 4v14H6z"/></svg>onboarding.md<span style="margin-left:auto;font-size:11px;color:var(--vscode-descriptionForeground,#9d9d9d)">docs</span></div>
+                <div style="display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:6px;font-size:12.5px;color:var(--vscode-editor-foreground,#ccc)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--vscode-descriptionForeground,#9d9d9d)" stroke-width="1.5"><path d="M6 3h8l4 4v14H6z"/></svg>rfc-014-idempotency.md<span style="margin-left:auto;font-size:11px;color:var(--vscode-descriptionForeground,#9d9d9d)">rfcs</span></div>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-top:16px;padding-top:14px;border-top:1px solid var(--vscode-panel-border,#2b2b2b)">
+                <span style="font-size:11.5px;color:var(--vscode-descriptionForeground,#9d9d9d)"><kbd style="font:11px JetBrains Mono,monospace;background:var(--vscode-input-background,#313131);border:1px solid var(--vscode-widget-border,#333);border-radius:4px;padding:1px 5px">⌘⇧M</kbd> Open reader</span>
+                <span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:3px 9px;background:color-mix(in srgb,var(--md-warn,#cca700) 16%,transparent);color:var(--md-warn,#cca700);border-radius:20px;font-weight:600"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8v5M12 16h.01M10.3 3.9 2.6 17a2 2 0 0 0 1.7 3h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>AI not configured</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== S3 · NO AI CONFIGURED ========== -->
+  <div id="s3" style="scroll-margin-top:20px;display:flex;flex-direction:column;gap:12px">
+    <div style="display:flex;align-items:baseline;gap:11px">
+      <span style="font:600 11px JetBrains Mono,monospace;background:#0f1115;color:#fff;padding:4px 9px;border-radius:6px">S3</span>
+      <span style="font-size:15px;font-weight:700">No AI configured — reading still works</span>
+      <span style="font-size:12.5px;color:#7a766d">The assistant panel explains what's gated and how to enable it</span>
+    </div>
+    <div style="width:384px;border-radius:11px;overflow:hidden;box-shadow:var(--md-chrome-shadow);border:1px solid rgba(0,0,0,.12);background:var(--vscode-sideBar-background,#181818)">
+      <div style="padding:12px 15px;border-bottom:1px solid var(--vscode-panel-border,#2b2b2b);display:flex;align-items:center;gap:8px"><span style="width:22px;height:22px;border-radius:6px;background:var(--vscode-badge-background,#616161);display:flex;align-items:center;justify-content:center"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--vscode-badge-foreground,#fff)" stroke-width="1.8"><path d="M12 3l1.8 4.2L18 9l-4.2 1.8L12 15l-1.8-4.2L6 9z"/></svg></span><span style="font-size:13px;font-weight:600;color:var(--vscode-editor-foreground,#ccc)">MDeepen AI</span></div>
+      <div style="padding:20px 16px">
+        <div style="font:600 15px Inter,sans-serif;color:var(--vscode-editor-foreground,#ccc);margin-bottom:6px">AI features are off</div>
+        <div style="font-size:12.5px;line-height:1.6;color:var(--vscode-descriptionForeground,#9d9d9d);margin-bottom:16px">You can read, paginate and navigate freely. Connect a model to unlock:</div>
+        <div style="display:flex;flex-direction:column;gap:9px;margin-bottom:18px">
+          <div style="display:flex;align-items:center;gap:9px;font-size:12.5px;color:var(--vscode-editor-foreground,#ccc)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--vscode-descriptionForeground,#9d9d9d)" stroke-width="1.6"><path d="M4 6h16M4 11h16M4 16h9"/></svg>Summaries & explanations</div>
+          <div style="display:flex;align-items:center;gap:9px;font-size:12.5px;color:var(--vscode-editor-foreground,#ccc)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--vscode-descriptionForeground,#9d9d9d)" stroke-width="1.6"><path d="M8 10h8M8 14h5M4 5h16v11H8l-4 4z"/></svg>Chat about the document</div>
+          <div style="display:flex;align-items:center;gap:9px;font-size:12.5px;color:var(--vscode-editor-foreground,#ccc)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--vscode-descriptionForeground,#9d9d9d)" stroke-width="1.6"><rect x="3" y="4" width="7" height="5" rx="1"/><rect x="14" y="15" width="7" height="5" rx="1"/><path d="M6.5 9v3a2 2 0 0 0 2 2h9"/></svg>Diagram generation</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:9px">
+          <button style="display:flex;align-items:center;gap:10px;background:var(--vscode-editorWidget-background,#202020);border:1px solid var(--vscode-widget-border,#333);border-radius:8px;padding:11px 13px;cursor:pointer;text-align:left;font-family:Inter,sans-serif"><span style="width:30px;height:30px;border-radius:7px;background:color-mix(in srgb,var(--md-success,#89d185) 18%,transparent);display:flex;align-items:center;justify-content:center;flex:none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--md-success,#89d185)" stroke-width="1.7"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6v6H9z"/></svg></span><span style="flex:1"><span style="display:block;font-size:12.5px;font-weight:600;color:var(--vscode-editor-foreground,#ccc)">Run locally · Ollama</span><span style="display:block;font-size:11px;color:var(--vscode-descriptionForeground,#9d9d9d);margin-top:1px">Private. Nothing leaves your machine.</span></span></button>
+          <button style="display:flex;align-items:center;gap:10px;background:var(--vscode-editorWidget-background,#202020);border:1px solid var(--vscode-widget-border,#333);border-radius:8px;padding:11px 13px;cursor:pointer;text-align:left;font-family:Inter,sans-serif"><span style="width:30px;height:30px;border-radius:7px;background:color-mix(in srgb,var(--md-info,#3794ff) 16%,transparent);display:flex;align-items:center;justify-content:center;flex:none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--md-info,#3794ff)" stroke-width="1.7"><path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM3 12h18M12 3c2.5 2.5 2.5 15 0 18M12 3c-2.5 2.5-2.5 15 0 18"/></svg></span><span style="flex:1"><span style="display:block;font-size:12.5px;font-weight:600;color:var(--vscode-editor-foreground,#ccc)">Connect a remote provider</span><span style="display:block;font-size:11px;color:var(--vscode-descriptionForeground,#9d9d9d);margin-top:1px">OpenAI, Anthropic, or a custom endpoint.</span></span></button>
+        </div>
+        <div style="font-size:11px;color:var(--vscode-descriptionForeground,#9d9d9d);margin-top:14px;line-height:1.5">Remote providers send document text over the network. You'll always confirm before the first send.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== S4 · AI CONFIGURATION ========== -->
+  <div id="s4" style="scroll-margin-top:20px;display:flex;flex-direction:column;gap:12px">
+    <div style="display:flex;align-items:baseline;gap:11px">
+      <span style="font:600 11px JetBrains Mono,monospace;background:#0f1115;color:#fff;padding:4px 9px;border-radius:6px">S4</span>
+      <span style="font-size:15px;font-weight:700">AI configuration</span>
+      <span style="font-size:12.5px;color:#7a766d">Provider, model, key, limits — with connection test and cost estimate</span>
+    </div>
+    <div style="width:720px;max-width:100%;border-radius:11px;overflow:hidden;box-shadow:var(--md-chrome-shadow);border:1px solid rgba(0,0,0,.12);background:var(--vscode-editor-background,#1f1f1f)">
+      <div style="padding:16px 22px;border-bottom:1px solid var(--vscode-panel-border,#2b2b2b);display:flex;align-items:center;gap:9px"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--vscode-editor-foreground,#ccc)" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1"/></svg><span style="font-size:14px;font-weight:600;color:var(--vscode-editor-foreground,#ccc)">MDeepen · AI settings</span></div>
+      <div style="padding:20px 22px;display:flex;flex-direction:column;gap:16px">
+        <div>
+          <div style="font-size:11px;font-weight:600;color:var(--vscode-descriptionForeground,#9d9d9d);margin-bottom:7px">MODE</div>
+          <div style="display:inline-flex;background:var(--vscode-input-background,#313131);border:1px solid var(--vscode-input-border,#3c3c3c);border-radius:7px;padding:3px;gap:2px">
+            <span style="padding:6px 16px;border-radius:5px;font-size:12.5px;font-weight:600;background:var(--vscode-button-background,#0078d4);color:#fff;cursor:pointer">Local</span>
+            <span style="padding:6px 16px;border-radius:5px;font-size:12.5px;color:var(--vscode-editor-foreground,#ccc);cursor:pointer">Remote</span>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div><div style="font-size:11px;font-weight:600;color:var(--vscode-descriptionForeground,#9d9d9d);margin-bottom:6px">Provider</div><div style="display:flex;align-items:center;justify-content:space-between;background:var(--vscode-input-background,#313131);border:1px solid var(--vscode-input-border,#3c3c3c);border-radius:6px;padding:8px 11px;font-size:12.5px;color:var(--vscode-input-foreground,#ccc)">Ollama<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div></div>
+          <div><div style="font-size:11px;font-weight:600;color:var(--vscode-descriptionForeground,#9d9d9d);margin-bottom:6px">Model</div><div style="display:flex;align-items:center;justify-content:space-between;background:var(--vscode-input-background,#313131);border:1px solid var(--vscode-input-border,#3c3c3c);border-radius:6px;padding:8px 11px;font-size:12.5px;color:var(--vscode-input-foreground,#ccc)">llama3.1:8b<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div></div>
+        </div>
+        <div><div style="font-size:11px;font-weight:600;color:var(--vscode-descriptionForeground,#9d9d9d);margin-bottom:6px">Endpoint URL</div><div style="background:var(--vscode-input-background,#313131);border:1px solid var(--vscode-input-border,#3c3c3c);border-radius:6px;padding:8px 11px;font:12.5px JetBrains Mono,monospace;color:var(--vscode-input-foreground,#ccc)">http://localhost:11434</div></div>
+        <div><div style="font-size:11px;font-weight:600;color:var(--vscode-descriptionForeground,#9d9d9d);margin-bottom:6px">API key <span style="font-weight:400;opacity:.7">· not required for local</span></div><div style="background:var(--vscode-input-background,#313131);border:1px solid var(--vscode-input-border,#3c3c3c);border-radius:6px;padding:8px 11px;font:12.5px JetBrains Mono,monospace;color:var(--vscode-input-placeholderForeground,#989898)">••••••••••••••••</div></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div><div style="font-size:11px;font-weight:600;color:var(--vscode-descriptionForeground,#9d9d9d);margin-bottom:6px">Max tokens</div><div style="background:var(--vscode-input-background,#313131);border:1px solid var(--vscode-input-border,#3c3c3c);border-radius:6px;padding:8px 11px;font-size:12.5px;color:var(--vscode-input-foreground,#ccc)">4096</div></div>
+          <div><div style="font-size:11px;font-weight:600;color:var(--vscode-descriptionForeground,#9d9d9d);margin-bottom:6px">Temperature · 0.3</div><div style="padding:14px 0 0"><div style="height:4px;border-radius:3px;background:var(--vscode-widget-border,#333);position:relative"><span style="position:absolute;left:0;top:0;height:100%;width:30%;background:var(--vscode-button-background,#0078d4);border-radius:3px"></span><span style="position:absolute;left:30%;top:50%;width:14px;height:14px;border-radius:50%;background:#fff;border:1px solid var(--vscode-widget-border,#333);transform:translate(-50%,-50%);box-shadow:0 1px 3px rgba(0,0,0,.3)"></span></div></div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;padding-top:4px">
+          <button style="display:flex;align-items:center;gap:8px;background:var(--vscode-button-secondaryBackground,#313131);color:var(--vscode-button-secondaryForeground,#ccc);border:none;border-radius:7px;padding:9px 15px;font-size:12.5px;font-weight:500;cursor:pointer;font-family:Inter,sans-serif"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M13 2 3 14h7l-1 8 10-12h-7z"/></svg>Test connection</button>
+          <span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--md-success,#89d185);font-weight:500"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12l5 5 9-11"/></svg>Connected · 128 ms</span>
+          <span style="margin-left:auto;display:inline-flex;align-items:center;gap:6px;font-size:11.5px;padding:4px 10px;background:color-mix(in srgb,var(--md-success,#89d185) 15%,transparent);color:var(--md-success,#89d185);border-radius:20px;font-weight:600">Local · $0.00 / 1K tokens</span>
+        </div>
+        <div style="display:flex;gap:9px;align-items:flex-start;background:var(--vscode-textBlockQuote-background,rgba(128,128,128,.05));border-radius:8px;padding:11px 13px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--vscode-descriptionForeground,#9d9d9d)" stroke-width="1.7" style="flex:none;margin-top:1px"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg><span style="font-size:11.5px;line-height:1.55;color:var(--vscode-descriptionForeground,#9d9d9d)">Local models run entirely on your machine — no document content is transmitted. Switch to a remote provider only if you accept sending text off-device.</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== S5 · FOCUS MODE ========== -->
+  <div id="s5" style="scroll-margin-top:20px;display:flex;flex-direction:column;gap:12px">
+    <div style="display:flex;align-items:baseline;gap:11px">
+      <span style="font:600 11px JetBrains Mono,monospace;background:#0f1115;color:#fff;padding:4px 9px;border-radius:6px">S5</span>
+      <span style="font-size:15px;font-weight:700">Focus mode</span>
+      <span style="font-size:12.5px;color:#7a766d">Chrome falls away — content, minimal nav, a discreet progress line</span>
+    </div>
+    <div style="width:900px;max-width:100%;border-radius:11px;overflow:hidden;box-shadow:var(--md-chrome-shadow);border:1px solid rgba(0,0,0,.12);background:var(--vscode-editor-background,#1f1f1f);position:relative">
+      <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--vscode-widget-border,#333)"><span style="display:block;height:100%;width:62%;background:var(--vscode-button-background,#0078d4)"></span></div>
+      <div style="position:absolute;top:18px;right:20px;display:flex;gap:10px;align-items:center;z-index:2">
+        <span style="font-size:11px;color:var(--vscode-descriptionForeground,#9d9d9d)">3 / 6</span>
+        <span style="display:inline-flex;align-items:center;gap:6px;font-size:11.5px;padding:5px 11px;background:var(--vscode-editorWidget-background,#202020);border:1px solid var(--vscode-widget-border,#333);border-radius:20px;color:var(--vscode-editor-foreground,#ccc);cursor:pointer"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg>Exit focus</span>
+      </div>
+      <div style="height:560px;overflow:hidden;display:flex;justify-content:center">
+        <div style="max-width:600px;padding:70px 20px 20px">
+          <div style="font:600 27px/1.25 'Source Serif 4',serif;color:var(--vscode-editor-foreground,#ccc);margin-bottom:16px">Data Flow</div>
+          <p style="font:400 17px/1.75 'Source Serif 4',serif;color:var(--vscode-editor-foreground,#ccc);margin:0 0 16px">A write request is validated synchronously, appended to the log, and acknowledged. All heavy work happens asynchronously downstream of the commit.</p>
+          <p style="font:400 17px/1.75 'Source Serif 4',serif;color:var(--vscode-editor-foreground,#ccc);margin:0 0 16px">The client never waits on fulfillment. Once the <span style="font:500 14px JetBrains Mono,monospace;background:var(--vscode-textCodeBlock-background,rgba(128,128,128,.16));padding:1px 5px;border-radius:4px">order.created</span> event is committed, a 202 is returned and downstream projections react on their own schedule.</p>
+          <div style="border-left:3px solid var(--vscode-focusBorder,#0078d4);background:var(--vscode-textBlockQuote-background,rgba(128,128,128,.05));padding:13px 16px;border-radius:0 8px 8px 0;margin:22px 0;font:400 15px/1.6 Inter,sans-serif;color:var(--vscode-editor-foreground,#ccc)">This lag between commit and projection is why <span style="font:500 13px JetBrains Mono,monospace">GET /orders/:id</span> can briefly return a stale status under load.</div>
+        </div>
+      </div>
+      <div style="position:absolute;bottom:18px;left:0;right:0;display:flex;justify-content:center;gap:18px;color:var(--vscode-descriptionForeground,#9d9d9d)">
+        <svg style="cursor:pointer" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 5l-7 7 7 7"/></svg>
+        <svg style="cursor:pointer" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 5l7 7-7 7"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== S6 · PRESENTATION MODE ========== -->
+  <div id="s6" style="scroll-margin-top:20px;display:flex;flex-direction:column;gap:12px">
+    <div style="display:flex;align-items:baseline;gap:11px">
+      <span style="font:600 11px JetBrains Mono,monospace;background:#0f1115;color:#fff;padding:4px 9px;border-radius:6px">S6</span>
+      <span style="font-size:15px;font-weight:700">Presentation mode</span>
+      <span style="font-size:12.5px;color:#7a766d">One section per screen · keyboard nav · page counter · optional notes</span>
+    </div>
+    <div style="width:1000px;max-width:100%;border-radius:11px;overflow:hidden;box-shadow:var(--md-chrome-shadow);border:1px solid rgba(0,0,0,.12);background:#0d0d0f;position:relative;color:#e8e8ea">
+      <div style="height:560px;display:flex;flex-direction:column;justify-content:center;padding:0 96px">
+        <div style="font:600 11px JetBrains Mono,monospace;letter-spacing:.14em;color:#6f6f7a;margin-bottom:20px">03 · DATA FLOW</div>
+        <div style="font:600 44px/1.15 'Source Serif 4',serif;letter-spacing:-.02em;margin-bottom:28px;max-width:760px">Commit fast, fulfill later.</div>
+        <div style="display:flex;flex-direction:column;gap:14px;max-width:640px">
+          <div style="display:flex;align-items:center;gap:16px;font-size:19px"><span style="width:30px;height:30px;border-radius:50%;background:rgba(120,150,255,.16);color:#8aa4ff;display:flex;align-items:center;justify-content:center;font:600 14px Inter;flex:none">1</span>Validate against the current catalog snapshot</div>
+          <div style="display:flex;align-items:center;gap:16px;font-size:19px"><span style="width:30px;height:30px;border-radius:50%;background:rgba(120,150,255,.16);color:#8aa4ff;display:flex;align-items:center;justify-content:center;font:600 14px Inter;flex:none">2</span>Append <span style="font:500 16px JetBrains Mono,monospace;color:#c9d3ff">order.created</span> and return 202</div>
+          <div style="display:flex;align-items:center;gap:16px;font-size:19px"><span style="width:30px;height:30px;border-radius:50%;background:rgba(120,150,255,.16);color:#8aa4ff;display:flex;align-items:center;justify-content:center;font:600 14px Inter;flex:none">3</span>Projections react independently, eventually consistent</div>
+        </div>
+      </div>
+      <div style="position:absolute;bottom:0;left:0;right:0;height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 26px;border-top:1px solid rgba(255,255,255,.08)">
+        <span style="font-size:12px;color:#8a8a94">order-service.md</span>
+        <div style="display:flex;align-items:center;gap:18px;color:#8a8a94">
+          <span style="font:500 13px JetBrains Mono,monospace">03 / 06</span>
+          <svg style="cursor:pointer" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+          <div style="display:flex;gap:8px"><svg style="cursor:pointer" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M15 5l-7 7 7 7"/></svg><svg style="cursor:pointer" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M9 5l7 7-7 7"/></svg></div>
+        </div>
+      </div>
+      <div style="position:absolute;top:20px;right:24px;font-size:11px;color:#6f6f7a;display:flex;align-items:center;gap:7px"><kbd style="font:10px JetBrains Mono,monospace;background:rgba(255,255,255,.08);border-radius:4px;padding:2px 6px">→</kbd> next · <kbd style="font:10px JetBrains Mono,monospace;background:rgba(255,255,255,.08);border-radius:4px;padding:2px 6px">N</kbd> notes · <kbd style="font:10px JetBrains Mono,monospace;background:rgba(255,255,255,.08);border-radius:4px;padding:2px 6px">Esc</kbd> exit</div>
+    </div>
+  </div>
+
+  <!-- ========== S7 · SELECTION MENU ========== -->
+  <div id="s7" style="scroll-margin-top:20px;display:flex;flex-direction:column;gap:12px">
+    <div style="display:flex;align-items:baseline;gap:11px">
+      <span style="font:600 11px JetBrains Mono,monospace;background:#0f1115;color:#fff;padding:4px 9px;border-radius:6px">S7</span>
+      <span style="font-size:15px;font-weight:700">Text-selection menu</span>
+      <span style="font-size:12.5px;color:#7a766d">Four primary actions surfaced; the rest behind “More” (progressive disclosure)</span>
+    </div>
+    <div style="width:660px;max-width:100%;border-radius:11px;overflow:hidden;box-shadow:var(--md-chrome-shadow);border:1px solid rgba(0,0,0,.12);background:var(--vscode-editor-background,#1f1f1f);position:relative">
+      <div style="padding:38px 46px 90px">
+        <div style="font:600 20px 'Source Serif 4',serif;color:var(--vscode-editor-foreground,#ccc);margin-bottom:14px">Error Handling</div>
+        <p style="font:400 15.5px/1.75 'Source Serif 4',serif;color:var(--vscode-editor-foreground,#ccc);margin:0">Failures are classified as retryable or terminal. <span style="background:color-mix(in srgb,var(--vscode-focusBorder,#0078d4) 32%,transparent);border-radius:3px;padding:1px 2px">Retryable failures re-enter the queue with exponential backoff; terminal failures move to the dead-letter topic and page on-call.</span> A message that fails five times is quarantined, not dropped.</p>
+      </div>
+      <!-- floating context menu -->
+      <div style="position:absolute;top:118px;left:120px;background:var(--vscode-editorWidget-background,#202020);border:1px solid var(--vscode-widget-border,#333);border-radius:10px;box-shadow:0 10px 34px rgba(0,0,0,.4);padding:5px;width:230px">
+        <div style="display:flex;gap:3px;padding:2px">
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;padding:9px 4px;border-radius:7px;background:var(--vscode-list-hoverBackground,#2a2d2e);cursor:pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--md-ai,#9d7cd8)" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.7M12 17h.01"/></svg><span style="font-size:10px;font-weight:500;color:var(--vscode-editor-foreground,#ccc)">Explain</span></div>
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;padding:9px 4px;border-radius:7px;cursor:pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--vscode-editor-foreground,#ccc)" stroke-width="1.7"><path d="M4 6h16M4 11h16M4 16h9"/></svg><span style="font-size:10px;font-weight:500;color:var(--vscode-editor-foreground,#ccc)">Summarize</span></div>
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;padding:9px 4px;border-radius:7px;cursor:pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--vscode-editor-foreground,#ccc)" stroke-width="1.7"><path d="M4 5h16M4 12h10M4 19h16"/></svg><span style="font-size:10px;font-weight:500;color:var(--vscode-editor-foreground,#ccc)">Simplify</span></div>
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;padding:9px 4px;border-radius:7px;cursor:pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--vscode-editor-foreground,#ccc)" stroke-width="1.7"><path d="M12 5v14M5 12h14"/></svg><span style="font-size:10px;font-weight:500;color:var(--vscode-editor-foreground,#ccc)">Ask</span></div>
+        </div>
+        <div style="height:1px;background:var(--vscode-widget-border,#333);margin:4px 2px"></div>
+        <div style="display:flex;flex-direction:column">
+          <div style="display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:6px;font-size:12px;color:var(--vscode-editor-foreground,#ccc);cursor:pointer"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--vscode-descriptionForeground,#9d9d9d)" stroke-width="1.6"><path d="M4 6h5v5H4zM15 6h5v5h-5zM4 15h16"/></svg>Create example</div>
+          <div style="display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:6px;font-size:12px;color:var(--vscode-editor-foreground,#ccc);cursor:pointer"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--vscode-descriptionForeground,#9d9d9d)" stroke-width="1.6"><rect x="3" y="4" width="6" height="4" rx="1"/><rect x="15" y="16" width="6" height="4" rx="1"/><path d="M6 8v4a2 2 0 0 0 2 2h10"/></svg>Create diagram</div>
+          <div style="display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:6px;font-size:12px;color:var(--vscode-editor-foreground,#ccc);cursor:pointer"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--vscode-descriptionForeground,#9d9d9d)" stroke-width="1.6"><path d="M3 5h18v4H3zM3 13h18v6H3zM7 5v14"/></svg>Turn into table</div>
+          <div style="display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:6px;font-size:12px;color:var(--vscode-editor-foreground,#ccc);cursor:pointer"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--vscode-descriptionForeground,#9d9d9d)" stroke-width="1.6"><path d="M7 8h10M7 12h6M4 4h16v12H8l-4 4z"/></svg>Identify terms</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== S8 · SUMMARY RESULT ========== -->
+  <div id="s8" style="scroll-margin-top:20px;display:flex;flex-direction:column;gap:12px">
+    <div style="display:flex;align-items:baseline;gap:11px">
+      <span style="font:600 11px JetBrains Mono,monospace;background:#0f1115;color:#fff;padding:4px 9px;border-radius:6px">S8</span>
+      <span style="font-size:15px;font-weight:700">Summary result</span>
+      <span style="font-size:12.5px;color:#7a766d">Switch length without re-asking · generated content clearly marked</span>
+    </div>
+    <div style="width:460px;border-radius:11px;overflow:hidden;box-shadow:var(--md-chrome-shadow);border:1px solid rgba(0,0,0,.12);background:var(--vscode-editorWidget-background,#202020)">
+      <div style="padding:13px 16px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--vscode-panel-border,#2b2b2b)">
+        <span style="width:20px;height:20px;border-radius:5px;background:var(--md-ai,#9d7cd8);display:flex;align-items:center;justify-content:center"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9"><path d="M12 3l1.8 4.2L18 9l-4.2 1.8L12 15l-1.8-4.2L6 9z"/></svg></span>
+        <span style="font-size:13px;font-weight:600;color:var(--vscode-editor-foreground,#ccc)">Summary</span>
+        <span style="margin-left:auto;font-size:10px;padding:2px 7px;border:1px solid var(--md-ai,#9d7cd8);color:var(--md-ai,#9d7cd8);border-radius:20px;font-weight:600">AI generated</span>
+      </div>
+      <div style="padding:13px 16px">
+        <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:15px">
+          <span style="font-size:11px;padding:5px 11px;border-radius:20px;background:var(--vscode-button-background,#0078d4);color:#fff;font-weight:600;cursor:pointer">One line</span>
+          <span style="font-size:11px;padding:5px 11px;border-radius:20px;border:1px solid var(--vscode-widget-border,#333);color:var(--vscode-editor-foreground,#ccc);cursor:pointer">Paragraph</span>
+          <span style="font-size:11px;padding:5px 11px;border-radius:20px;border:1px solid var(--vscode-widget-border,#333);color:var(--vscode-editor-foreground,#ccc);cursor:pointer">Detailed</span>
+          <span style="font-size:11px;padding:5px 11px;border-radius:20px;border:1px solid var(--vscode-widget-border,#333);color:var(--vscode-editor-foreground,#ccc);cursor:pointer">Key points</span>
+          <span style="font-size:11px;padding:5px 11px;border-radius:20px;border:1px solid var(--vscode-widget-border,#333);color:var(--vscode-editor-foreground,#ccc);cursor:pointer">Executive</span>
+          <span style="font-size:11px;padding:5px 11px;border-radius:20px;border:1px solid var(--vscode-widget-border,#333);color:var(--vscode-editor-foreground,#ccc);cursor:pointer">Technical</span>
+        </div>
+        <p style="font:400 14.5px/1.65 'Source Serif 4',serif;color:var(--vscode-editor-foreground,#ccc);margin:0 0 14px">Orders are committed synchronously after validation, then fulfilled asynchronously through per-partition events — trading global ordering for throughput and independent retries.</p>
+        <div style="display:flex;align-items:center;gap:14px;padding-top:12px;border-top:1px solid var(--vscode-panel-border,#2b2b2b)">
+          <span style="display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--vscode-descriptionForeground,#9d9d9d);cursor:pointer"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg>Copy</span>
+          <span style="display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--vscode-descriptionForeground,#9d9d9d);cursor:pointer"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 12a8 8 0 0 1 14-5l2 2M20 5v4h-4"/></svg>Regenerate</span>
+          <span style="margin-left:auto;display:flex;gap:10px;color:var(--vscode-descriptionForeground,#9d9d9d)"><svg style="cursor:pointer" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M7 11V6a2 2 0 0 1 2-2l3 7v9H6l-2-8h3M17 20V11"/></svg><svg style="cursor:pointer" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M17 13V18a2 2 0 0 1-2 2l-3-7V4h6l2 8h-3M7 4v9"/></svg></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== S9 · EXPLANATION RESULT ========== -->
+  <div id="s9" style="scroll-margin-top:20px;display:flex;flex-direction:column;gap:12px">
+    <div style="display:flex;align-items:baseline;gap:11px">
+      <span style="font:600 11px JetBrains Mono,monospace;background:#0f1115;color:#fff;padding:4px 9px;border-radius:6px">S9</span>
+      <span style="font-size:15px;font-weight:700">Explanation result</span>
+      <span style="font-size:12.5px;color:#7a766d">Level, related concepts, references, follow-on actions, feedback</span>
+    </div>
+    <div style="width:460px;border-radius:11px;overflow:hidden;box-shadow:var(--md-chrome-shadow);border:1px solid rgba(0,0,0,.12);background:var(--vscode-editorWidget-background,#202020)">
+      <div style="padding:13px 16px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--vscode-panel-border,#2b2b2b)">
+        <span style="width:20px;height:20px;border-radius:5px;background:var(--md-ai,#9d7cd8);display:flex;align-items:center;justify-content:center"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9"><path d="M12 3l1.8 4.2L18 9l-4.2 1.8L12 15l-1.8-4.2L6 9z"/></svg></span>
+        <span style="font-size:13px;font-weight:600;color:var(--vscode-editor-foreground,#ccc)">Explanation</span>
+        <span style="margin-left:auto;display:inline-flex;background:var(--vscode-input-background,#313131);border-radius:6px;padding:2px;gap:2px"><span style="font-size:10px;padding:3px 8px;border-radius:4px;color:var(--vscode-editor-foreground,#ccc)">Beginner</span><span style="font-size:10px;padding:3px 8px;border-radius:4px;background:var(--vscode-button-background,#0078d4);color:#fff;font-weight:600">Intermediate</span><span style="font-size:10px;padding:3px 8px;border-radius:4px;color:var(--vscode-editor-foreground,#ccc)">Expert</span></span>
+      </div>
+      <div style="padding:14px 16px">
+        <p style="font:400 14.5px/1.65 'Source Serif 4',serif;color:var(--vscode-editor-foreground,#ccc);margin:0 0 14px">Retryable failures are transient — the system waits, doubling the delay each time (<span style="font:500 12px JetBrains Mono,monospace;background:var(--vscode-textCodeBlock-background,rgba(128,128,128,.16));padding:1px 4px;border-radius:3px">exponential backoff</span>), and tries again. Terminal failures can never succeed on retry, so they're routed to a dead-letter queue for a human to inspect.</p>
+        <div style="font-size:10.5px;font-weight:600;letter-spacing:.05em;color:var(--vscode-descriptionForeground,#9d9d9d);margin-bottom:7px">RELATED CONCEPTS</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px">
+          <span style="font-size:11px;padding:4px 9px;border-radius:6px;background:var(--vscode-input-background,#313131);color:var(--vscode-textLink-foreground,#4daafc);cursor:pointer">Idempotency</span>
+          <span style="font-size:11px;padding:4px 9px;border-radius:6px;background:var(--vscode-input-background,#313131);color:var(--vscode-textLink-foreground,#4daafc);cursor:pointer">Dead-letter queue</span>
+          <span style="font-size:11px;padding:4px 9px;border-radius:6px;background:var(--vscode-input-background,#313131);color:var(--vscode-textLink-foreground,#4daafc);cursor:pointer">Poison message</span>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:13px">
+          <button style="flex:1;display:flex;align-items:center;justify-content:center;gap:7px;background:var(--vscode-input-background,#313131);border:1px solid var(--vscode-widget-border,#333);border-radius:7px;padding:8px;font-size:11.5px;font-weight:500;color:var(--vscode-editor-foreground,#ccc);cursor:pointer;font-family:Inter,sans-serif"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 6h5v5H4zM15 6h5v5h-5zM4 15h16"/></svg>Generate example</button>
+          <button style="flex:1;display:flex;align-items:center;justify-content:center;gap:7px;background:var(--vscode-input-background,#313131);border:1px solid var(--vscode-widget-border,#333);border-radius:7px;padding:8px;font-size:11.5px;font-weight:500;color:var(--vscode-editor-foreground,#ccc);cursor:pointer;font-family:Inter,sans-serif"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="6" height="4" rx="1"/><rect x="15" y="16" width="6" height="4" rx="1"/><path d="M6 8v4a2 2 0 0 0 2 2h10"/></svg>Generate diagram</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding-top:12px;border-top:1px solid var(--vscode-panel-border,#2b2b2b)">
+          <span style="font-size:11px;color:var(--vscode-descriptionForeground,#9d9d9d)">Was this helpful?</span>
+          <span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:4px 10px;border:1px solid var(--vscode-widget-border,#333);border-radius:20px;color:var(--vscode-editor-foreground,#ccc);cursor:pointer"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M7 11V6a2 2 0 0 1 2-2l3 7v9H6l-2-8h3M17 20V11"/></svg>Yes</span>
+          <span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:4px 10px;border:1px solid var(--vscode-widget-border,#333);border-radius:20px;color:var(--vscode-editor-foreground,#ccc);cursor:pointer"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M17 13V18a2 2 0 0 1-2 2l-3-7V4h6l2 8h-3M7 4v9"/></svg>No</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== S10 · DIAGRAM GENERATION ========== -->
+  <div id="s10" style="scroll-margin-top:20px;display:flex;flex-direction:column;gap:12px">
+    <div style="display:flex;align-items:baseline;gap:11px">
+      <span style="font:600 11px JetBrains Mono,monospace;background:#0f1115;color:#fff;padding:4px 9px;border-radius:6px">S10</span>
+      <span style="font-size:15px;font-weight:700">Diagram generation — Mermaid</span>
+      <span style="font-size:12.5px;color:#7a766d">Preview + editable source · insert-into-Markdown asks for confirmation</span>
+    </div>
+    <div style="width:820px;max-width:100%;border-radius:11px;overflow:hidden;box-shadow:var(--md-chrome-shadow);border:1px solid rgba(0,0,0,.12);background:var(--vscode-editor-background,#1f1f1f)">
+      <div style="padding:13px 18px;border-bottom:1px solid var(--vscode-panel-border,#2b2b2b);display:flex;align-items:center;gap:10px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--vscode-editor-foreground,#ccc)" stroke-width="1.6"><rect x="3" y="4" width="7" height="5" rx="1"/><rect x="14" y="15" width="7" height="5" rx="1"/><path d="M6.5 9v3a2 2 0 0 0 2 2h9"/></svg>
+        <span style="font-size:13.5px;font-weight:600;color:var(--vscode-editor-foreground,#ccc)">Diagram</span>
+        <span style="display:inline-flex;align-items:center;gap:6px;margin-left:6px;font-size:11px;padding:4px 9px;background:var(--vscode-input-background,#313131);border-radius:6px;color:var(--vscode-editor-foreground,#ccc);cursor:pointer">Sequence<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></span>
+        <div style="margin-left:auto;display:flex;gap:14px;color:var(--vscode-descriptionForeground,#9d9d9d)">
+          <svg style="cursor:pointer" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 12a8 8 0 0 1 14-5l2 2M20 5v4h-4"/></svg>
+          <svg style="cursor:pointer" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg>
+          <svg style="cursor:pointer" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3v12M8 11l4 4 4-4M4 21h16"/></svg>
+        </div>
+      </div>
+      <div style="display:flex;height:340px">
+        <!-- preview -->
+        <div style="flex:1;background:var(--vscode-editor-background,#1f1f1f);display:flex;align-items:center;justify-content:center;padding:24px;border-right:1px solid var(--vscode-panel-border,#2b2b2b)">
+          <svg viewBox="0 0 340 260" style="width:100%;max-width:320px;font-family:Inter,sans-serif">
+            <g stroke="var(--vscode-descriptionForeground,#9d9d9d)" stroke-dasharray="3 3" stroke-width="1"><line x1="55" y1="42" x2="55" y2="240"/><line x1="170" y1="42" x2="170" y2="240"/><line x1="285" y1="42" x2="285" y2="240"/></g>
+            <g fill="var(--vscode-editorWidget-background,#202020)" stroke="var(--vscode-widget-border,#333)"><rect x="18" y="16" width="74" height="26" rx="5"/><rect x="133" y="16" width="74" height="26" rx="5"/><rect x="248" y="16" width="74" height="26" rx="5"/></g>
+            <g fill="var(--vscode-editor-foreground,#ccc)" font-size="11" text-anchor="middle" font-weight="600"><text x="55" y="33">Client</text><text x="170" y="33">Service</text><text x="285" y="33">Log</text></g>
+            <g stroke="var(--vscode-textLink-foreground,#4daafc)" stroke-width="1.5" fill="var(--vscode-textLink-foreground,#4daafc)" font-size="9.5"><line x1="55" y1="78" x2="168" y2="78" marker-end="url(#ar)"/><text x="110" y="72" text-anchor="middle" stroke="none">POST /orders</text><line x1="170" y1="120" x2="283" y2="120" marker-end="url(#ar)"/><text x="226" y="114" text-anchor="middle" stroke="none">append</text><line x1="283" y1="158" x2="172" y2="158" marker-end="url(#ar)"/><text x="226" y="152" text-anchor="middle" stroke="none">committed</text><line x1="168" y1="196" x2="57" y2="196" marker-end="url(#ar)"/><text x="112" y="190" text-anchor="middle" stroke="none">202 Accepted</text></g>
+            <defs><marker id="ar" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="M0 0l6 3-6 3z" fill="var(--vscode-textLink-foreground,#4daafc)"/></marker></defs>
+          </svg>
+        </div>
+        <!-- code editor -->
+        <div style="width:320px;background:var(--vscode-editorWidget-background,#202020);display:flex;flex-direction:column">
+          <div style="padding:8px 13px;font:11px JetBrains Mono,monospace;color:var(--vscode-descriptionForeground,#9d9d9d);border-bottom:1px solid var(--vscode-panel-border,#2b2b2b)">mermaid</div>
+          <pre style="margin:0;padding:12px 14px;font:12px/1.7 JetBrains Mono,monospace;color:var(--vscode-editor-foreground,#ccc);overflow:auto;flex:1"><span style="color:var(--md-ai,#9d7cd8)">sequenceDiagram</span>
+  Client<span style="color:var(--vscode-textLink-foreground,#4daafc)">->></span>Service: POST /orders
+  Service<span style="color:var(--vscode-textLink-foreground,#4daafc)">->></span>Log: append
+  Log<span style="color:var(--vscode-textLink-foreground,#4daafc)">-->></span>Service: committed
+  Service<span style="color:var(--vscode-textLink-foreground,#4daafc)">-->></span>Client: 202 Accepted</pre>
+        </div>
+      </div>
+      <div style="padding:11px 18px;border-top:1px solid var(--vscode-panel-border,#2b2b2b);display:flex;align-items:center;gap:11px">
+        <span style="display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--md-warn,#cca700)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 8v5M12 16h.01M10.3 3.9 2.6 17a2 2 0 0 0 1.7 3h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>Inserting writes to the source file</span>
+        <button style="margin-left:auto;display:flex;align-items:center;gap:7px;background:var(--vscode-button-background,#0078d4);color:#fff;border:none;border-radius:7px;padding:8px 15px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 5v14M5 12h14"/></svg>Insert into Markdown</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== S11 · SEMANTIC SEARCH ========== -->
+  <div id="s11" style="scroll-margin-top:20px;display:flex;flex-direction:column;gap:12px">
+    <div style="display:flex;align-items:baseline;gap:11px">
+      <span style="font:600 11px JetBrains Mono,monospace;background:#0f1115;color:#fff;padding:4px 9px;border-radius:6px">S11</span>
+      <span style="font-size:15px;font-weight:700">Semantic search</span>
+      <span style="font-size:12.5px;color:#7a766d">Meaning-ranked results, distinguished from literal text matches</span>
+    </div>
+    <div style="width:640px;max-width:100%;border-radius:11px;overflow:hidden;box-shadow:var(--md-chrome-shadow);border:1px solid rgba(0,0,0,.12);background:var(--vscode-editor-background,#1f1f1f)">
+      <div style="padding:14px 16px;border-bottom:1px solid var(--vscode-panel-border,#2b2b2b)">
+        <div style="display:flex;align-items:center;gap:9px;background:var(--vscode-input-background,#313131);border:1px solid var(--vscode-focusBorder,#0078d4);border-radius:8px;padding:9px 12px">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--vscode-input-foreground,#ccc)" stroke-width="1.7"><circle cx="11" cy="11" r="6"/><path d="m20 20-4.3-4.3"/></svg>
+          <span style="flex:1;font-size:13px;color:var(--vscode-input-foreground,#ccc)">how are retries handled</span>
+          <span style="font-size:10px;color:var(--vscode-descriptionForeground,#9d9d9d)">3 results</span>
+        </div>
+        <div style="display:flex;gap:7px;margin-top:11px">
+          <span style="display:inline-flex;align-items:center;gap:6px;font-size:11px;padding:4px 10px;border-radius:20px;background:var(--vscode-button-background,#0078d4);color:#fff;font-weight:600;cursor:pointer"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l1.8 4.2L18 9l-4.2 1.8L12 15l-1.8-4.2L6 9z"/></svg>Semantic</span>
+          <span style="font-size:11px;padding:4px 10px;border-radius:20px;border:1px solid var(--vscode-widget-border,#333);color:var(--vscode-editor-foreground,#ccc);cursor:pointer">Exact text</span>
+          <span style="font-size:11px;padding:4px 10px;border-radius:20px;border:1px solid var(--vscode-widget-border,#333);color:var(--vscode-editor-foreground,#ccc);cursor:pointer">This file</span>
+          <span style="font-size:11px;padding:4px 10px;border-radius:20px;border:1px solid var(--vscode-widget-border,#333);color:var(--vscode-editor-foreground,#ccc);cursor:pointer">Workspace</span>
+        </div>
+      </div>
+      <div style="padding:8px">
+        <div style="padding:12px 13px;border-radius:8px;cursor:pointer;background:var(--vscode-list-hoverBackground,#2a2d2e);margin-bottom:2px">
+          <div style="display:flex;align-items:center;gap:9px;margin-bottom:5px"><span style="font:600 10px JetBrains Mono,monospace;color:var(--vscode-descriptionForeground,#9d9d9d)">order-service.md</span><span style="opacity:.4;font-size:10px">›</span><span style="font-size:12px;font-weight:600;color:var(--vscode-editor-foreground,#ccc)">§05 Error Handling</span><span style="margin-left:auto;font-size:10px;font-weight:600;color:var(--md-success,#89d185)">96% match</span></div>
+          <p style="font:400 12.5px/1.55 'Source Serif 4',serif;color:var(--vscode-descriptionForeground,#9d9d9d);margin:0">“Retryable failures re-enter the queue with <mark style="background:color-mix(in srgb,var(--md-warn,#cca700) 35%,transparent);color:inherit;border-radius:2px">exponential backoff</mark>; terminal failures move to the dead-letter topic…”</p>
+        </div>
+        <div style="padding:12px 13px;border-radius:8px;cursor:pointer;margin-bottom:2px">
+          <div style="display:flex;align-items:center;gap:9px;margin-bottom:5px"><span style="font:600 10px JetBrains Mono,monospace;color:var(--vscode-descriptionForeground,#9d9d9d)">order-service.md</span><span style="opacity:.4;font-size:10px">›</span><span style="font-size:12px;font-weight:600;color:var(--vscode-editor-foreground,#ccc)">§03 Data Flow</span><span style="margin-left:auto;font-size:10px;font-weight:600;color:var(--md-info,#3794ff)">71% match</span></div>
+          <p style="font:400 12.5px/1.55 'Source Serif 4',serif;color:var(--vscode-descriptionForeground,#9d9d9d);margin:0">“…downstream consumers react independently and re-process on failure.”</p>
+        </div>
+        <div style="padding:12px 13px;border-radius:8px;cursor:pointer">
+          <div style="display:flex;align-items:center;gap:9px;margin-bottom:5px"><span style="font:600 10px JetBrains Mono,monospace;color:var(--vscode-descriptionForeground,#9d9d9d)">rfc-014-idempotency.md</span><span style="opacity:.4;font-size:10px">›</span><span style="font-size:12px;font-weight:600;color:var(--vscode-editor-foreground,#ccc)">§2 Guarantees</span><span style="margin-left:auto;font-size:10px;font-weight:600;color:var(--md-info,#3794ff)">64% match</span></div>
+          <p style="font:400 12.5px/1.55 'Source Serif 4',serif;color:var(--vscode-descriptionForeground,#9d9d9d);margin:0">“An idempotency key makes a repeated request safe to retry without duplicating effects.”</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== S12 · GLOSSARY ========== -->
+  <div id="s12" style="scroll-margin-top:20px;display:flex;flex-direction:column;gap:12px">
+    <div style="display:flex;align-items:baseline;gap:11px">
+      <span style="font:600 11px JetBrains Mono,monospace;background:#0f1115;color:#fff;padding:4px 9px;border-radius:6px">S12</span>
+      <span style="font-size:15px;font-weight:700">Glossary + inline tooltip</span>
+      <span style="font-size:12.5px;color:#7a766d">Contextual and general definitions · occurrences · complexity level</span>
+    </div>
+    <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start">
+      <div style="width:560px;max-width:100%;border-radius:11px;overflow:hidden;box-shadow:var(--md-chrome-shadow);border:1px solid rgba(0,0,0,.12);background:var(--vscode-editor-background,#1f1f1f);display:flex;height:300px">
+        <div style="width:190px;border-right:1px solid var(--vscode-panel-border,#2b2b2b);background:var(--vscode-sideBar-background,#181818);display:flex;flex-direction:column">
+          <div style="padding:10px 13px;font-size:10.5px;font-weight:600;letter-spacing:.05em;color:var(--vscode-descriptionForeground,#9d9d9d)">TERMS · 12</div>
+          <div style="flex:1;overflow:auto;padding:0 7px">
+            <div style="padding:7px 9px;border-radius:5px;font-size:12.5px;color:var(--vscode-editor-foreground,#ccc);background:var(--vscode-list-activeSelectionBackground,#04395e);font-weight:600">Saga</div>
+            <div style="padding:7px 9px;border-radius:5px;font-size:12.5px;color:var(--vscode-editor-foreground,#ccc)">Idempotency</div>
+            <div style="padding:7px 9px;border-radius:5px;font-size:12.5px;color:var(--vscode-editor-foreground,#ccc)">Partition key</div>
+            <div style="padding:7px 9px;border-radius:5px;font-size:12.5px;color:var(--vscode-editor-foreground,#ccc)">Dead-letter</div>
+            <div style="padding:7px 9px;border-radius:5px;font-size:12.5px;color:var(--vscode-editor-foreground,#ccc)">Projection</div>
+          </div>
+        </div>
+        <div style="flex:1;padding:16px 18px">
+          <div style="display:flex;align-items:center;gap:9px;margin-bottom:12px"><span style="font:600 17px Inter,sans-serif;color:var(--vscode-editor-foreground,#ccc)">Saga</span><span style="font-size:9.5px;padding:2px 7px;border-radius:20px;background:color-mix(in srgb,var(--md-warn,#cca700) 18%,transparent);color:var(--md-warn,#cca700);font-weight:600">Advanced</span></div>
+          <div style="font-size:10.5px;font-weight:600;color:var(--vscode-descriptionForeground,#9d9d9d);margin-bottom:4px">IN THIS DOCUMENT</div>
+          <p style="font:400 13px/1.55 'Source Serif 4',serif;color:var(--vscode-editor-foreground,#ccc);margin:0 0 12px">The cross-partition sequence that coordinates payment and inventory, using compensating actions instead of a distributed transaction.</p>
+          <div style="font-size:10.5px;font-weight:600;color:var(--vscode-descriptionForeground,#9d9d9d);margin-bottom:4px">GENERAL</div>
+          <p style="font:400 13px/1.55 'Source Serif 4',serif;color:var(--vscode-descriptionForeground,#9d9d9d);margin:0 0 12px">A pattern for managing long-lived transactions as a series of local steps, each with a compensating undo.</p>
+          <div style="display:flex;align-items:center;gap:10px"><span style="font-size:11px;color:var(--vscode-textLink-foreground,#4daafc);cursor:pointer">4 occurrences ›</span><span style="font-size:11px;color:var(--vscode-descriptionForeground,#9d9d9d)">Related: Compensation, 2PC</span></div>
+        </div>
+      </div>
+      <!-- tooltip demo -->
+      <div style="width:280px;border-radius:11px;box-shadow:var(--md-chrome-shadow);border:1px solid rgba(0,0,0,.12);background:var(--vscode-editor-background,#1f1f1f);padding:24px 20px;position:relative">
+        <p style="font:400 14px/1.7 'Source Serif 4',serif;color:var(--vscode-editor-foreground,#ccc);margin:0">Cross-partition work relies on the <span style="border-bottom:1.5px dotted var(--md-info,#3794ff);color:var(--md-info,#3794ff);cursor:help">saga</span> described in §4.</p>
+        <div style="position:absolute;top:52px;left:88px;width:210px;background:var(--vscode-editorWidget-background,#202020);border:1px solid var(--vscode-widget-border,#333);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.4);padding:10px 12px">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px"><span style="font:600 12px Inter;color:var(--vscode-editor-foreground,#ccc)">Saga</span><span style="font-size:9px;padding:1px 6px;border-radius:20px;background:color-mix(in srgb,var(--md-warn,#cca700) 18%,transparent);color:var(--md-warn,#cca700);font-weight:600">Advanced</span></div>
+          <p style="font:400 11px/1.5 Inter,sans-serif;color:var(--vscode-descriptionForeground,#9d9d9d);margin:0">Coordinates payment + inventory via compensating actions. <span style="color:var(--vscode-textLink-foreground,#4daafc);cursor:pointer">Open in glossary ›</span></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== S13 · ANNOTATIONS ========== -->
+  <div id="s13" style="scroll-margin-top:20px;display:flex;flex-direction:column;gap:12px">
+    <div style="display:flex;align-items:baseline;gap:11px">
+      <span style="font:600 11px JetBrains Mono,monospace;background:#0f1115;color:#fff;padding:4px 9px;border-radius:6px">S13</span>
+      <span style="font-size:15px;font-weight:700">Annotations & bookmarks</span>
+      <span style="font-size:12.5px;color:#7a766d">Typed notes with tags, jump-to-anchor, edit / delete / export</span>
+    </div>
+    <div style="width:600px;max-width:100%;border-radius:11px;overflow:hidden;box-shadow:var(--md-chrome-shadow);border:1px solid rgba(0,0,0,.12);background:var(--vscode-sideBar-background,#181818)">
+      <div style="padding:13px 16px;border-bottom:1px solid var(--vscode-panel-border,#2b2b2b);display:flex;align-items:center;gap:9px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--vscode-editor-foreground,#ccc)" stroke-width="1.6"><path d="M6 3h12v18l-6-4-6 4z"/></svg><span style="font-size:13.5px;font-weight:600;color:var(--vscode-editor-foreground,#ccc)">Notes · 3</span><span style="margin-left:auto;display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--vscode-descriptionForeground,#9d9d9d);cursor:pointer"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3v12M8 11l4 4 4-4M4 21h16"/></svg>Export</span></div>
+      <!-- add form -->
+      <div style="padding:14px 16px;border-bottom:1px solid var(--vscode-panel-border,#2b2b2b);background:var(--vscode-editorWidget-background,#202020)">
+        <div style="background:var(--vscode-input-background,#313131);border:1px solid var(--vscode-focusBorder,#0078d4);border-radius:7px;padding:9px 11px;font-size:12.5px;color:var(--vscode-input-foreground,#ccc);margin-bottom:10px">Confirm whether backoff cap is configurable per-topic…</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:4px 9px;border-radius:20px;background:color-mix(in srgb,var(--md-warn,#cca700) 16%,transparent);color:var(--md-warn,#cca700);font-weight:600;cursor:pointer"><span style="width:6px;height:6px;border-radius:50%;background:currentColor"></span>Question</span>
+          <span style="font-size:11px;padding:4px 9px;border-radius:20px;border:1px solid var(--vscode-widget-border,#333);color:var(--vscode-descriptionForeground,#9d9d9d);cursor:pointer">#backoff</span>
+          <span style="font-size:11px;padding:4px 9px;border-radius:20px;border:1px dashed var(--vscode-widget-border,#333);color:var(--vscode-descriptionForeground,#9d9d9d);cursor:pointer">+ tag</span>
+          <button style="margin-left:auto;background:var(--vscode-button-background,#0078d4);color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">Save</button>
+        </div>
+      </div>
+      <!-- notes list -->
+      <div style="padding:6px 8px">
+        <div style="padding:11px 12px;border-radius:8px;display:flex;gap:11px">
+          <span style="width:4px;border-radius:3px;background:var(--md-warn,#cca700);flex:none"></span>
+          <div style="flex:1">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><span style="font-size:10px;font-weight:600;color:var(--md-warn,#cca700)">QUESTION</span><span style="font:600 10px JetBrains Mono,monospace;color:var(--vscode-descriptionForeground,#9d9d9d)">§05</span><span style="margin-left:auto;font-size:10px;color:var(--vscode-descriptionForeground,#9d9d9d)">2h ago</span></div>
+            <p style="font-size:12.5px;line-height:1.5;color:var(--vscode-editor-foreground,#ccc);margin:0 0 6px">Is the backoff cap configurable per-topic or global?</p>
+            <div style="display:flex;align-items:center;gap:12px;color:var(--vscode-descriptionForeground,#9d9d9d)"><span style="font-size:10px">#backoff</span><span style="margin-left:auto;display:flex;gap:11px"><svg style="cursor:pointer" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 15 20 4M20 4h-5M20 4v5"/></svg><svg style="cursor:pointer" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 20h4L18 10l-4-4L4 16z"/></svg><svg style="cursor:pointer" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13"/></svg></span></div>
+          </div>
+        </div>
+        <div style="padding:11px 12px;border-radius:8px;display:flex;gap:11px">
+          <span style="width:4px;border-radius:3px;background:var(--md-info,#3794ff);flex:none"></span>
+          <div style="flex:1">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><span style="font-size:10px;font-weight:600;color:var(--md-info,#3794ff)">INSIGHT</span><span style="font:600 10px JetBrains Mono,monospace;color:var(--vscode-descriptionForeground,#9d9d9d)">§02</span><span style="margin-left:auto;font-size:10px;color:var(--vscode-descriptionForeground,#9d9d9d)">yesterday</span></div>
+            <p style="font-size:12.5px;line-height:1.5;color:var(--vscode-editor-foreground,#ccc);margin:0">Ordering guarantee is per-partition only — important for the reconciliation job.</p>
+          </div>
+        </div>
+        <div style="padding:11px 12px;border-radius:8px;display:flex;gap:11px">
+          <span style="width:4px;border-radius:3px;background:var(--md-success,#89d185);flex:none"></span>
+          <div style="flex:1">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><span style="font-size:10px;font-weight:600;color:var(--md-success,#89d185)">BOOKMARK</span><span style="font:600 10px JetBrains Mono,monospace;color:var(--vscode-descriptionForeground,#9d9d9d)">§04</span><span style="margin-left:auto;font-size:10px;color:var(--vscode-descriptionForeground,#9d9d9d)">3d ago</span></div>
+            <p style="font-size:12.5px;line-height:1.5;color:var(--vscode-editor-foreground,#ccc);margin:0">API reference — idempotency-key header details.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== S14 · DOCUMENT COMPARISON ========== -->
+  <div id="s14" style="scroll-margin-top:20px;display:flex;flex-direction:column;gap:12px">
+    <div style="display:flex;align-items:baseline;gap:11px">
+      <span style="font:600 11px JetBrains Mono,monospace;background:#0f1115;color:#fff;padding:4px 9px;border-radius:6px">S14</span>
+      <span style="font-size:15px;font-weight:700">Document comparison</span>
+      <span style="font-size:12.5px;color:#7a766d">Textual diff plus a semantic layer that flags changes in meaning</span>
+    </div>
+    <div style="width:840px;max-width:100%;border-radius:11px;overflow:hidden;box-shadow:var(--md-chrome-shadow);border:1px solid rgba(0,0,0,.12);background:var(--vscode-editor-background,#1f1f1f)">
+      <div style="padding:12px 16px;border-bottom:1px solid var(--vscode-panel-border,#2b2b2b);display:flex;align-items:center;gap:12px;font-size:12px">
+        <span style="display:inline-flex;align-items:center;gap:7px;color:var(--vscode-editor-foreground,#ccc)"><span style="width:9px;height:9px;border-radius:2px;background:var(--vscode-descriptionForeground,#9d9d9d)"></span>order-service.md <span style="color:var(--vscode-descriptionForeground,#9d9d9d)">v1.2</span></span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--vscode-descriptionForeground,#9d9d9d)" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        <span style="display:inline-flex;align-items:center;gap:7px;color:var(--vscode-editor-foreground,#ccc)"><span style="width:9px;height:9px;border-radius:2px;background:var(--md-info,#3794ff)"></span>order-service.md <span style="color:var(--vscode-descriptionForeground,#9d9d9d)">v1.5</span></span>
+        <div style="margin-left:auto;display:flex;gap:14px;font-size:11px"><span style="color:var(--md-success,#89d185)">+6 added</span><span style="color:var(--vscode-errorForeground,#f14c4c)">−2 removed</span><span style="color:var(--md-warn,#cca700)">3 meaning changes</span></div>
+      </div>
+      <div style="display:flex;height:300px">
+        <div style="flex:1;overflow:auto;border-right:1px solid var(--vscode-panel-border,#2b2b2b);font:12.5px/1.7 'Source Serif 4',serif;padding:14px 16px;color:var(--vscode-editor-foreground,#ccc)">
+          <div style="font-size:10px;font-weight:600;color:var(--vscode-descriptionForeground,#9d9d9d);margin-bottom:9px;letter-spacing:.05em;font-family:Inter">TEXTUAL DIFF</div>
+          <p style="margin:0 0 8px">Orders are processed per-partition in the sequence they are committed.</p>
+          <p style="margin:0 0 8px;background:color-mix(in srgb,var(--vscode-errorForeground,#f14c4c) 15%,transparent);border-radius:3px;padding:2px 5px;text-decoration:line-through;opacity:.75">A message that fails three times is quarantined.</p>
+          <p style="margin:0 0 8px;background:color-mix(in srgb,var(--md-success,#89d185) 15%,transparent);border-radius:3px;padding:2px 5px">A message that fails <strong>five</strong> times is quarantined, not dropped.</p>
+          <p style="margin:0 0 8px;background:color-mix(in srgb,var(--md-success,#89d185) 15%,transparent);border-radius:3px;padding:2px 5px">It remains inspectable in the DLQ.</p>
+        </div>
+        <div style="width:320px;overflow:auto;padding:14px 16px">
+          <div style="font-size:10px;font-weight:600;color:var(--vscode-descriptionForeground,#9d9d9d);margin-bottom:9px;letter-spacing:.05em">SEMANTIC CHANGES</div>
+          <div style="border:1px solid var(--vscode-widget-border,#333);border-left:3px solid var(--md-warn,#cca700);border-radius:0 7px 7px 0;padding:10px 12px;margin-bottom:9px">
+            <div style="font-size:11.5px;font-weight:600;color:var(--vscode-editor-foreground,#ccc);margin-bottom:3px">Retry threshold changed</div>
+            <p style="font-size:11px;line-height:1.5;color:var(--vscode-descriptionForeground,#9d9d9d);margin:0">3 → 5 retries before quarantine. <strong>Impact:</strong> longer failure windows; alerting thresholds may need updating.</p>
+          </div>
+          <div style="border:1px solid var(--vscode-widget-border,#333);border-left:3px solid var(--md-info,#3794ff);border-radius:0 7px 7px 0;padding:10px 12px">
+            <div style="font-size:11.5px;font-weight:600;color:var(--vscode-editor-foreground,#ccc);margin-bottom:3px">Guarantee clarified</div>
+            <p style="font-size:11px;line-height:1.5;color:var(--vscode-descriptionForeground,#9d9d9d);margin:0">Messages are now explicitly “not dropped”. No behavioral change; clearer contract.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== S15 · QUALITY ANALYSIS ========== -->
+  <div id="s15" style="scroll-margin-top:20px;display:flex;flex-direction:column;gap:12px">
+    <div style="display:flex;align-items:baseline;gap:11px">
+      <span style="font:600 11px JetBrains Mono,monospace;background:#0f1115;color:#fff;padding:4px 9px;border-radius:6px">S15</span>
+      <span style="font-size:15px;font-weight:700">Quality analysis</span>
+      <span style="font-size:12.5px;color:#7a766d">Scores per dimension + issues ranked by severity with fixes</span>
+    </div>
+    <div style="width:760px;max-width:100%;border-radius:11px;overflow:hidden;box-shadow:var(--md-chrome-shadow);border:1px solid rgba(0,0,0,.12);background:var(--vscode-editor-background,#1f1f1f)">
+      <div style="padding:16px 18px;border-bottom:1px solid var(--vscode-panel-border,#2b2b2b);display:flex;align-items:center;gap:12px">
+        <div style="width:52px;height:52px;border-radius:50%;background:conic-gradient(var(--md-success,#89d185) 0 76%,var(--vscode-widget-border,#333) 76% 100%);display:flex;align-items:center;justify-content:center;flex:none"><span style="width:40px;height:40px;border-radius:50%;background:var(--vscode-editor-background,#1f1f1f);display:flex;align-items:center;justify-content:center;font:700 15px Inter;color:var(--vscode-editor-foreground,#ccc)">76</span></div>
+        <div><div style="font-size:14px;font-weight:600;color:var(--vscode-editor-foreground,#ccc)">Overall health</div><div style="font-size:11.5px;color:var(--vscode-descriptionForeground,#9d9d9d)">Good, with two areas needing attention</div></div>
+        <span style="margin-left:auto;font-size:11px;padding:5px 11px;border:1px solid var(--vscode-widget-border,#333);border-radius:20px;color:var(--vscode-editor-foreground,#ccc);cursor:pointer">Filter: All severities ▾</span>
+      </div>
+      <!-- scores -->
+      <div style="padding:16px 18px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:13px 24px;border-bottom:1px solid var(--vscode-panel-border,#2b2b2b)">
+        <div><div style="display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:5px;color:var(--vscode-editor-foreground,#ccc)"><span>Clarity</span><span style="font-weight:600">82</span></div><div style="height:5px;border-radius:3px;background:var(--vscode-widget-border,#333)"><span style="display:block;height:100%;width:82%;background:var(--md-success,#89d185);border-radius:3px"></span></div></div>
+        <div><div style="display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:5px;color:var(--vscode-editor-foreground,#ccc)"><span>Structure</span><span style="font-weight:600">91</span></div><div style="height:5px;border-radius:3px;background:var(--vscode-widget-border,#333)"><span style="display:block;height:100%;width:91%;background:var(--md-success,#89d185);border-radius:3px"></span></div></div>
+        <div><div style="display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:5px;color:var(--vscode-editor-foreground,#ccc)"><span>Completeness</span><span style="font-weight:600">68</span></div><div style="height:5px;border-radius:3px;background:var(--vscode-widget-border,#333)"><span style="display:block;height:100%;width:68%;background:var(--md-warn,#cca700);border-radius:3px"></span></div></div>
+        <div><div style="display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:5px;color:var(--vscode-editor-foreground,#ccc)"><span>Consistency</span><span style="font-weight:600">77</span></div><div style="height:5px;border-radius:3px;background:var(--vscode-widget-border,#333)"><span style="display:block;height:100%;width:77%;background:var(--md-success,#89d185);border-radius:3px"></span></div></div>
+        <div><div style="display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:5px;color:var(--vscode-editor-foreground,#ccc)"><span>Readability</span><span style="font-weight:600">85</span></div><div style="height:5px;border-radius:3px;background:var(--vscode-widget-border,#333)"><span style="display:block;height:100%;width:85%;background:var(--md-success,#89d185);border-radius:3px"></span></div></div>
+        <div><div style="display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:5px;color:var(--vscode-editor-foreground,#ccc)"><span>Freshness</span><span style="font-weight:600">54</span></div><div style="height:5px;border-radius:3px;background:var(--vscode-widget-border,#333)"><span style="display:block;height:100%;width:54%;background:var(--vscode-errorForeground,#f14c4c);border-radius:3px"></span></div></div>
+      </div>
+      <!-- issues -->
+      <div style="padding:10px 10px">
+        <div style="display:flex;gap:12px;padding:11px 12px;border-radius:8px;cursor:pointer;background:var(--vscode-list-hoverBackground,#2a2d2e);margin-bottom:2px">
+          <span style="font-size:9px;font-weight:700;padding:3px 8px;border-radius:5px;background:color-mix(in srgb,var(--vscode-errorForeground,#f14c4c) 20%,transparent);color:var(--vscode-errorForeground,#f14c4c);height:fit-content;letter-spacing:.03em">HIGH</span>
+          <div style="flex:1"><div style="font-size:12.5px;font-weight:600;color:var(--vscode-editor-foreground,#ccc);margin-bottom:3px">Deployment section references a retired pipeline</div><p style="font-size:11.5px;line-height:1.5;color:var(--vscode-descriptionForeground,#9d9d9d);margin:0 0 5px">§06 mentions “canary 5% for 10 min”, but the platform moved to error-budget gating in Q1. <strong>Fix:</strong> update rollout steps. <span style="color:var(--vscode-descriptionForeground,#9d9d9d)">· ~15 min</span></p><span style="font:600 10px JetBrains Mono,monospace;color:var(--vscode-textLink-foreground,#4daafc)">§06 Deployment →</span></div>
+        </div>
+        <div style="display:flex;gap:12px;padding:11px 12px;border-radius:8px;cursor:pointer;margin-bottom:2px">
+          <span style="font-size:9px;font-weight:700;padding:3px 8px;border-radius:5px;background:color-mix(in srgb,var(--md-warn,#cca700) 20%,transparent);color:var(--md-warn,#cca700);height:fit-content;letter-spacing:.03em">MED</span>
+          <div style="flex:1"><div style="font-size:12.5px;font-weight:600;color:var(--vscode-editor-foreground,#ccc);margin-bottom:3px">Error codes not enumerated</div><p style="font-size:11.5px;line-height:1.5;color:var(--vscode-descriptionForeground,#9d9d9d);margin:0">API reference describes 202 but omits 4xx responses. <strong>Fix:</strong> add an error table. <span>· ~10 min</span></p></div>
+        </div>
+        <div style="display:flex;gap:12px;padding:11px 12px;border-radius:8px;cursor:pointer">
+          <span style="font-size:9px;font-weight:700;padding:3px 8px;border-radius:5px;background:var(--vscode-widget-border,#333);color:var(--vscode-descriptionForeground,#9d9d9d);height:fit-content;letter-spacing:.03em">LOW</span>
+          <div style="flex:1"><div style="font-size:12.5px;font-weight:600;color:var(--vscode-editor-foreground,#ccc);margin-bottom:3px">Inconsistent term: “DLQ” vs “dead-letter topic”</div><p style="font-size:11.5px;line-height:1.5;color:var(--vscode-descriptionForeground,#9d9d9d);margin:0">Used interchangeably across §05. <strong>Fix:</strong> pick one. <span>· ~3 min</span></p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== S16 · SEND-TO-AI CONFIRMATION ========== -->
+  <div id="s16" style="scroll-margin-top:20px;display:flex;flex-direction:column;gap:12px">
+    <div style="display:flex;align-items:baseline;gap:11px">
+      <span style="font:600 11px JetBrains Mono,monospace;background:#0f1115;color:#fff;padding:4px 9px;border-radius:6px">S16</span>
+      <span style="font-size:15px;font-weight:700">Send-to-AI confirmation</span>
+      <span style="font-size:12.5px;color:#7a766d">Shown before the first remote send · sensitive data flagged and maskable</span>
+    </div>
+    <div style="width:720px;max-width:100%;height:440px;border-radius:11px;overflow:hidden;box-shadow:var(--md-chrome-shadow);border:1px solid rgba(0,0,0,.12);background:var(--vscode-editor-background,#1f1f1f);position:relative;display:flex;align-items:center;justify-content:center">
+      <div style="position:absolute;inset:0;background:rgba(0,0,0,.5)"></div>
+      <div style="position:relative;width:420px;background:var(--vscode-editorWidget-background,#202020);border:1px solid var(--vscode-widget-border,#333);border-radius:11px;box-shadow:0 18px 50px rgba(0,0,0,.5);overflow:hidden">
+        <div style="padding:16px 18px 14px">
+          <div style="display:flex;align-items:center;gap:9px;margin-bottom:12px"><span style="width:26px;height:26px;border-radius:7px;background:color-mix(in srgb,var(--md-info,#3794ff) 16%,transparent);display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--md-info,#3794ff)" stroke-width="1.7"><path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM3 12h18"/></svg></span><span style="font-size:14.5px;font-weight:600;color:var(--vscode-editor-foreground,#ccc)">Send content to Anthropic?</span></div>
+          <p style="font-size:12.5px;line-height:1.55;color:var(--vscode-descriptionForeground,#9d9d9d);margin:0 0 14px">This is the first time you're sending document text to a remote provider. Review what will leave your machine.</p>
+          <div style="background:var(--vscode-input-background,#313131);border-radius:8px;padding:12px 14px;margin-bottom:12px;font-size:12px">
+            <div style="display:flex;justify-content:space-between;padding:3px 0;color:var(--vscode-editor-foreground,#ccc)"><span style="color:var(--vscode-descriptionForeground,#9d9d9d)">Content</span><span>§05 Error Handling · 1 selection</span></div>
+            <div style="display:flex;justify-content:space-between;padding:3px 0;color:var(--vscode-editor-foreground,#ccc)"><span style="color:var(--vscode-descriptionForeground,#9d9d9d)">Model</span><span>claude-sonnet-4</span></div>
+            <div style="display:flex;justify-content:space-between;padding:3px 0;color:var(--vscode-editor-foreground,#ccc)"><span style="color:var(--vscode-descriptionForeground,#9d9d9d)">Estimated tokens</span><span>~1,240</span></div>
+            <div style="display:flex;justify-content:space-between;padding:3px 0;color:var(--vscode-editor-foreground,#ccc)"><span style="color:var(--vscode-descriptionForeground,#9d9d9d)">Estimated cost</span><span>≈ $0.006</span></div>
+          </div>
+          <div style="display:flex;gap:9px;align-items:flex-start;background:color-mix(in srgb,var(--md-warn,#cca700) 12%,transparent);border-radius:8px;padding:10px 12px">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--md-warn,#cca700)" stroke-width="1.8" style="flex:none;margin-top:1px"><path d="M12 8v5M12 16h.01M10.3 3.9 2.6 17a2 2 0 0 0 1.7 3h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+            <div style="flex:1"><div style="font-size:11.5px;font-weight:600;color:var(--vscode-editor-foreground,#ccc);margin-bottom:2px">1 possible secret detected</div><div style="font-size:11px;color:var(--vscode-descriptionForeground,#9d9d9d)">A string resembling an API key on line 42.</div></div>
+            <span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--md-warn,#cca700);cursor:pointer;white-space:nowrap"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><path d="M4 4l16 16"/></svg>Mask</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:9px;padding:13px 18px;border-top:1px solid var(--vscode-panel-border,#2b2b2b);background:var(--vscode-editor-background,#1f1f1f)">
+          <label style="display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--vscode-descriptionForeground,#9d9d9d);cursor:pointer"><span style="width:14px;height:14px;border-radius:3px;border:1.5px solid var(--vscode-widget-border,#555)"></span>Don't ask again</label>
+          <button style="margin-left:auto;background:var(--vscode-button-secondaryBackground,#313131);color:var(--vscode-button-secondaryForeground,#ccc);border:none;border-radius:7px;padding:8px 16px;font-size:12.5px;font-weight:500;cursor:pointer;font-family:Inter,sans-serif">Cancel</button>
+          <button style="background:var(--vscode-button-background,#0078d4);color:#fff;border:none;border-radius:7px;padding:8px 16px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">Mask & send</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== S17 · ERROR STATES ========== -->
+  <div id="s17" style="scroll-margin-top:20px;display:flex;flex-direction:column;gap:12px">
+    <div style="display:flex;align-items:baseline;gap:11px">
+      <span style="font:600 11px JetBrains Mono,monospace;background:#0f1115;color:#fff;padding:4px 9px;border-radius:6px">S17</span>
+      <span style="font-size:15px;font-weight:700">Error states</span>
+      <span style="font-size:12.5px;color:#7a766d">Recoverable, human-readable, never colour-only · reading is never blocked</span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,266px);gap:14px">
+      <!-- connection -->
+      <div style="border-radius:10px;border:1px solid rgba(0,0,0,.12);box-shadow:var(--md-chrome-shadow);background:var(--vscode-editorWidget-background,#202020);padding:15px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--vscode-errorForeground,#f14c4c)" stroke-width="1.8"><path d="M2 12s3.5-7 10-7 10 7 10 7M4 4l16 16"/></svg><span style="font-size:12.5px;font-weight:600;color:var(--vscode-editor-foreground,#ccc)">Can't reach the model</span></div>
+        <p style="font-size:11.5px;line-height:1.5;color:var(--vscode-descriptionForeground,#9d9d9d);margin:0 0 11px">Ollama isn't responding at localhost:11434. Reading works as usual.</p>
+        <div style="display:flex;gap:7px"><button style="background:var(--vscode-button-background,#0078d4);color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:11.5px;font-weight:600;cursor:pointer;font-family:Inter">Retry</button><button style="background:transparent;color:var(--vscode-editor-foreground,#ccc);border:1px solid var(--vscode-widget-border,#333);border-radius:6px;padding:6px 12px;font-size:11.5px;cursor:pointer;font-family:Inter">Settings</button></div>
+      </div>
+      <!-- invalid key -->
+      <div style="border-radius:10px;border:1px solid rgba(0,0,0,.12);box-shadow:var(--md-chrome-shadow);background:var(--vscode-editorWidget-background,#202020);padding:15px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--vscode-errorForeground,#f14c4c)" stroke-width="1.8"><circle cx="8" cy="15" r="4"/><path d="M10.8 12 20 3M17 6l2 2M14 9l2 2"/></svg><span style="font-size:12.5px;font-weight:600;color:var(--vscode-editor-foreground,#ccc)">Invalid API key</span></div>
+        <p style="font-size:11.5px;line-height:1.5;color:var(--vscode-descriptionForeground,#9d9d9d);margin:0 0 11px">The provider rejected your key (401). Check it hasn't expired or been revoked.</p>
+        <button style="background:var(--vscode-button-background,#0078d4);color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:11.5px;font-weight:600;cursor:pointer;font-family:Inter">Update key</button>
+      </div>
+      <!-- limit -->
+      <div style="border-radius:10px;border:1px solid rgba(0,0,0,.12);box-shadow:var(--md-chrome-shadow);background:var(--vscode-editorWidget-background,#202020);padding:15px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--md-warn,#cca700)" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span style="font-size:12.5px;font-weight:600;color:var(--vscode-editor-foreground,#ccc)">Rate limit reached</span></div>
+        <p style="font-size:11.5px;line-height:1.5;color:var(--vscode-descriptionForeground,#9d9d9d);margin:0 0 11px">Too many requests. Retrying automatically in <strong>18s</strong>, or try a lighter action.</p>
+        <button style="background:transparent;color:var(--vscode-editor-foreground,#ccc);border:1px solid var(--vscode-widget-border,#333);border-radius:6px;padding:6px 12px;font-size:11.5px;cursor:pointer;font-family:Inter">Retry now</button>
+      </div>
+      <!-- doc too large -->
+      <div style="border-radius:10px;border:1px solid rgba(0,0,0,.12);box-shadow:var(--md-chrome-shadow);background:var(--vscode-editorWidget-background,#202020);padding:15px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--md-warn,#cca700)" stroke-width="1.8"><path d="M6 3h8l4 4v14H6z"/><path d="M9 13h6M9 16h4"/></svg><span style="font-size:12.5px;font-weight:600;color:var(--vscode-editor-foreground,#ccc)">Document is large</span></div>
+        <p style="font-size:11.5px;line-height:1.5;color:var(--vscode-descriptionForeground,#9d9d9d);margin:0 0 11px">This file exceeds the model's context. MDeepen will send the current section only.</p>
+        <button style="background:var(--vscode-button-background,#0078d4);color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:11.5px;font-weight:600;cursor:pointer;font-family:Inter">Use section</button>
+      </div>
+      <!-- mermaid invalid -->
+      <div style="border-radius:10px;border:1px solid rgba(0,0,0,.12);box-shadow:var(--md-chrome-shadow);background:var(--vscode-editorWidget-background,#202020);padding:15px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--vscode-errorForeground,#f14c4c)" stroke-width="1.8"><rect x="3" y="4" width="6" height="4" rx="1"/><rect x="15" y="16" width="6" height="4" rx="1"/><path d="M6 8v4a2 2 0 0 0 2 2h10"/></svg><span style="font-size:12.5px;font-weight:600;color:var(--vscode-editor-foreground,#ccc)">Diagram won't render</span></div>
+        <p style="font-size:11.5px;line-height:1.5;color:var(--vscode-descriptionForeground,#9d9d9d);margin:0 0 8px">Mermaid parse error on line 4: expected <span style="font:500 10.5px JetBrains Mono">--&gt;&gt;</span>. Source is preserved for editing.</p>
+        <button style="background:transparent;color:var(--vscode-editor-foreground,#ccc);border:1px solid var(--vscode-widget-border,#333);border-radius:6px;padding:6px 12px;font-size:11.5px;cursor:pointer;font-family:Inter">Fix with AI</button>
+      </div>
+      <!-- low confidence -->
+      <div style="border-radius:10px;border:1px solid rgba(0,0,0,.12);box-shadow:var(--md-chrome-shadow);background:var(--vscode-editorWidget-background,#202020);padding:15px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--md-warn,#cca700)" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.7M12 17h.01"/></svg><span style="font-size:12.5px;font-weight:600;color:var(--vscode-editor-foreground,#ccc)">Not enough evidence</span></div>
+        <p style="font-size:11.5px;line-height:1.5;color:var(--vscode-descriptionForeground,#9d9d9d);margin:0 0 11px">The document doesn't clearly answer this. This response may be unreliable — treat with care.</p>
+        <button style="background:transparent;color:var(--vscode-editor-foreground,#ccc);border:1px solid var(--vscode-widget-border,#333);border-radius:6px;padding:6px 12px;font-size:11.5px;cursor:pointer;font-family:Inter">Search workspace</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== S18 · LOADING STATES ========== -->
+  <div id="s18" style="scroll-margin-top:20px;display:flex;flex-direction:column;gap:12px">
+    <div style="display:flex;align-items:baseline;gap:11px">
+      <span style="font:600 11px JetBrains Mono,monospace;background:#0f1115;color:#fff;padding:4px 9px;border-radius:6px">S18</span>
+      <span style="font-size:15px;font-weight:700">Loading states</span>
+      <span style="font-size:12.5px;color:#7a766d">Skeletons, streaming, cancellable progress · reading never blocks</span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,266px);gap:14px">
+      <!-- skeleton -->
+      <div style="border-radius:10px;border:1px solid rgba(0,0,0,.12);box-shadow:var(--md-chrome-shadow);background:var(--vscode-editorWidget-background,#202020);padding:16px">
+        <div style="font-size:10px;font-weight:600;letter-spacing:.05em;color:var(--vscode-descriptionForeground,#9d9d9d);margin-bottom:12px">SKELETON</div>
+        <div class="mdsk" style="height:14px;width:70%;margin-bottom:11px"></div>
+        <div class="mdsk" style="height:9px;width:100%;margin-bottom:7px"></div>
+        <div class="mdsk" style="height:9px;width:94%;margin-bottom:7px"></div>
+        <div class="mdsk" style="height:9px;width:82%;margin-bottom:14px"></div>
+        <div class="mdsk" style="height:9px;width:100%;margin-bottom:7px"></div>
+        <div class="mdsk" style="height:9px;width:60%"></div>
+      </div>
+      <!-- streaming -->
+      <div style="border-radius:10px;border:1px solid rgba(0,0,0,.12);box-shadow:var(--md-chrome-shadow);background:var(--vscode-editorWidget-background,#202020);padding:16px">
+        <div style="font-size:10px;font-weight:600;letter-spacing:.05em;color:var(--vscode-descriptionForeground,#9d9d9d);margin-bottom:12px">STREAMING</div>
+        <div style="display:flex;gap:9px"><span style="flex:none;width:20px;height:20px;border-radius:6px;background:var(--md-ai,#9d7cd8);display:flex;align-items:center;justify-content:center"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9"><path d="M12 3l1.8 4.2L18 9l-4.2 1.8L12 15l-1.8-4.2L6 9z"/></svg></span>
+        <p style="font-size:12px;line-height:1.6;color:var(--vscode-editor-foreground,#ccc);margin:0">The write path commits synchronously, then fulfillment happens<span style="display:inline-block;width:6px;height:13px;background:var(--md-ai,#9d7cd8);vertical-align:-2px;margin-left:1px;animation:mdblink 1s infinite"></span></p></div>
+        <button style="width:100%;margin-top:13px;display:flex;align-items:center;justify-content:center;gap:6px;padding:6px;background:transparent;border:1px solid var(--vscode-widget-border,#333);border-radius:6px;font-size:11px;font-weight:500;color:var(--vscode-editor-foreground,#ccc);cursor:pointer;font-family:Inter"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>Stop</button>
+      </div>
+      <!-- progress -->
+      <div style="border-radius:10px;border:1px solid rgba(0,0,0,.12);box-shadow:var(--md-chrome-shadow);background:var(--vscode-editorWidget-background,#202020);padding:16px">
+        <div style="font-size:10px;font-weight:600;letter-spacing:.05em;color:var(--vscode-descriptionForeground,#9d9d9d);margin-bottom:12px">PROGRESS</div>
+        <div style="display:flex;align-items:center;gap:9px;margin-bottom:12px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--vscode-button-background,#0078d4)" stroke-width="2" style="animation:mdspin 1s linear infinite"><path d="M12 3a9 9 0 1 0 9 9" stroke-linecap="round"/></svg><span style="font-size:12px;color:var(--vscode-editor-foreground,#ccc)">Indexing for semantic search…</span></div>
+        <div style="height:5px;border-radius:3px;background:var(--vscode-widget-border,#333);margin-bottom:7px"><span style="display:block;height:100%;width:44%;background:var(--vscode-button-background,#0078d4);border-radius:3px"></span></div>
+        <div style="display:flex;justify-content:space-between;font-size:10.5px;color:var(--vscode-descriptionForeground,#9d9d9d)"><span>18 of 41 sections</span><span style="cursor:pointer;color:var(--vscode-textLink-foreground,#4daafc)">Cancel</span></div>
+        <p style="font-size:10.5px;line-height:1.5;color:var(--vscode-descriptionForeground,#9d9d9d);margin:12px 0 0;padding-top:11px;border-top:1px solid var(--vscode-panel-border,#2b2b2b)">You can keep reading while this runs in the background.</p>
+      </div>
+    </div>
+  </div>
+
+  <!--INSERT-->
+  </div>
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1400,&quot;height&quot;:900}}">
+class Component extends DCLogic {
+  state = {
+    theme: 'dark',
+    active: 1,
+    showTree: true,
+    showAI: true,
+    messages: [
+      { role: 'user', text: 'What does this service actually guarantee about ordering?' },
+      { role: 'ai', text: 'Orders are processed per-partition in the sequence they are committed to the log. Global ordering is **not** guaranteed — only within a single `orderId` partition key. Cross-partition operations rely on the saga described in §4.', sources: [{ s: '02', t: 'System Context' }, { s: '04', t: 'Error Handling' }] }
+    ],
+    streaming: false,
+    stream: ''
+  };
+
+  sections = [
+    { n: '01', title: 'Overview', read: 100, blocks: [
+      { t:'h1', text:'Order Service — Architecture Guide' },
+      { t:'lead', text:'The Order Service owns the lifecycle of a customer order from creation through fulfillment. It is event-driven, horizontally partitioned by orderId, and exposes a thin synchronous API in front of an asynchronous core.' },
+      { t:'p', text:"This document is the canonical reference for engineers integrating with, operating, or extending the service. It assumes familiarity with the platform's messaging backbone and deployment tooling." },
+      { t:'note', text:'Audience — backend and platform engineers, on-call responders, and reviewers of change proposals that touch the ordering path.' },
+      { t:'h2', text:'What this service is not' },
+      { t:'ul', items:['It is not a payment processor — it delegates capture to the Payments Service.','It is not a source of truth for inventory; it reserves and releases via events.','It does not guarantee global ordering across partitions.'] }
+    ] },
+    { n: '02', title: 'System Context', read: 62, blocks: [
+      { t:'h1', text:'System Context' },
+      { t:'p', text:'The service sits between the storefront edge and the fulfillment domain. Inbound traffic arrives through the API gateway; outbound effects are published as domain events on the order topic.' },
+      { t:'h2', text:'Upstream dependencies' },
+      { t:'ul', items:['Catalog — product and price snapshots at time of order.','Payments — authorization and capture, called via the saga.','Inventory — reservation and release through events.'] },
+      { t:'note', text:'Ordering guarantee — events are ordered within a partition keyed by orderId. There is no cross-partition ordering.' },
+      { t:'code', text:'order.created    ->  inventory.reserve\npayment.captured ->  order.confirmed\npayment.failed   ->  order.cancelled' }
+    ] },
+    { n: '03', title: 'Data Flow', read: 30, blocks: [
+      { t:'h1', text:'Data Flow' },
+      { t:'p', text:'A write request is validated synchronously, appended to the log, and acknowledged. All heavy work happens asynchronously downstream of the commit.' },
+      { t:'ol', items:['Gateway authenticates and rate-limits the request.','Command handler validates the payload against the current catalog snapshot.','The order.created event is appended and the client receives a 202.','Projections and downstream consumers react independently.'] },
+      { t:'code', text:'POST /orders  ->  202 Accepted { orderId, status: "pending" }' }
+    ] },
+    { n: '04', title: 'API Reference', read: 0, blocks: [
+      { t:'h1', text:'API Reference' },
+      { t:'p', text:'The public surface is deliberately small. Prefer events for anything that does not need a synchronous answer.' },
+      { t:'h2', text:'POST /orders' },
+      { t:'p', text:'Creates an order. Idempotent on the Idempotency-Key header.' },
+      { t:'code', text:'{\n  "items": [{ "sku": "A-1002", "qty": 2 }],\n  "customerId": "cus_18fA"\n}' },
+      { t:'h2', text:'GET /orders/:id' },
+      { t:'p', text:'Returns the current projection. May lag the log by a few hundred milliseconds under load.' }
+    ] },
+    { n: '05', title: 'Error Handling', read: 0, blocks: [
+      { t:'h1', text:'Error Handling' },
+      { t:'p', text:'Failures are classified as retryable or terminal. Retryable failures re-enter the queue with exponential backoff; terminal failures move to the dead-letter topic and page on-call.' },
+      { t:'notewarn', text:'Poison messages — a message that fails five times is quarantined, not dropped. It remains inspectable in the DLQ.' },
+      { t:'ul', items:['Retryable: transient network, downstream 5xx, lock contention.','Terminal: schema violation, unknown SKU, expired idempotency window.'] }
+    ] },
+    { n: '06', title: 'Deployment', read: 0, blocks: [
+      { t:'h1', text:'Deployment' },
+      { t:'p', text:'The service ships as a container deployed via the platform pipeline. Rollouts are progressive with automatic rollback on error-budget burn.' },
+      { t:'ol', items:['Merge to main triggers the build.','Canary receives 5% of traffic for ten minutes.','Full rollout proceeds if SLOs hold.'] }
+    ] }
+  ];
+
+  chatRef = React.createRef();
+
+  componentDidUpdate() { if (this.chatRef.current) this.chatRef.current.scrollTop = this.chatRef.current.scrollHeight; }
+  componentWillUnmount() { clearInterval(this._t); }
+
+  darkVars = {
+    '--vscode-editor-background':'#1f1f1f','--vscode-editor-foreground':'#cccccc','--vscode-sideBar-background':'#181818','--vscode-activityBar-background':'#181818','--vscode-activityBar-foreground':'#d7d7d7','--vscode-activityBar-inactiveForeground':'#868686','--vscode-titleBar-activeBackground':'#181818','--vscode-titleBar-activeForeground':'#cccccc','--vscode-statusBar-background':'#181818','--vscode-statusBar-foreground':'#cccccc','--vscode-button-background':'#0078d4','--vscode-button-foreground':'#ffffff','--vscode-button-hoverBackground':'#0289e6','--vscode-button-secondaryBackground':'#313131','--vscode-button-secondaryForeground':'#cccccc','--vscode-focusBorder':'#0078d4','--vscode-input-background':'#313131','--vscode-input-foreground':'#cccccc','--vscode-input-border':'#3c3c3c','--vscode-input-placeholderForeground':'#989898','--vscode-list-hoverBackground':'#2a2d2e','--vscode-list-activeSelectionBackground':'#04395e','--vscode-descriptionForeground':'#9d9d9d','--vscode-errorForeground':'#f14c4c','--vscode-panel-border':'#2b2b2b','--vscode-widget-border':'#333333','--vscode-editorWidget-background':'#202020','--vscode-textLink-foreground':'#4daafc','--vscode-textCodeBlock-background':'rgba(255,255,255,.06)','--vscode-textBlockQuote-background':'rgba(255,255,255,.04)','--vscode-badge-background':'#616161','--vscode-badge-foreground':'#ffffff','--md-warn':'#cca700','--md-success':'#89d185','--md-info':'#3794ff','--md-ai':'#9d7cd8','--md-chrome-shadow':'0 12px 40px rgba(0,0,0,.30)'
+  };
+  lightVars = {
+    '--vscode-editor-background':'#ffffff','--vscode-editor-foreground':'#3b3b3b','--vscode-sideBar-background':'#f8f8f8','--vscode-activityBar-background':'#f8f8f8','--vscode-activityBar-foreground':'#1f1f1f','--vscode-activityBar-inactiveForeground':'#616161','--vscode-titleBar-activeBackground':'#f8f8f8','--vscode-titleBar-activeForeground':'#1f1f1f','--vscode-statusBar-background':'#f8f8f8','--vscode-statusBar-foreground':'#3b3b3b','--vscode-button-background':'#005fb8','--vscode-button-foreground':'#ffffff','--vscode-button-hoverBackground':'#0258a8','--vscode-button-secondaryBackground':'#e5e5e5','--vscode-button-secondaryForeground':'#3b3b3b','--vscode-focusBorder':'#005fb8','--vscode-input-background':'#ffffff','--vscode-input-foreground':'#3b3b3b','--vscode-input-border':'#cecece','--vscode-input-placeholderForeground':'#767676','--vscode-list-hoverBackground':'#f0f0f0','--vscode-list-activeSelectionBackground':'#cfe4fb','--vscode-descriptionForeground':'#767676','--vscode-errorForeground':'#cd3131','--vscode-panel-border':'#e5e5e5','--vscode-widget-border':'#e5e5e5','--vscode-editorWidget-background':'#f8f8f8','--vscode-textLink-foreground':'#005fb8','--vscode-textCodeBlock-background':'rgba(0,0,0,.05)','--vscode-textBlockQuote-background':'rgba(0,0,0,.035)','--vscode-badge-background':'#c4c4c4','--vscode-badge-foreground':'#3b3b3b','--md-warn':'#bf8803','--md-success':'#388a34','--md-info':'#1a85ff','--md-ai':'#8250df','--md-chrome-shadow':'0 12px 40px rgba(0,0,0,.16)'
+  };
+
+  index = [
+    { id:'S1', label:'Reader (3-panel)', href:'#s1' },
+    { id:'S2', label:'Empty state', href:'#s2' },
+    { id:'S3', label:'No AI configured', href:'#s3' },
+    { id:'S4', label:'AI configuration', href:'#s4' },
+    { id:'S5', label:'Focus mode', href:'#s5' },
+    { id:'S6', label:'Presentation', href:'#s6' },
+    { id:'S7', label:'Selection menu', href:'#s7' },
+    { id:'S8', label:'Summary', href:'#s8' },
+    { id:'S9', label:'Explanation', href:'#s9' },
+    { id:'S10', label:'Diagram', href:'#s10' },
+    { id:'S11', label:'Semantic search', href:'#s11' },
+    { id:'S12', label:'Glossary', href:'#s12' },
+    { id:'S13', label:'Annotations', href:'#s13' },
+    { id:'S14', label:'Comparison', href:'#s14' },
+    { id:'S15', label:'Quality analysis', href:'#s15' },
+    { id:'S16', label:'Send confirmation', href:'#s16' },
+    { id:'S17', label:'Error states', href:'#s17' },
+    { id:'S18', label:'Loading states', href:'#s18' }
+  ];
+
+  segStyle(on) {
+    return { border:'none', cursor:'pointer', padding:'6px 16px', borderRadius:'7px', fontSize:'12.5px', fontWeight:600, fontFamily:'Inter,sans-serif', background: on ? '#0f1115' : 'transparent', color: on ? '#fff' : '#5c5952' };
+  }
+
+  go(e) { const el = e.target.closest('[data-i]'); if (el) this.setState({ active: +el.getAttribute('data-i') }); }
+  next() { this.setState(s => ({ active: Math.min(s.active + 1, this.sections.length - 1) })); }
+  prev() { this.setState(s => ({ active: Math.max(s.active - 1, 0) })); }
+
+  streamReply(full, sources) {
+    clearInterval(this._t);
+    const words = full.split(' ');
+    let i = 0;
+    this.setState({ streaming: true, stream: '' });
+    this._t = setInterval(() => {
+      i += 2;
+      if (i >= words.length) {
+        clearInterval(this._t);
+        this.setState(s => ({ streaming:false, stream:'', messages:[...s.messages, { role:'ai', text: full, sources }] }));
+      } else {
+        this.setState({ stream: words.slice(0, i).join(' ') });
+      }
+    }, 55);
+  }
+
+  runAction(name) {
+    const map = {
+      Summarize: { u:'Summarize this section', t:'**In one line:** the service commits an order synchronously, then does all fulfillment work asynchronously via events. Validation happens before the commit; everything after is eventually consistent and independently retryable.', s:[{s:'03',t:'Data Flow'}] },
+      Explain: { u:'Explain this section simply', t:'Think of it like ordering at a busy kitchen: you hand in your ticket and immediately get a number (the 202). The kitchen then works through tickets in its own time. Your food (the order) is guaranteed to be made in the order *your* tickets arrive, but not relative to other customers.', s:[{s:'03',t:'Data Flow'}] },
+      Diagram: { u:'Draw a diagram of the flow', t:'Generated a sequence diagram of the write path. Open the diagram panel (S10) to preview, edit the Mermaid source, or insert it into the Markdown.', s:[{s:'03',t:'Data Flow'}] }
+    };
+    const a = map[name];
+    this.setState(s => ({ messages:[...s.messages, { role:'user', text:a.u }] }));
+    setTimeout(() => this.streamReply(a.t, a.s), 120);
+  }
+
+  ask(e) {
+    if (e.key !== 'Enter' || !e.target.value.trim()) return;
+    const q = e.target.value.trim(); e.target.value = '';
+    this.setState(s => ({ messages:[...s.messages, { role:'user', text:q }] }));
+    setTimeout(() => this.streamReply('Based on the current section, the answer is scoped to per-partition guarantees. For anything crossing partitions, see the saga in §4 — that path trades strict ordering for compensating transactions.', [{s:'02',t:'System Context'}]), 150);
+  }
+
+  stop() { clearInterval(this._t); this.setState(s => ({ streaming:false, stream:'', messages: s.stream ? [...s.messages, { role:'ai', text: s.stream + ' …', sources:[], stopped:true }] : s.messages })); }
+  clearChat() { this.setState({ messages: [], streaming:false, stream:'' }); }
+
+  mdInline(t) {
+    let h = (t || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    h = h.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/`(.+?)`/g,'<code style="font:500 12px JetBrains Mono,monospace;background:var(--vscode-textCodeBlock-background,rgba(128,128,128,.16));padding:1px 4px;border-radius:3px">$1</code>').replace(/\*(.+?)\*/g,'<em>$1</em>');
+    return h;
+  }
+
+  renderVals() {
+    const s = this.state;
+    const sec = this.sections[s.active];
+    const msgs = s.messages.map(m => ({ ...m, isUser: m.role === 'user', isAI: m.role === 'ai', html: { __html: this.mdInline(m.text) }, hasSources: !!(m.sources && m.sources.length) }));
+    const readCount = this.sections.filter(x => x.read >= 100).length;
+    const progress = Math.round((s.active) / (this.sections.length - 1) * 100);
+    return {
+      rootStyle: s.theme === 'dark' ? this.darkVars : this.lightVars,
+      theme: s.theme,
+      setDark: () => this.setState({ theme:'dark' }),
+      setLight: () => this.setState({ theme:'light' }),
+      darkBtnStyle: this.segStyle(s.theme === 'dark'),
+      lightBtnStyle: this.segStyle(s.theme === 'light'),
+      index: this.index,
+      sections: this.sections,
+      secItems: this.sections.map((x, i) => ({ ...x, isActive: i === s.active, isRead: x.read >= 100, rowStyle: { display:'flex', alignItems:'center', gap:'9px', padding:'7px 8px 7px 10px', borderRadius:'5px', cursor:'pointer', fontSize:'13px', marginBottom:'1px', position:'relative', background: i === s.active ? 'var(--vscode-list-activeSelectionBackground,#04395e)' : 'transparent', color: i === s.active ? 'var(--vscode-editor-foreground,#fff)' : 'var(--vscode-editor-foreground,#ccc)', fontWeight: i === s.active ? 600 : 400 } })),
+      active: s.active,
+      activeSection: sec,
+      activeBlocks: (sec.blocks || []).map(b => ({ ...b, isH1: b.t === 'h1', isH2: b.t === 'h2', isLead: b.t === 'lead', isP: b.t === 'p', isNote: b.t === 'note', isNoteWarn: b.t === 'notewarn', isCode: b.t === 'code', isUl: b.t === 'ul', isOl: b.t === 'ol' })),
+      chatRef: this.chatRef,
+      messages: s.messages,
+      msgs,
+      streamHtml: { __html: this.mdInline(s.stream) },
+      hasMessages: s.messages.length > 0,
+      streaming: s.streaming,
+      stream: s.stream,
+      progress,
+      progressLabel: `${progress}%`,
+      sectionLabel: `Section ${s.active + 1} of ${this.sections.length}`,
+      readTime: `${sec.title} · ~${Math.max(1, Math.round((sec.blocks || []).length / 3))} min`,
+      go: (i) => this.go(i),
+      next: () => this.next(),
+      prev: () => this.prev(),
+      runSummarize: () => this.runAction('Summarize'),
+      runExplain: () => this.runAction('Explain'),
+      runDiagram: () => this.runAction('Diagram'),
+      ask: (e) => this.ask(e),
+      stop: () => this.stop(),
+      clearChat: () => this.clearChat()
+    };
+  }
+}
+</script>
+</body>
+</html>
