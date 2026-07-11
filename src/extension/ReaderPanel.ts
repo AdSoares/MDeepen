@@ -20,6 +20,7 @@ export class ReaderPanel {
   private readonly disposables: vscode.Disposable[] = [];
   private disposed = false;
   private queue: Promise<void> = Promise.resolve();
+  private changeTimer: ReturnType<typeof setTimeout> | undefined;
 
   static open(context: vscode.ExtensionContext, uri: vscode.Uri, docStore: DocStateStore, uiStore: UiStateStore): void {
     const key = uri.toString();
@@ -48,7 +49,12 @@ export class ReaderPanel {
     this.panel.onDidDispose(() => this.dispose(), null, this.disposables);
 
     vscode.workspace.onDidChangeTextDocument((e) => {
-      if (e.document.uri.toString() === this.uri.toString()) this.reparse('sectionsUpdated');
+      if (e.document.uri.toString() !== this.uri.toString()) return;
+      if (this.changeTimer) clearTimeout(this.changeTimer);
+      this.changeTimer = setTimeout(() => {
+        this.changeTimer = undefined;
+        if (!this.disposed) void this.reparse('sectionsUpdated');
+      }, 200);
     }, null, this.disposables);
   }
 
@@ -204,6 +210,7 @@ export class ReaderPanel {
 
   private dispose(): void {
     this.disposed = true;
+    if (this.changeTimer) clearTimeout(this.changeTimer);
     ReaderPanel.panels.delete(this.uri.toString());
     while (this.disposables.length) this.disposables.pop()?.dispose();
   }
