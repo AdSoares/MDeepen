@@ -48,7 +48,7 @@ export function Content({ page, fileName, index, total, focus, onPrev, onNext, o
         post({ type: 'openLink', href, kind });
       };
     });
-  }, [page?.id]);
+  }, [page?.id, page?.content]);
 
   return (
     <div class="mdeepen-content">
