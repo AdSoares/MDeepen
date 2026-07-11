@@ -47,13 +47,25 @@ export function App() {
   useEffect(() => {
     if (!page || store.get().readIds.has(page.id)) return;
     const id = page.id;
-    const timer = window.setTimeout(() => {
-      if (store.get().pages[store.get().activeIndex]?.id !== id) return;
-      if (store.get().readIds.has(id)) return;
-      store.markRead(id);
-      post({ type: 'sectionRead', id });
-    }, READ_DWELL_MS);
-    return () => window.clearTimeout(timer);
+    let timer: number | undefined;
+    const arm = () => {
+      timer = window.setTimeout(() => {
+        if (store.get().pages[store.get().activeIndex]?.id !== id) return;
+        if (store.get().readIds.has(id)) return;
+        store.markRead(id);
+        post({ type: 'sectionRead', id });
+      }, READ_DWELL_MS);
+    };
+    const onVis = () => {
+      window.clearTimeout(timer);
+      if (document.visibilityState === 'visible') arm();
+    };
+    document.addEventListener('visibilitychange', onVis);
+    if (document.visibilityState === 'visible') arm();
+    return () => {
+      window.clearTimeout(timer);
+      document.removeEventListener('visibilitychange', onVis);
+    };
   }, [page?.id]);
   const pct = progressPercent(s.activeIndex, s.pages.length);
 

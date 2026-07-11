@@ -36,6 +36,7 @@ export function Resizer({ kind, currentWidth, onResize }: Props) {
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
+      onPointerCancel={onPointerUp}
     />
   );
 }
