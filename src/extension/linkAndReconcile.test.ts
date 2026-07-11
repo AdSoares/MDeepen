@@ -18,6 +18,9 @@ describe('classifyLink', () => {
     expect(classifyLink('vscode://x')).toBe('blocked');
     expect(classifyLink('data:text/html,x')).toBe('blocked');
   });
+  it('blocks the file: scheme', () => {
+    expect(classifyLink('file:///etc/passwd')).toBe('blocked');
+  });
   it('still treats scheme-less relative paths as local', () => {
     expect(classifyLink('./a.md')).toBe('local');
     expect(classifyLink('sub/b.md')).toBe('local');

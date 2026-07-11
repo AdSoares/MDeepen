@@ -83,6 +83,7 @@ export class ReaderPanel {
         await this.docStore.set(this.uri.toString(), { index: this.activeIndex, read: this.readMarks() });
         break;
       case 'setPaginationLevel':
+        if (!Number.isInteger(msg.level) || msg.level < 1 || msg.level > 6) break;
         this.level = msg.level;
         await this.reparse('sectionsUpdated');
         break;
