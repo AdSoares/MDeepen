@@ -1,4 +1,5 @@
 import type { PanelsState, ReaderConfig } from '../../shared/types';
+import { DEFAULT_CONFIG, DEFAULT_PANELS } from '../../shared/defaults';
 
 export interface MementoLike {
   get<T>(key: string, defaultValue?: T): T;
@@ -53,10 +54,7 @@ export interface UiState {
   panels: PanelsState;
 }
 
-const DEFAULT_UI_STATE: UiState = {
-  config: { fontSize: 15.5, columnWidth: 700, lineHeight: 1.72, theme: 'auto' },
-  panels: { outlineVisible: true, aiVisible: true, outlineWidth: 252, aiWidth: 340 },
-};
+const DEFAULT_UI_STATE: UiState = { config: DEFAULT_CONFIG, panels: DEFAULT_PANELS };
 
 export class UiStateStore {
   constructor(private readonly memento: MementoLike) {}

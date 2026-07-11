@@ -1,5 +1,6 @@
 import type { HostToWebview } from '../shared/messages';
 import type { OutlineNode, Page, ReaderConfig } from '../shared/types';
+import { DEFAULT_CONFIG, DEFAULT_PANELS } from '../shared/defaults';
 
 export interface ReaderState {
   fileName: string;
@@ -14,9 +15,9 @@ export interface ReaderState {
 
 const initial: ReaderState = {
   fileName: '', pages: [], outline: [], effectiveLevel: 2, activeIndex: 0,
-  config: { fontSize: 15.5, columnWidth: 700, lineHeight: 1.72, theme: 'auto' },
   readIds: new Set(),
-  panels: { outlineVisible: true, aiVisible: true, outlineWidth: 252, aiWidth: 340, focus: false },
+  config: { ...DEFAULT_CONFIG },
+  panels: { ...DEFAULT_PANELS, focus: false },
 };
 
 const clamp = (i: number, len: number): number => Math.min(Math.max(i, 0), Math.max(0, len - 1));
