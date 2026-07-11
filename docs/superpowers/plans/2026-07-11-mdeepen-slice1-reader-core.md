@@ -36,7 +36,7 @@
 
 **Interfaces:**
 - Consumes: nothing (greenfield).
-- Produces: `npm run build` emits `dist/extension.js` (CJS, node) and `dist/webview.js` (IIFE). Activation command id `mdeepen.openReader`. Test runner `npm test` (Vitest).
+- Produces: `npm run build` emits `dist/extension.js` (CJS, node) and `dist/webview/main.js` (ESM, code-split chunks) plus `dist/webview/codicons/`. Activation command id `mdeepen.openReader`. Test runner `npm test` (Vitest).
 
 - [ ] **Step 1: Create `package.json` (extension manifest)**
 
