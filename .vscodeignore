@@ -6,3 +6,4 @@ vitest.config.ts
 tsconfig.json
 **/*.test.ts
 docs/**
+.superpowers/**
