@@ -55,4 +55,25 @@ describe('UiStateStore', () => {
     await s.set(next);
     expect(new UiStateStore(mem).get()).toEqual(next);
   });
+  it('sanitizes garbage persisted state to defaults/clamps', () => {
+    const mem = fakeMemento();
+    mem._raw['mdeepen.uiState'] = {
+      config: { fontSize: NaN, columnWidth: 99999, lineHeight: 'x', theme: 'x' },
+      panels: { outlineVisible: 'yes', aiVisible: 1, outlineWidth: -5, aiWidth: 99999 },
+    };
+    const s = new UiStateStore(mem);
+    expect(s.get()).toEqual({
+      config: { fontSize: 15.5, columnWidth: 1400, lineHeight: 1.72, theme: 'auto' },
+      panels: { outlineVisible: true, aiVisible: true, outlineWidth: 180, aiWidth: 480 },
+    });
+  });
+  it('preserves columnWidth 0 (full width) through sanitization', () => {
+    const mem = fakeMemento();
+    mem._raw['mdeepen.uiState'] = {
+      config: { fontSize: 15.5, columnWidth: 0, lineHeight: 1.72, theme: 'auto' },
+      panels: { outlineVisible: true, aiVisible: true, outlineWidth: 252, aiWidth: 340 },
+    };
+    const s = new UiStateStore(mem);
+    expect(s.get().config.columnWidth).toBe(0);
+  });
 });

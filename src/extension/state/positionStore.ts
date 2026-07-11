@@ -62,7 +62,26 @@ export class UiStateStore {
   constructor(private readonly memento: MementoLike) {}
 
   get(): UiState {
-    return this.memento.get<UiState>(UI_KEY, DEFAULT_UI_STATE);
+    const raw = this.memento.get<UiState>(UI_KEY, DEFAULT_UI_STATE);
+    const num = (v: unknown, min: number, max: number, dflt: number): number =>
+      typeof v === 'number' && Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : dflt;
+    const bool = (v: unknown, dflt: boolean): boolean => (typeof v === 'boolean' ? v : dflt);
+    const d = DEFAULT_UI_STATE;
+    const colRaw = raw?.config?.columnWidth;
+    return {
+      config: {
+        fontSize: num(raw?.config?.fontSize, 11, 24, d.config.fontSize),
+        columnWidth: colRaw === 0 ? 0 : num(colRaw, 480, 1400, d.config.columnWidth),
+        lineHeight: num(raw?.config?.lineHeight, 1.3, 2.2, d.config.lineHeight),
+        theme: raw?.config?.theme === 'light' || raw?.config?.theme === 'dark' ? raw.config.theme : 'auto',
+      },
+      panels: {
+        outlineVisible: bool(raw?.panels?.outlineVisible, true),
+        aiVisible: bool(raw?.panels?.aiVisible, true),
+        outlineWidth: num(raw?.panels?.outlineWidth, 180, 400, d.panels.outlineWidth),
+        aiWidth: num(raw?.panels?.aiWidth, 260, 480, d.panels.aiWidth),
+      },
+    };
   }
 
   set(state: UiState): Thenable<void> {
