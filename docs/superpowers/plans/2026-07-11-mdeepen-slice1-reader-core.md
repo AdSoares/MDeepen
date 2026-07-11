@@ -119,8 +119,17 @@
 
 ```js
 import * as esbuild from 'esbuild';
+import { cpSync, mkdirSync } from 'node:fs';
 
 const watch = process.argv.includes('--watch');
+
+// Copy codicon assets next to the webview bundle so the .vsix ships them
+// without .vscodeignore negation tricks.
+function copyCodicons() {
+  mkdirSync('dist/webview/codicons', { recursive: true });
+  cpSync('node_modules/@vscode/codicons/dist/codicon.css', 'dist/webview/codicons/codicon.css');
+  cpSync('node_modules/@vscode/codicons/dist/codicon.ttf', 'dist/webview/codicons/codicon.ttf');
+}
 
 const extension = {
   entryPoints: ['src/extension/extension.ts'],
@@ -133,12 +142,18 @@ const extension = {
   target: 'node18',
 };
 
+// ESM + splitting so dynamic import() of highlight.js/mermaid become real
+// lazy chunks (esbuild only code-splits with format 'esm'). The webview
+// loads main.js via <script type="module">.
 const webview = {
   entryPoints: ['src/webview/main.tsx'],
   bundle: true,
   platform: 'browser',
-  format: 'iife',
-  outfile: 'dist/webview.js',
+  format: 'esm',
+  splitting: true,
+  outdir: 'dist/webview',
+  entryNames: '[name]',
+  chunkNames: 'chunks/[name]-[hash]',
   sourcemap: true,
   target: 'es2020',
   loader: { '.css': 'text' },
@@ -147,11 +162,13 @@ const webview = {
 };
 
 if (watch) {
+  copyCodicons();
   const c1 = await esbuild.context(extension);
   const c2 = await esbuild.context(webview);
   await Promise.all([c1.watch(), c2.watch()]);
   console.log('esbuild watching…');
 } else {
+  copyCodicons();
   await Promise.all([esbuild.build(extension), esbuild.build(webview)]);
   console.log('esbuild build complete.');
 }
@@ -168,6 +185,7 @@ export default defineConfig({
   test: {
     include: ['src/**/*.test.ts'],
     environment: 'node',
+    passWithNoTests: true,
   },
 });
 ```
@@ -228,12 +246,12 @@ export {};
 - [ ] **Step 9: Install and build**
 
 Run: `npm install && npm run build`
-Expected: exits 0; `dist/extension.js` and `dist/webview.js` exist.
+Expected: exits 0; `dist/extension.js`, `dist/webview/main.js` and `dist/webview/codicons/codicon.css` exist.
 
 - [ ] **Step 10: Verify test runner wiring**
 
 Run: `npm test`
-Expected: Vitest runs and reports "No test files found" (exit 0). This confirms the runner works before any tests exist.
+Expected: Vitest runs and exits 0 with "No test files found" (allowed by `passWithNoTests: true`). This confirms the runner works before any tests exist.
 
 - [ ] **Step 11: Commit**
 
@@ -1137,9 +1155,9 @@ export class ReaderPanel {
 
   private html(): string {
     const webview = this.panel.webview;
-    const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'dist', 'webview.js'));
+    const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'dist', 'webview', 'main.js'));
     const codiconUri = webview.asWebviewUri(
-      vscode.Uri.joinPath(this.context.extensionUri, 'node_modules', '@vscode', 'codicons', 'dist', 'codicon.css'),
+      vscode.Uri.joinPath(this.context.extensionUri, 'dist', 'webview', 'codicons', 'codicon.css'),
     );
     const nonce = String(Date.now());
     const csp = [
@@ -1159,7 +1177,7 @@ export class ReaderPanel {
 </head>
 <body>
   <div id="app"></div>
-  <script nonce="${nonce}" src="${scriptUri}"></script>
+  <script type="module" nonce="${nonce}" src="${scriptUri}"></script>
 </body>
 </html>`;
   }
@@ -2030,7 +2048,6 @@ Return a cleanup that removes the listener alongside the existing `unsub()`.
 .vscode/**
 src/**
 node_modules/**
-!node_modules/@vscode/codicons/dist/**
 esbuild.mjs
 vitest.config.ts
 tsconfig.json
@@ -2038,7 +2055,7 @@ tsconfig.json
 docs/**
 ```
 
-Note: the negation keeps the Codicon CSS/font that `ReaderPanel` links via `asWebviewUri`. Verify the packaged `.vsix` includes `node_modules/@vscode/codicons/dist/codicon.css` and `codicon.ttf`.
+Note: the Codicon CSS/font are copied into `dist/webview/codicons/` by the build (Task 1), so `node_modules` can be excluded entirely. Verify the packaged `.vsix` includes `dist/webview/codicons/codicon.css` and `codicon.ttf`.
 
 - [ ] **Step 3: Create `README.md`**
 
