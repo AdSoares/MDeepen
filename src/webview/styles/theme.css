@@ -6,7 +6,7 @@
 }
 * { box-sizing: border-box; }
 body { margin: 0; color: var(--vscode-editor-foreground); background: var(--vscode-editor-background); font-family: var(--md-ui); font-size: 13px; }
-.mdeepen-root { display: flex; flex-direction: column; height: 100vh; }
+.mdeepen-root { display: flex; flex-direction: column; height: 100vh; background: var(--vscode-editor-background); color: var(--vscode-editor-foreground); }
 .mdeepen-body { display: flex; flex: 1; min-height: 0; }
 .mdeepen-outline { width: 252px; background: var(--vscode-sideBar-background); border-right: 1px solid var(--vscode-panel-border); overflow: auto; }
 .mdeepen-content { flex: 1; min-width: 0; display: flex; flex-direction: column; }
@@ -20,3 +20,25 @@ button.md-btn.primary { background: var(--vscode-button-background); }
 .mdeepen-root[data-focus="true"] .mdeepen-reading { max-width: 600px; font-size: 17px; }
 .focus-progress { height: 3px; background: var(--vscode-button-background); transition: width .2s; }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+.mdeepen-root[data-theme="dark"] {
+  --vscode-editor-background: #1f1f1f; --vscode-editor-foreground: #cccccc;
+  --vscode-sideBar-background: #181818;
+  --vscode-statusBar-background: #181818; --vscode-statusBar-foreground: #cccccc;
+  --vscode-panel-border: #2b2b2b;
+  --vscode-button-background: #0078d4; --vscode-button-secondaryBackground: #313131; --vscode-button-foreground: #ffffff;
+  --vscode-input-background: #313131; --vscode-input-foreground: #cccccc; --vscode-input-border: #3c3c3c;
+  --vscode-list-activeSelectionBackground: #04395e;
+  --vscode-descriptionForeground: #9d9d9d;
+  --md-warn: #cca700; --md-success: #89d185; --md-info: #3794ff; --md-ai: #9d7cd8;
+}
+.mdeepen-root[data-theme="light"] {
+  --vscode-editor-background: #ffffff; --vscode-editor-foreground: #3b3b3b;
+  --vscode-sideBar-background: #f8f8f8;
+  --vscode-statusBar-background: #f8f8f8; --vscode-statusBar-foreground: #3b3b3b;
+  --vscode-panel-border: #e5e5e5;
+  --vscode-button-background: #005fb8; --vscode-button-secondaryBackground: #e5e5e5; --vscode-button-foreground: #ffffff;
+  --vscode-input-background: #ffffff; --vscode-input-foreground: #3b3b3b; --vscode-input-border: #cecece;
+  --vscode-list-activeSelectionBackground: #cfe4fb;
+  --vscode-descriptionForeground: #767676;
+  --md-warn: #bf8803; --md-success: #388a34; --md-info: #1a85ff; --md-ai: #8250df;
+}
