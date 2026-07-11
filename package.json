@@ -1,0 +1,51 @@
+{
+  "name": "mdeepen",
+  "displayName": "MDeepen — Markdown Intelligence Reader",
+  "description": "Read Markdown, deeper. Paginated, section-based Markdown reader for VS Code.",
+  "version": "0.1.0",
+  "publisher": "codartia",
+  "private": true,
+  "license": "UNLICENSED",
+  "engines": { "vscode": "^1.90.0" },
+  "categories": ["Other"],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      { "command": "mdeepen.openReader", "title": "MDeepen: Open in Markdown Intelligence Reader" }
+    ],
+    "menus": {
+      "explorer/context": [
+        { "command": "mdeepen.openReader", "when": "resourceExtname == .md", "group": "navigation" }
+      ],
+      "editor/title/context": [
+        { "command": "mdeepen.openReader", "when": "resourceExtname == .md", "group": "navigation" }
+      ]
+    },
+    "keybindings": [
+      { "command": "mdeepen.openReader", "key": "ctrl+alt+m", "when": "editorLangId == markdown" }
+    ]
+  },
+  "scripts": {
+    "build": "node esbuild.mjs",
+    "watch": "node esbuild.mjs --watch",
+    "test": "vitest run",
+    "package": "vsce package --no-dependencies"
+  },
+  "devDependencies": {
+    "@types/markdown-it": "^14.1.2",
+    "@types/node": "^20.14.0",
+    "@types/vscode": "^1.90.0",
+    "@vscode/vsce": "^2.31.0",
+    "esbuild": "^0.23.0",
+    "typescript": "^5.5.0",
+    "vitest": "^2.0.0"
+  },
+  "dependencies": {
+    "@vscode/codicons": "^0.0.36",
+    "highlight.js": "^11.10.0",
+    "markdown-it": "^14.1.0",
+    "markdown-it-task-lists": "^2.1.1",
+    "mermaid": "^11.2.0",
+    "preact": "^10.23.0"
+  }
+}
