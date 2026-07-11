@@ -2,12 +2,12 @@ import * as vscode from 'vscode';
 import { randomUUID } from 'node:crypto';
 import { sectionize } from './parser/sectionize';
 import { classifyLink, reconcileIndex } from './linkAndReconcile';
-import { PositionStore } from './state/positionStore';
-import type { ReaderConfig, Page } from '../shared/types';
+import { DocStateStore, UiStateStore } from './state/positionStore';
+import { remapReadIds } from './readState';
+import type { Page } from '../shared/types';
 import type { HostToWebview, WebviewToHost } from '../shared/messages';
 import { isWebviewToHost } from '../shared/messages';
 
-const DEFAULT_CONFIG: ReaderConfig = { fontSize: 15.5, columnWidth: 700, lineHeight: 1.72, theme: 'auto' };
 const DEFAULT_LEVEL = 2;
 
 export class ReaderPanel {
@@ -16,24 +16,26 @@ export class ReaderPanel {
   private level = DEFAULT_LEVEL;
   private pages: Page[] = [];
   private activeIndex = 0;
+  private readIds: string[] = [];
   private readonly disposables: vscode.Disposable[] = [];
   private disposed = false;
   private queue: Promise<void> = Promise.resolve();
 
-  static open(context: vscode.ExtensionContext, uri: vscode.Uri, store: PositionStore): void {
+  static open(context: vscode.ExtensionContext, uri: vscode.Uri, docStore: DocStateStore, uiStore: UiStateStore): void {
     const key = uri.toString();
     const existing = ReaderPanel.panels.get(key);
     if (existing) {
       existing.panel.reveal();
       return;
     }
-    ReaderPanel.panels.set(key, new ReaderPanel(context, uri, store));
+    ReaderPanel.panels.set(key, new ReaderPanel(context, uri, docStore, uiStore));
   }
 
   private constructor(
     private readonly context: vscode.ExtensionContext,
     private readonly uri: vscode.Uri,
-    private readonly store: PositionStore,
+    private readonly docStore: DocStateStore,
+    private readonly uiStore: UiStateStore,
     private readonly panel = vscode.window.createWebviewPanel(
       'mdeepenReader',
       `MDeepen · ${uri.path.split('/').pop()}`,
@@ -68,7 +70,7 @@ export class ReaderPanel {
       case 'activeSectionChanged':
         if (!Number.isInteger(msg.index) || msg.index < 0) break;
         this.activeIndex = msg.index;
-        await this.store.set(this.uri.toString(), msg.index);
+        await this.docStore.set(this.uri.toString(), { index: this.activeIndex, readIds: this.readIds });
         break;
       case 'setPaginationLevel':
         this.level = msg.level;
@@ -79,6 +81,15 @@ export class ReaderPanel {
         break;
       case 'openLink':
         await this.openLink(msg.href);
+        break;
+      case 'sectionRead':
+        if (typeof msg.id === 'string' && this.pages.some((p) => p.id === msg.id) && !this.readIds.includes(msg.id)) {
+          this.readIds.push(msg.id);
+          await this.docStore.set(this.uri.toString(), { index: this.activeIndex, readIds: this.readIds });
+        }
+        break;
+      case 'uiStateChanged':
+        await this.uiStore.set({ config: msg.config, panels: msg.panels });
         break;
     }
   }
@@ -126,8 +137,10 @@ export class ReaderPanel {
     this.pages = result.pages;
 
     if (kind === 'init') {
-      const restored = this.store.get(this.uri.toString());
-      this.activeIndex = Math.min(restored, Math.max(0, result.pages.length - 1));
+      const uriString = this.uri.toString();
+      const doc = this.docStore.get(uriString);
+      this.readIds = remapReadIds(doc.readIds, result.pages, result.pages);
+      this.activeIndex = Math.min(doc.index, Math.max(0, result.pages.length - 1));
       this.post({
         type: 'init',
         fileName: this.uri.path.split('/').pop() ?? 'document.md',
@@ -135,19 +148,22 @@ export class ReaderPanel {
         outline: result.outline,
         effectiveLevel: result.effectiveLevel,
         restoredIndex: this.activeIndex,
-        readIds: [],
-        panels: { outlineVisible: true, aiVisible: true, outlineWidth: 252, aiWidth: 340 },
-        config: DEFAULT_CONFIG,
+        readIds: this.readIds,
+        panels: this.uiStore.get().panels,
+        config: this.uiStore.get().config,
       });
     } else {
+      const uriString = this.uri.toString();
       this.activeIndex = reconcileIndex(oldPages, result.pages, this.activeIndex);
+      this.readIds = remapReadIds(this.readIds, oldPages, result.pages);
+      await this.docStore.set(uriString, { index: this.activeIndex, readIds: this.readIds });
       this.post({
         type: 'sectionsUpdated',
         pages: result.pages,
         outline: result.outline,
         effectiveLevel: result.effectiveLevel,
         keepIndex: this.activeIndex,
-        readIds: [],
+        readIds: this.readIds,
       });
     }
   }
