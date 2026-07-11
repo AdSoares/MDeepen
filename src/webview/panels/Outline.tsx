@@ -28,7 +28,7 @@ function Row({ node, activeIndex, onSelect }: { node: OutlineNode; activeIndex: 
         }}
       >
         <span style={{ opacity: 0.6, fontFamily: 'var(--md-mono)', fontSize: '11px' }}>
-          {String(node.pageIndex).padStart(2, '0')}
+          {String(node.pageIndex + 1).padStart(2, '0')}
         </span>
         <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{node.title}</span>
         {isRead && <span class="codicon codicon-check" style={{ color: 'var(--md-success)' }} aria-label="read" />}
