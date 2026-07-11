@@ -19,7 +19,13 @@ export function App() {
       else if (m.type === 'configChanged') store.setConfig(m.config);
     });
     post({ type: 'ready' });
-    return () => { unsub(); };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.altKey && e.key === 'ArrowRight') { e.preventDefault(); setIndex(store.get().activeIndex + 1); }
+      else if (e.altKey && e.key === 'ArrowLeft') { e.preventDefault(); setIndex(store.get().activeIndex - 1); }
+      else if (e.key === 'F11' && e.shiftKey && e.ctrlKey) { e.preventDefault(); store.setPanels({ focus: !store.get().panels.focus }); }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => { unsub(); window.removeEventListener('keydown', onKey); };
   }, []);
 
   const s = store.get();
