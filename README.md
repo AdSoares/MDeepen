@@ -12,6 +12,7 @@ Read Markdown, deeper. A paginated, section-based Markdown reader for VS Code.
 - Column width: steps of 100px up to full width ("Cheia"); toggleable outline and AI panels.
 - Draggable panel borders with layout persistence; UI preferences (width, spacing, theme) persisted across sessions.
 - Reading and focus modes (`Ctrl+Shift+F11` toggles focus mode); adjustable font size, column width, line spacing, theme.
+- Manual refresh button to reload Markdown; pagination-level picker to set section heading level (H1–H6).
 - AI features are intentionally off in this slice.
 
 ## Develop
@@ -20,3 +21,4 @@ Read Markdown, deeper. A paginated, section-based Markdown reader for VS Code.
 - `npm test` (Vitest)
 - F5 to launch the Extension Development Host.
 - `npm run package` to produce a `.vsix`.
+- **Audit note:** `npm audit --omit=dev` is clean. All advisories are in dev-tool dependencies only; none are shipped in the `.vsix`.
