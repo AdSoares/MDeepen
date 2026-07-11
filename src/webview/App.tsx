@@ -47,10 +47,19 @@ export function App() {
   const pct = progressPercent(s.activeIndex, s.pages.length);
 
   return (
-    <div class="mdeepen-root" data-theme={s.config.theme} data-focus={String(s.panels.focus)} style={{ '--md-fs': `${s.config.fontSize}px`, '--md-lh': String(s.config.lineHeight), '--md-col': `${s.config.columnWidth}px` }}>
+    <div class="mdeepen-root" data-theme={s.config.theme} data-focus={String(s.panels.focus)} style={{ '--md-fs': `${s.config.fontSize}px`, '--md-lh': String(s.config.lineHeight), '--md-col': s.config.columnWidth === 0 ? '100%' : `${s.config.columnWidth}px` }}>
       {s.panels.focus && <div class="focus-progress" style={{ width: `${pct}%` }} />}
       {!s.panels.focus && (
-        <div style={{ height: '34px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', borderBottom: '1px solid var(--vscode-panel-border)' }}>
+        <div style={{ height: '34px', display: 'flex', alignItems: 'center', justifyContent: 'flex-start', borderBottom: '1px solid var(--vscode-panel-border)' }}>
+          <button class="md-btn" aria-label="Toggle outline panel" aria-pressed={s.panels.outlineVisible}
+            onClick={() => store.setPanels({ outlineVisible: !store.get().panels.outlineVisible })}>
+            <span class="codicon codicon-layout-sidebar-left" aria-hidden="true" />
+          </button>
+          <button class="md-btn" aria-label="Toggle AI panel" aria-pressed={s.panels.aiVisible}
+            onClick={() => store.setPanels({ aiVisible: !store.get().panels.aiVisible })}>
+            <span class="codicon codicon-layout-sidebar-right" aria-hidden="true" />
+          </button>
+          <span style={{ flex: 1 }} />
           <ViewControls config={s.config} onChange={(c) => store.setConfig(c)} />
         </div>
       )}

@@ -1,18 +1,21 @@
 import type { ReaderConfig } from '../../shared/types';
+import { stepColumnWidth, COL_FULL } from '../layout';
 
 interface Props { config: ReaderConfig; onChange: (c: ReaderConfig) => void; }
 
 export function ViewControls({ config, onChange }: Props) {
   const set = (patch: Partial<ReaderConfig>) => onChange({ ...config, ...patch });
   const clampFs = (v: number) => Math.min(24, Math.max(11, v));
-  const clampCol = (v: number) => Math.min(1000, Math.max(480, v));
   const clampLh = (v: number) => Math.min(2.2, Math.max(1.3, Math.round(v * 100) / 100));
   return (
     <div style={{ display: 'flex', gap: '8px', alignItems: 'center', padding: '0 12px' }}>
       <button class="md-btn" aria-label="Decrease font size" onClick={() => set({ fontSize: clampFs(config.fontSize - 1) })}>A−</button>
       <button class="md-btn" aria-label="Increase font size" onClick={() => set({ fontSize: clampFs(config.fontSize + 1) })}>A+</button>
-      <button class="md-btn" aria-label="Narrower column" onClick={() => set({ columnWidth: clampCol(config.columnWidth - 40) })}>› ‹</button>
-      <button class="md-btn" aria-label="Wider column" onClick={() => set({ columnWidth: clampCol(config.columnWidth + 40) })}>‹ ›</button>
+      <button class="md-btn" aria-label="Narrower column" onClick={() => set({ columnWidth: stepColumnWidth(config.columnWidth, -1) })}>› ‹</button>
+      <span aria-live="polite" style={{ minWidth: '48px', textAlign: 'center', fontSize: '11px', color: 'var(--vscode-descriptionForeground)' }}>
+        {config.columnWidth === COL_FULL ? 'Cheia' : `${config.columnWidth}px`}
+      </span>
+      <button class="md-btn" aria-label="Wider column" onClick={() => set({ columnWidth: stepColumnWidth(config.columnWidth, 1) })}>‹ ›</button>
       <button class="md-btn" aria-label="Tighter line spacing" onClick={() => set({ lineHeight: clampLh(config.lineHeight - 0.1) })}>↕−</button>
       <button class="md-btn" aria-label="Looser line spacing" onClick={() => set({ lineHeight: clampLh(config.lineHeight + 0.1) })}>↕+</button>
       <select
