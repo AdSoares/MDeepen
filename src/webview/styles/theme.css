@@ -1,0 +1,56 @@
+:root {
+  --md-warn: #cca700; --md-success: #89d185; --md-info: #3794ff; --md-ai: #9d7cd8;
+  --md-serif: 'Source Serif 4', Georgia, serif;
+  --md-ui: 'Inter', var(--vscode-font-family, system-ui);
+  --md-mono: 'JetBrains Mono', var(--vscode-editor-font-family, monospace);
+}
+* { box-sizing: border-box; }
+body { margin: 0; color: var(--vscode-editor-foreground); background: var(--vscode-editor-background); font-family: var(--md-ui); font-size: 13px; }
+.mdeepen-root { display: flex; flex-direction: column; height: 100vh; background: var(--vscode-editor-background); color: var(--vscode-editor-foreground); }
+.mdeepen-body { display: flex; flex: 1; min-height: 0; }
+.mdeepen-outline { width: var(--md-outline-w, 252px); background: var(--vscode-sideBar-background); border-right: 1px solid var(--vscode-panel-border); overflow: auto; }
+.mdeepen-content { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.mdeepen-ai { width: var(--md-ai-w, 340px); background: var(--vscode-sideBar-background); border-left: 1px solid var(--vscode-panel-border); overflow: auto; }
+.mdeepen-status { height: 25px; display: flex; align-items: center; gap: 12px; padding: 0 12px; font-size: 11px; background: var(--vscode-statusBar-background); color: var(--vscode-statusBar-foreground); }
+.mdeepen-reading { max-width: var(--md-col, 700px); margin: 0 auto; padding: 38px 40px; font-family: var(--md-serif); font-size: var(--md-fs, 15.5px); line-height: var(--md-lh, 1.72); overflow: auto; flex: 1; }
+.mdeepen-navfoot { height: 52px; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; border-top: 1px solid var(--vscode-panel-border); }
+button.md-btn { font-family: var(--md-ui); border: none; border-radius: 5px; padding: 5px 12px; cursor: pointer; background: var(--vscode-button-secondaryBackground); color: var(--vscode-button-foreground); }
+button.md-btn.primary { background: var(--vscode-button-background); }
+.hidden { display: none !important; }
+.mdeepen-root[data-focus="true"] .mdeepen-reading { max-width: 600px; font-size: 17px; }
+.focus-progress { height: 3px; background: var(--vscode-button-background); transition: width .2s; }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+.mdeepen-root[data-theme="dark"] {
+  --vscode-editor-background: #1f1f1f; --vscode-editor-foreground: #cccccc;
+  --vscode-sideBar-background: #181818;
+  --vscode-statusBar-background: #181818; --vscode-statusBar-foreground: #cccccc;
+  --vscode-panel-border: #2b2b2b;
+  --vscode-button-background: #0078d4; --vscode-button-secondaryBackground: #313131; --vscode-button-foreground: #ffffff;
+  --vscode-input-background: #313131; --vscode-input-foreground: #cccccc; --vscode-input-border: #3c3c3c;
+  --vscode-list-activeSelectionBackground: #04395e;
+  --vscode-descriptionForeground: #9d9d9d;
+  --md-warn: #cca700; --md-success: #89d185; --md-info: #3794ff; --md-ai: #9d7cd8;
+}
+.mdeepen-root[data-theme="light"] {
+  --vscode-editor-background: #ffffff; --vscode-editor-foreground: #3b3b3b;
+  --vscode-sideBar-background: #f8f8f8;
+  --vscode-statusBar-background: #f8f8f8; --vscode-statusBar-foreground: #3b3b3b;
+  --vscode-panel-border: #e5e5e5;
+  --vscode-button-background: #005fb8; --vscode-button-secondaryBackground: #e5e5e5; --vscode-button-foreground: #ffffff;
+  --vscode-input-background: #ffffff; --vscode-input-foreground: #3b3b3b; --vscode-input-border: #cecece;
+  --vscode-list-activeSelectionBackground: #cfe4fb;
+  --vscode-descriptionForeground: #767676;
+  --md-warn: #bf8803; --md-success: #388a34; --md-info: #1a85ff; --md-ai: #8250df;
+}
+.mdeepen-root select {
+  background: var(--vscode-input-background);
+  color: var(--vscode-input-foreground);
+  border: 1px solid var(--vscode-input-border, var(--vscode-panel-border));
+  border-radius: 5px;
+  padding: 2px 6px;
+  font-family: var(--md-ui);
+  font-size: 11px;
+}
+.md-resizer { width: 6px; cursor: col-resize; flex: 0 0 6px; background: transparent; }
+.md-resizer:hover, .md-resizer:active { background: var(--vscode-focusBorder); opacity: .6; }
+button.md-btn[aria-pressed="false"] { opacity: .55; }
