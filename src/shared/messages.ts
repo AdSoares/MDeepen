@@ -1,9 +1,16 @@
 import type { OutlineNode, Page, PanelsState, ReaderConfig } from './types';
+import type { AiConfig, AiErrorKind } from '../extension/ai/types';
 
 export type HostToWebview =
   | { type: 'init'; fileName: string; pages: Page[]; outline: OutlineNode[]; effectiveLevel: number; restoredIndex: number; readIds: string[]; panels: PanelsState; config: ReaderConfig }
   | { type: 'sectionsUpdated'; pages: Page[]; outline: OutlineNode[]; effectiveLevel: number; keepIndex: number; readIds: string[] }
-  | { type: 'configChanged'; config: ReaderConfig };
+  | { type: 'configChanged'; config: ReaderConfig }
+  | { type: 'aiChunk'; text: string }
+  | { type: 'aiDone'; usage: { inputTokens: number; outputTokens: number } }
+  | { type: 'aiError'; kind: AiErrorKind; message: string }
+  | { type: 'aiConfirmNeeded'; summary: { fileName: string; sectionTitle: string; model: string; estTokens: number; estCost: number }; secrets: { label: string; count: number } }
+  | { type: 'aiConfigState'; configured: boolean; provider: string; model: string }
+  | { type: 'aiConnectionResult'; ok: boolean; ms: number; error?: string };
 
 export type WebviewToHost =
   | { type: 'ready' }
@@ -12,10 +19,17 @@ export type WebviewToHost =
   | { type: 'uiStateChanged'; config: ReaderConfig; panels: PanelsState }
   | { type: 'openLink'; href: string; kind: 'external' | 'local' | 'anchor' }
   | { type: 'refresh' }
-  | { type: 'setPaginationLevel'; level: number };
+  | { type: 'setPaginationLevel'; level: number }
+  | { type: 'aiSummarizeSection'; id: string }
+  | { type: 'aiStop' }
+  | { type: 'aiConfirmSend'; dontAskAgain: boolean; masked: boolean }
+  | { type: 'aiCancelSend' }
+  | { type: 'aiTestConnection' }
+  | { type: 'aiSaveConfig'; config: AiConfig }
+  | { type: 'aiConfigRequest' };
 
-const HOST_TYPES = new Set(['init', 'sectionsUpdated', 'configChanged']);
-const WEBVIEW_TYPES = new Set(['ready', 'activeSectionChanged', 'sectionRead', 'uiStateChanged', 'openLink', 'refresh', 'setPaginationLevel']);
+const HOST_TYPES = new Set(['init', 'sectionsUpdated', 'configChanged', 'aiChunk', 'aiDone', 'aiError', 'aiConfirmNeeded', 'aiConfigState', 'aiConnectionResult']);
+const WEBVIEW_TYPES = new Set(['ready', 'activeSectionChanged', 'sectionRead', 'uiStateChanged', 'openLink', 'refresh', 'setPaginationLevel', 'aiSummarizeSection', 'aiStop', 'aiConfirmSend', 'aiCancelSend', 'aiTestConnection', 'aiSaveConfig', 'aiConfigRequest']);
 
 export function isHostToWebview(m: unknown): m is HostToWebview {
   return typeof m === 'object' && m !== null && HOST_TYPES.has((m as { type?: unknown }).type as string);
