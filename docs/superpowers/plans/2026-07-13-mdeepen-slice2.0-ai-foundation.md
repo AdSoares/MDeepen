@@ -926,20 +926,31 @@ git commit -m "feat: AI config webview, provider badge and summarize UI"
 **Interfaces:**
 - Consumes: `ai.confirm` state; posts `aiConfirmSend`/`aiCancelSend`.
 
-- [ ] **Step 1: Create `AiConfirm.tsx`**
+- [x] **Step 1: Create `AiConfirm.tsx`**
 
 Modal (S16): title "Send content to Anthropic?", a summary box (Content = fileName › sectionTitle, Model, Estimated tokens, Estimated cost ≈ `$${estCost.toFixed(4)}`), a warning strip when `secrets.count > 0` ("⚠ N possible secret detected") with a **Mask** toggle (controls the `masked` flag), a "Don't ask again" checkbox, and footer buttons **Cancel** (posts `aiCancelSend`) / **Mask & send** or **Send** (posts `aiConfirmSend { dontAskAgain, masked }`). Dimmed backdrop.
 
-- [ ] **Step 2: Render it from App when `ai.confirm` is set**
+- [x] **Step 2: Render it from App when `ai.confirm` is set**
 
 Ensure `aiConfirm` store method sets `ai.confirm` from the `aiConfirmNeeded` message and clears it on send/cancel.
 
-- [ ] **Step 3: Build + typecheck + tests**
+- [x] **Step 3: Build + typecheck + tests**
 
 Run: `npm run build && npx tsc --noEmit && npm test`
-Expected: green.
+Expected: green. Result: **117 tests** (114 + 3 for `formatCost`), tsc clean, both bundles build.
 
-- [ ] **Step 4: Commit**
+> **Notes:**
+> - `masked` defaults to true whenever `secrets.count > 0`, so the safe option is the pre-selected
+>   one and the primary button reads 'Mask & send'.
+> - Added `formatCost` (TDD, in `costEstimate.ts`): a real cost under a hundredth of a cent renders
+>   as '< $0.0001' instead of '$0.0000', which would read as free.
+> - Modal is `role="dialog" aria-modal="true"`, focuses Cancel on open, and closes on Escape or a
+>   backdrop click (both take the cancel path, so the host drops the pending send).
+> - Removed the Task 8 stopgap 'waiting for your confirmation' line from `AiPanel`, now superseded.
+> - Confirmed `.mdeepen-root` sets no transform/filter, so the modal's `position: fixed` backdrop
+>   covers the viewport as intended.
+
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/webview/panels/AiConfirm.tsx src/webview/App.tsx src/webview/store.ts
