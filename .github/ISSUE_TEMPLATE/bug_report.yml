@@ -1,0 +1,76 @@
+name: Bug report
+description: Something in the reader or the AI panel does not behave as expected
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. Please do not include API keys, tokens, or private
+        document content in this issue. For a security problem, follow
+        [SECURITY.md](../blob/main/SECURITY.md) instead of opening a public issue.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What did you see, and what did you expect instead?
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open a .md file with ...
+        2. Run "MDeepen: Open in Markdown Intelligence Reader"
+        3. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: sample
+    attributes:
+      label: Minimal Markdown that triggers it
+      description: The smallest document that reproduces the problem, if the bug depends on content.
+      render: markdown
+
+  - type: input
+    id: version
+    attributes:
+      label: MDeepen version
+      placeholder: "0.2.0"
+    validations:
+      required: true
+
+  - type: input
+    id: vscode
+    attributes:
+      label: VS Code version and OS
+      placeholder: "1.90.0, Windows 11"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Reading and pagination
+        - Outline and navigation
+        - Markdown or Mermaid rendering
+        - Read marks, progress, or persistence
+        - AI panel or configuration
+        - Packaging or installation
+        - Something else
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Errors from the developer tools
+      description: >
+        Help > Toggle Developer Tools > Console, in the Extension Development Host
+        or in the window running MDeepen. Redact anything private before pasting.
+      render: shell

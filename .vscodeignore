@@ -9,3 +9,8 @@ docs/**
 .superpowers/**
 **/*.map
 .gitignore
+.github/**
+.editorconfig
+CONTRIBUTING.md
+CODE_OF_CONDUCT.md
+SECURITY.md

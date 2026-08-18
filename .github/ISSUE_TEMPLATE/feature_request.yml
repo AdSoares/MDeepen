@@ -1,0 +1,40 @@
+name: Feature request
+description: Suggest a capability for the reader or the AI layer
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: The reading problem
+      description: >
+        What is hard today? Describe the situation you hit while reading or working
+        through a document, not the solution you have in mind.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What you would like MDeepen to do
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: What you do instead today
+      description: Workarounds, other extensions, or manual steps you use now.
+
+  - type: dropdown
+    id: needs-ai
+    attributes:
+      label: Does this need the AI layer?
+      description: >
+        Reading must keep working with no API key configured, so it matters whether
+        a feature is AI-dependent.
+      options:
+        - "No — it should work with AI switched off"
+        - "Yes — it inherently needs a model"
+        - "Not sure"
+    validations:
+      required: true
