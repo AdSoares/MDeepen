@@ -845,7 +845,7 @@ git commit -m "feat: AI controller orchestrating config, first-send gate and str
 - Consumes: AI message types (Task 1); `AI_MODELS`, `DEFAULT_AI_CONFIG` (Task 1).
 - Produces: store gains `ai: { configured, provider, model, streaming, streamText, messages, confirm, connection }`; App routes `aiConfigState`/`aiChunk`/`aiDone`/`aiError`/`aiConfirmNeeded`/`aiConnectionResult`.
 
-- [ ] **Step 1: Add store AI state (test first)**
+- [x] **Step 1: Add store AI state (test first)**
 
 Add to `src/webview/store.test.ts`:
 
@@ -868,11 +868,11 @@ Then extend `store.ts`: add an `ai` slice to `ReaderState` (`{ configured: boole
 
 Run: `npx vitest run src/webview/store.test.ts` → green.
 
-- [ ] **Step 2: package.json contributes**
+- [x] **Step 2: package.json contributes**
 
 Add to `contributes.commands`: `{ "command": "mdeepen.configureAi", "title": "MDeepen: Configure AI…" }`. (No `when` — available in palette.)
 
-- [ ] **Step 3: AiPanel — configured state + Summarize + badge**
+- [x] **Step 3: AiPanel — configured state + Summarize + badge**
 
 In `AiPanel.tsx`, branch on `ai.configured`:
 - Not configured → keep the existing "AI features are off" card, plus a "Configure AI" button that posts `aiConfigRequest` and triggers the config view (or runs the command).
@@ -880,22 +880,35 @@ In `AiPanel.tsx`, branch on `ai.configured`:
 
 Pass `activePageId` and an `onCite(pageIndex)` down from App.
 
-- [ ] **Step 4: AiConfig.tsx (S4 modal/card)**
+- [x] **Step 4: AiConfig.tsx (S4 modal/card)**
 
 A card with: mode segmented (Remote active, Local disabled), model `<select>` from `AI_MODELS`, maxTokens number input, API key masked input, **Test connection** button (posts `aiTestConnection`, shows `ai.connection` result), **Save** (posts `aiSaveConfig` with the non-secret config; the key is saved via a separate `aiSaveKey`? — no: include key handling by posting the key in `aiSaveConfig`? The key must NOT round-trip through globalState). 
 
 Resolution: add a dedicated message `aiSaveKey { key }` (webview→host) so the key goes straight to SecretStorage and never into the config object. Add it to the contract (Task 1 covered config; add `aiSaveKey` to `WEBVIEW_TYPES` and the union here, with a test line). The controller handles `aiSaveKey` by `store.setKey(msg.key)` then `postConfigState()`.
 
-- [ ] **Step 5: App wiring**
+- [x] **Step 5: App wiring**
 
 In `App.tsx`, handle the new host→webview AI messages by calling the store methods; on mount, post `aiConfigRequest`. Show `AiConfig` when the user invokes configure (a local `showConfig` state toggled by the Configure button / command-driven `aiConfigState`). Render the confirm modal (S16) when `ai.confirm` is set: summary + optional secret warning + Mask toggle + "Don't ask again" + Cancel/Send buttons posting `aiConfirmSend`/`aiCancelSend`.
 
-- [ ] **Step 6: Build + typecheck + tests**
+- [x] **Step 6: Build + typecheck + tests**
 
 Run: `npm run build && npx tsc --noEmit && npm test`
-Expected: green. Wire `aiSaveKey` end to end (contract + controller + config UI).
+Expected: green. Result: **114 tests**, tsc clean, both bundles build.
 
-- [ ] **Step 7: Commit**
+> **Notes:**
+> - `aiSaveKey` wired end to end (contract + guard sets + controller + config UI); a controller test
+>   asserts the key reaches SecretStorage and never appears in the globalState config object.
+> - Added `aiShowConfig` (host->webview) so the palette command `mdeepen.configureAi` actually opens
+>   the config view. `ReaderPanel.open()` now returns the panel and queues the message when the
+>   webview is not initialised yet, so the command works on a cold start too.
+> - Store keeps a partial answer when a stream errors or is stopped (tested), and `aiStopped()`
+>   closes the webview's own streaming state - this is the gap Task 7 left open on `aiStop`.
+> - Verified the webview bundle does **not** contain the SDK (`api.anthropic.com` absent), per the
+>   slice constraint that all network access stays in the extension host.
+> - The S16 modal itself is Task 9; for now the panel shows a 'waiting for your confirmation' line
+>   when `ai.confirm` is set, so a first send is never silently swallowed.
+
+- [x] **Step 7: Commit**
 
 ```bash
 git add package.json src/webview/panels/AiConfig.tsx src/webview/panels/AiPanel.tsx src/webview/App.tsx src/webview/store.ts src/webview/store.test.ts src/shared/messages.ts src/shared/messages.test.ts src/extension/ai/AiController.ts
