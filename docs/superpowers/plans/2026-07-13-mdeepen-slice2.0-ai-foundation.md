@@ -458,7 +458,7 @@ git commit -m "feat: pure error classification and summarize prompt builder"
 
 This task integrates the SDK and is smoke-verified (no unit test — network/SDK). It relies on the already-tested `classifyError`.
 
-- [ ] **Step 1: Implement `AnthropicProvider.ts`**
+- [x] **Step 1: Implement `AnthropicProvider.ts`**
 
 ```ts
 import Anthropic from '@anthropic-ai/sdk';
@@ -517,7 +517,7 @@ export class AnthropicProvider implements AiProvider {
 
 Note on `Date.now()`: this runs in the extension host (Node), not in a workflow script — `Date.now()` is available and correct here.
 
-- [ ] **Step 2: Implement `providerRegistry.ts`**
+- [x] **Step 2: Implement `providerRegistry.ts`**
 
 ```ts
 import type { AiConfig, AiProvider } from './types';
@@ -533,12 +533,20 @@ export function createProvider(config: AiConfig, apiKey: string): AiProvider {
 }
 ```
 
-- [ ] **Step 3: Build + typecheck**
+- [x] **Step 3: Build + typecheck**
 
 Run: `npm run build && npx tsc --noEmit && npm test`
-Expected: build 0 (SDK bundles into `dist/extension.js`); tsc clean; 98 tests still green. If tsc flags the `{ signal }` request-options overload or the stream event type, reconcile against the installed SDK types (read `node_modules/@anthropic-ai/sdk` typings) — do not guess; adjust the event narrowing to match the SDK's `MessageStreamEvent` union.
+Expected: build 0 (SDK bundles into `dist/extension.js`); tsc clean; 97 tests still green.
 
-- [ ] **Step 4: Commit**
+> **Smoke result:** verified offline with `ANTHROPIC_BASE_URL=http://127.0.0.1:1` against an
+> esbuild bundle of `providerRegistry.ts` (472 KB, SDK inlined): `generate()` yields a single
+> `{type:'error', kind:'connection'}`, `testConnection()` returns `ok:false` with a message, and an
+> already-aborted signal yields nothing. The **success path (text_delta streaming, `finalMessage`
+> usage) is still unverified** — it needs a real key and network, and lands in the Task 11 smoke handoff.
+> Note: nothing imports `ai/` from `extension.ts` yet, so the SDK is not in `dist/extension.js`
+> until Task 7 wires the controller. If tsc flags the `{ signal }` request-options overload or the stream event type, reconcile against the installed SDK types (read `node_modules/@anthropic-ai/sdk` typings) — do not guess; adjust the event narrowing to match the SDK's `MessageStreamEvent` union.
+
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/extension/ai/AnthropicProvider.ts src/extension/ai/providerRegistry.ts
