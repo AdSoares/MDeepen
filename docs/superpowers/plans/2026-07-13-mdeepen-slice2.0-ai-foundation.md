@@ -1012,25 +1012,56 @@ git commit -m "style: AI streaming caret, confirm modal and config card"
 - Modify: `package.json` (0.2.0)
 - Modify: `README.md`
 
-- [ ] **Step 1: Bump to 0.2.0.**
+- [x] **Step 1: Bump to 0.2.0.**
 
-- [ ] **Step 2: README** — add the AI foundation section: configure a remote Anthropic provider (key in SecretStorage), first-send confirmation with secret masking, Summarize section with streaming; note reading works fully without AI; note the AI layer is Slice 2 (chat/selection/mermaid to come).
+- [x] **Step 2: README** — add the AI foundation section: configure a remote Anthropic provider (key in SecretStorage), first-send confirmation with secret masking, Summarize section with streaming; note reading works fully without AI; note the AI layer is Slice 2 (chat/selection/mermaid to come).
 
-- [ ] **Step 3: Build, test, package**
+- [x] **Step 3: Build, test, package**
 
 Run: `npm run build && npx tsc --noEmit && npm test && npm run package`
 Expected: suite green; `mdeepen-0.2.0.vsix` produced; confirm vsce listing has no `.map`/`.superpowers`; note the vsix size delta from bundling the SDK.
 
-- [ ] **Step 4: Commit**
+> **Result:** 117 tests green, tsc clean. `mdeepen-0.2.0.vsix` = **2.37 MB / 117 files**
+> (0.1.2 was 2.28 MB) - only **+90 KB** packaged despite ~400 KB of SDK added to
+> `dist/extension.js` (494 KB, up from ~100 KB), because the vsix is compressed.
+> `vsce ls` shows no `.map`, no `.superpowers`, no `src/`, no `docs/`, no test files.
+> Also added `.gitignore` to `.vscodeignore` - it was being shipped inside the extension.
+> Remaining packaging warning: no LICENSE file (the manifest declares `UNLICENSED` and
+> `private: true`, so this only matters if MDeepen is ever published to the Marketplace).
+
+- [x] **Step 4: Commit**
 
 ```bash
 git add package.json README.md
 git commit -m "chore: release 0.2.0 with AI foundation"
 ```
 
-- [ ] **Step 5: Human smoke (manual, needs a real Anthropic API key)** — verify §11 completion criteria: configure AI (key saved to SecretStorage, not settings); Test connection; first Summarize triggers S16 with local token/cost estimate; secret detection + mask on a section containing an `sk-...` string; streaming with caret + Stop keeping the partial; citation navigates; Copy; error states (wrong key → auth, offline → connection); reader still works with AI unconfigured.
+- [ ] **Step 5: Human smoke (manual, needs a real Anthropic API key)** - **NOT DONE: this step is the user's.** — verify §11 completion criteria: configure AI (key saved to SecretStorage, not settings); Test connection; first Summarize triggers S16 with local token/cost estimate; secret detection + mask on a section containing an `sk-...` string; streaming with caret + Stop keeping the partial; citation navigates; Copy; error states (wrong key → auth, offline → connection); reader still works with AI unconfigured.
 
 ---
+
+> **Smoke checklist** - install `mdeepen-0.2.0.vsix` (or press F5 for the Extension Development
+> Host), open a `.md`, and walk these. Everything before this point is verified by the suite, the
+> compiler and offline bundle inspection; the success path of a real streamed request is **not**:
+>
+> | # | Check | Expected |
+> |---|---|---|
+> | 1 | Open the reader with no key configured | Panel shows "AI features are off"; pagination, outline, read marks and progress all work |
+> | 2 | `MDeepen: Configure AI...` from the palette | Config card opens (works from a cold start too - the message is queued until the webview is ready) |
+> | 3 | Save a real key, then check `settings.json` and the workspace | Key appears nowhere on disk; only in the VS Code secret store |
+> | 4 | Test connection | Reports `Connected in NNN ms` |
+> | 5 | First Summarize section | Confirmation dialog with file > section, model, estimated tokens and cost |
+> | 6 | Summarize a section containing `sk-abcdef0123456789abcdef` | Warning strip appears, Mask is pre-checked, button reads "Mask & send" |
+> | 7 | Send it, then inspect the answer | The model never echoes the key - it received the redaction marker |
+> | 8 | Watch the stream | **Unverified path:** text arrives token by token with a blinking caret |
+> | 9 | Stop generating mid-stream | Streaming state clears and the partial answer is kept as a message |
+> | 10 | Click the citation chip | Reader navigates to that section |
+> | 11 | Copy | Answer lands on the clipboard |
+> | 12 | Save a wrong key and summarize | Error reads as an auth failure, not "unknown" |
+> | 13 | Disconnect the network and summarize | Error reads as a connection failure (this one *is* verified offline in Task 5) |
+> | 14 | Close the panel mid-stream | Request is aborted, no orphaned billing |
+> | 15 | Tick "Don't ask again", reopen the workspace | No dialog on the next send; a different workspace still asks |
+
 
 ## Self-Review Notes
 
