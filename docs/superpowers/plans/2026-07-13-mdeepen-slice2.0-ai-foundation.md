@@ -685,7 +685,7 @@ git commit -m "feat: AI config store over SecretStorage and globalState"
 
 This task is VS Code-integration; smoke-verified. It relies on the tested pure modules.
 
-- [ ] **Step 1: Implement `AiController.ts`**
+- [x] **Step 1: Implement `AiController.ts`**
 
 ```ts
 import * as vscode from 'vscode';
@@ -791,22 +791,39 @@ export class AiController {
 
 Note: `pendingSend` is unused in the final shape (superseded by `pendingRun`/`pendingRaw`); remove the `pendingSend` field and its assignment to keep the class clean.
 
-- [ ] **Step 2: Wire into `ReaderPanel.ts`**
+- [x] **Step 2: Wire into `ReaderPanel.ts`**
 
 In `ReaderPanel`, construct an `AiController` (needs the config store — passed from `extension.ts` into `ReaderPanel.open`), and in `onMessage`, route any message whose `type` starts with `'ai'` to `this.aiController.handle(msg)`. On `init`, also call `this.aiController.postConfigState()`. Do NOT disturb the existing FIFO reparse queue, disposed guard, message validation, or link handling.
 
 The AI controller needs live `pages`, `fileName`, and a `post` bound to this panel's webview — pass closures: `() => this.pages`, `() => this.uri.path.split('/').pop() ?? ''`, and `(m) => this.post(m)`.
 
-- [ ] **Step 3: Wire into `extension.ts`**
+- [x] **Step 3: Wire into `extension.ts`**
 
 Construct `const aiStore = new AiConfigStore(context.secrets, context.globalState);` and pass it into `ReaderPanel.open(...)`. Register command `mdeepen.configureAi` (added to `package.json` contributes in Task 8) that opens the config webview (Task 8 provides the UI; for now the command can post `aiConfigRequest`-driven state or open the panel — Task 8 finalizes).
 
-- [ ] **Step 4: Build + typecheck + tests**
+- [x] **Step 4: Build + typecheck + tests**
 
 Run: `npm run build && npx tsc --noEmit && npm test`
-Expected: green (101). Fix any tsc issues in the wiring (e.g. `context.secrets` is `vscode.SecretStorage`, structurally compatible with `SecretsLike`).
+Expected: green (107 = 100 + 7 new controller tests). Wiring compiled with no tsc fixes needed.
 
-- [ ] **Step 5: Commit**
+> **Deviations from the plan's code:**
+> - `workspaceState` is typed `MementoLike` (Task 6) instead of `vscode.Memento`, so `AiController`
+>   imports no `vscode` at all and the first-send gate is unit-testable. The plan's `vscode.Memento`
+>   also fails `tsc` against a test fake (`keys` missing).
+> - Added unit tests (the plan said smoke-only): gate blocks the first send, masked/raw confirm paths,
+>   cancel drops the pending send, `dontAskAgain` persists, chunk/usage forwarding, and stop aborts.
+> - `run()` aborts any in-flight request before starting, so a double-click cannot interleave two
+>   streams into one panel or orphan the first `AbortController`.
+> - Added `dispose()`, called from `ReaderPanel.dispose()`, so closing the panel cancels a live stream.
+> - Dropped the unused `pendingSend` field as the plan instructed.
+> - `mdeepen.configureAi` is **not** registered here — Task 8 owns the command and its
+>   `package.json` contribution; a stub would otherwise ship as a dead palette entry.
+>
+> **Open for Task 9/10:** `aiStop` aborts silently, so the host sends no terminal message — the
+> webview must clear its own streaming state when it dispatches `aiStop`, or the panel stays
+> stuck in a streaming UI.
+
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/extension/ai/AiController.ts src/extension/ReaderPanel.ts src/extension/extension.ts
