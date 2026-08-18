@@ -33,11 +33,11 @@
 **Interfaces:**
 - Produces: `AiErrorKind`, `AiRequest`, `AiChunk`, `ConnectionResult`, `AiProvider`, `AiConfig` (in `ai/types.ts`); new message variants in the contract.
 
-- [ ] **Step 1: Add the dependency**
+- [x] **Step 1: Add the dependency**
 
 In `package.json` `dependencies`, add `"@anthropic-ai/sdk": "^0.116.0"`. Run `npm install`.
 
-- [ ] **Step 2: Create `src/extension/ai/types.ts`**
+- [x] **Step 2: Create `src/extension/ai/types.ts`**
 
 ```ts
 export type AiErrorKind = 'auth' | 'rate_limit' | 'connection' | 'unknown';
@@ -74,7 +74,7 @@ export const DEFAULT_AI_CONFIG: AiConfig = { provider: 'anthropic', model: 'clau
 export const AI_MODELS = ['claude-opus-4-8', 'claude-sonnet-5', 'claude-haiku-4-5'] as const;
 ```
 
-- [ ] **Step 3: Extend the message contract test (failing)**
+- [x] **Step 3: Extend the message contract test (failing)**
 
 Append to `src/shared/messages.test.ts`, inside the describe block:
 
@@ -92,12 +92,12 @@ Append to `src/shared/messages.test.ts`, inside the describe block:
   });
 ```
 
-- [ ] **Step 4: Run to verify failure**
+- [x] **Step 4: Run to verify failure**
 
 Run: `npx vitest run src/shared/messages.test.ts`
 Expected: the two new AI-message cases fail (types not yet in the sets).
 
-- [ ] **Step 5: Extend `src/shared/messages.ts`**
+- [x] **Step 5: Extend `src/shared/messages.ts`**
 
 Add to the imports: `import type { AiConfig, AiErrorKind } from '../extension/ai/types';` (types-only import — no runtime coupling to the host).
 
@@ -131,14 +131,14 @@ Add the new type strings to `WEBVIEW_TYPES` and `HOST_TYPES` sets:
 'aiChunk', 'aiDone', 'aiError', 'aiConfirmNeeded', 'aiConfigState', 'aiConnectionResult'
 ```
 
-- [ ] **Step 6: Run tests + typecheck**
+- [x] **Step 6: Run tests + typecheck**
 
 Run: `npx vitest run src/shared/messages.test.ts && npm run build && npx tsc --noEmit && npm test`
 Expected: green (80 tests).
 
 Note: the types-only import from `../extension/ai/types` into `src/shared/` crosses the shared→extension boundary. This is acceptable because it is `import type` (erased at build; no runtime dependency, webview bundle unaffected). If tsc complains about rootDir, keep it — the webview build (esbuild) tree-shakes type-only imports.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add package.json package-lock.json src/extension/ai/types.ts src/shared/messages.ts src/shared/messages.test.ts
@@ -156,7 +156,7 @@ git commit -m "feat: add anthropic sdk, AI core types and message contract"
 **Interfaces:**
 - Produces: `interface Secret { kind: string; index: number; length: number }`; `detectSecrets(text: string): Secret[]`; `maskSecrets(text: string): string` (replaces every detected secret span with `‹redacted›`).
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```ts
 import { describe, it, expect } from 'vitest';
@@ -193,12 +193,12 @@ describe('maskSecrets', () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify failure**
+- [x] **Step 2: Run to verify failure**
 
 Run: `npx vitest run src/extension/ai/secretDetection.test.ts`
 Expected: FAIL — module missing.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 ```ts
 export interface Secret {
@@ -238,12 +238,12 @@ export function maskSecrets(text: string): string {
 }
 ```
 
-- [ ] **Step 4: Run to verify pass + full suite**
+- [x] **Step 4: Run to verify pass + full suite**
 
 Run: `npx vitest run src/extension/ai/secretDetection.test.ts && npm test`
 Expected: green (86 tests).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/extension/ai/secretDetection.ts src/extension/ai/secretDetection.test.ts
