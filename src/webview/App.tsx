@@ -6,6 +6,7 @@ import { progressPercent, remainingMinutes, readingMinutes } from '../shared/pro
 import { Outline } from './panels/Outline';
 import { Content } from './panels/Content';
 import { AiPanel } from './panels/AiPanel';
+import { AiConfig } from './panels/AiConfig';
 import { ViewControls } from './panels/ViewControls';
 import { Resizer } from './panels/Resizer';
 import { findBySlug } from './anchors';
@@ -24,14 +25,27 @@ function schedulePersist() {
 
 export function App() {
   const [, force] = useState(0);
+  const [showConfig, setShowConfig] = useState(false);
   useEffect(() => {
     const unsub = store.subscribe(() => force((n) => n + 1));
     onMessage((m) => {
       if (m.type === 'init') store.applyInit(m);
       else if (m.type === 'sectionsUpdated') store.applyUpdate(m);
       else if (m.type === 'configChanged') store.setConfig(m.config);
+      else if (m.type === 'aiConfigState') store.aiConfigState(m.configured, m.provider, m.model);
+      else if (m.type === 'aiChunk') store.aiChunk(m.text);
+      else if (m.type === 'aiDone') store.aiDone();
+      else if (m.type === 'aiError') store.aiError(m.kind, m.message);
+      else if (m.type === 'aiConnectionResult') store.aiConnection({ ok: m.ok, ms: m.ms, error: m.error });
+      else if (m.type === 'aiShowConfig') { store.setPanels({ aiVisible: true }); setShowConfig(true); }
+      else if (m.type === 'aiConfirmNeeded') {
+        // The host is holding the request until the user answers, so stop showing a live stream.
+        store.aiStopped();
+        store.aiConfirm({ summary: m.summary, secrets: m.secrets });
+      }
     });
     post({ type: 'ready' });
+    post({ type: 'aiConfigRequest' });
     const onKey = (e: KeyboardEvent) => {
       if (e.altKey && e.key === 'ArrowRight') { e.preventDefault(); setIndex(store.get().activeIndex + 1); }
       else if (e.altKey && e.key === 'ArrowLeft') { e.preventDefault(); setIndex(store.get().activeIndex - 1); }
@@ -123,7 +137,21 @@ export function App() {
           <Resizer kind="ai" currentWidth={s.panels.aiWidth} onResize={(w) => { store.setPanels({ aiWidth: w }); schedulePersist(); }} />
         )}
         <div class={`mdeepen-ai ${s.panels.aiVisible && !s.panels.focus ? '' : 'hidden'}`}>
-          <AiPanel />
+          {showConfig && <AiConfig ai={s.ai} onClose={() => setShowConfig(false)} />}
+          <AiPanel
+            ai={s.ai}
+            activePageId={page?.id}
+            onConfigure={() => setShowConfig((v) => !v)}
+            onCite={(pageIndex) => setIndex(pageIndex)}
+            onSummarize={() => {
+              const st = store.get();
+              const target = st.pages[st.activeIndex];
+              if (!target) return;
+              store.aiStreamStart(target.title, st.activeIndex);
+              post({ type: 'aiSummarizeSection', id: target.id });
+            }}
+            onStop={() => { store.aiStopped(); post({ type: 'aiStop' }); }}
+          />
         </div>
       </div>
       <div class="mdeepen-status">

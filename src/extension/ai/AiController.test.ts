@@ -107,6 +107,23 @@ describe('AiController first-send gate', () => {
   });
 });
 
+describe('AiController key handling', () => {
+  it('stores the key in SecretStorage and reports configured, without touching the config', async () => {
+    const posted: HostToWebview[] = [];
+    const secrets = fakeSecrets();
+    const configMemento = fakeMemento();
+    const store = new AiConfigStore(secrets, configMemento);
+    const c = new AiController(store, fakeMemento(), (m) => posted.push(m), () => [PAGE], () => 'doc.md');
+
+    await c.handle({ type: 'aiSaveKey', key: 'sk-secret' });
+
+    expect(await store.getKey()).toBe('sk-secret');
+    expect(JSON.stringify(configMemento.get('mdeepen.aiConfig', {}))).not.toContain('sk-secret');
+    const state = posted.find((m) => m.type === 'aiConfigState');
+    expect(state && state.type === 'aiConfigState' && state.configured).toBe(true);
+  });
+});
+
 describe('AiController streaming', () => {
   it('forwards text chunks and usage to the webview', async () => {
     rec.chunks.push({ type: 'text', text: 'Hel' }, { type: 'text', text: 'lo' }, { type: 'done', usage: { inputTokens: 10, outputTokens: 3 } });

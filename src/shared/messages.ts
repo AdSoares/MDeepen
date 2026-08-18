@@ -10,7 +10,8 @@ export type HostToWebview =
   | { type: 'aiError'; kind: AiErrorKind; message: string }
   | { type: 'aiConfirmNeeded'; summary: { fileName: string; sectionTitle: string; model: string; estTokens: number; estCost: number }; secrets: { label: string; count: number } }
   | { type: 'aiConfigState'; configured: boolean; provider: string; model: string }
-  | { type: 'aiConnectionResult'; ok: boolean; ms: number; error?: string };
+  | { type: 'aiConnectionResult'; ok: boolean; ms: number; error?: string }
+  | { type: 'aiShowConfig' };
 
 export type WebviewToHost =
   | { type: 'ready' }
@@ -26,10 +27,11 @@ export type WebviewToHost =
   | { type: 'aiCancelSend' }
   | { type: 'aiTestConnection' }
   | { type: 'aiSaveConfig'; config: AiConfig }
+  | { type: 'aiSaveKey'; key: string }
   | { type: 'aiConfigRequest' };
 
-const HOST_TYPES = new Set(['init', 'sectionsUpdated', 'configChanged', 'aiChunk', 'aiDone', 'aiError', 'aiConfirmNeeded', 'aiConfigState', 'aiConnectionResult']);
-const WEBVIEW_TYPES = new Set(['ready', 'activeSectionChanged', 'sectionRead', 'uiStateChanged', 'openLink', 'refresh', 'setPaginationLevel', 'aiSummarizeSection', 'aiStop', 'aiConfirmSend', 'aiCancelSend', 'aiTestConnection', 'aiSaveConfig', 'aiConfigRequest']);
+const HOST_TYPES = new Set(['init', 'sectionsUpdated', 'configChanged', 'aiChunk', 'aiDone', 'aiError', 'aiConfirmNeeded', 'aiConfigState', 'aiConnectionResult', 'aiShowConfig']);
+const WEBVIEW_TYPES = new Set(['ready', 'activeSectionChanged', 'sectionRead', 'uiStateChanged', 'openLink', 'refresh', 'setPaginationLevel', 'aiSummarizeSection', 'aiStop', 'aiConfirmSend', 'aiCancelSend', 'aiTestConnection', 'aiSaveConfig', 'aiSaveKey', 'aiConfigRequest']);
 
 export function isHostToWebview(m: unknown): m is HostToWebview {
   return typeof m === 'object' && m !== null && HOST_TYPES.has((m as { type?: unknown }).type as string);

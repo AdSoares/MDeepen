@@ -42,9 +42,13 @@ describe('message type guards', () => {
     expect(isWebviewToHost({ type: 'aiConfirmSend', dontAskAgain: true, masked: false })).toBe(true);
     expect(isWebviewToHost({ type: 'aiSaveConfig', config: { provider: 'anthropic', model: 'claude-opus-4-8', maxTokens: 4096 } })).toBe(true);
   });
+  it('accepts the API key message, which must never travel inside aiSaveConfig', () => {
+    expect(isWebviewToHost({ type: 'aiSaveKey', key: 'sk-test' })).toBe(true);
+  });
   it('accepts new AI host->webview messages', () => {
     expect(isHostToWebview({ type: 'aiChunk', text: 'x' })).toBe(true);
     expect(isHostToWebview({ type: 'aiDone', usage: { inputTokens: 1, outputTokens: 2 } })).toBe(true);
     expect(isHostToWebview({ type: 'aiError', kind: 'auth', message: 'x' })).toBe(true);
+    expect(isHostToWebview({ type: 'aiShowConfig' })).toBe(true);
   });
 });

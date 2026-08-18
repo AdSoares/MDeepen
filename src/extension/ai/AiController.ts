@@ -34,6 +34,11 @@ export class AiController {
         await this.store.setConfig(msg.config);
         await this.postConfigState();
         break;
+      case 'aiSaveKey':
+        // Goes straight to SecretStorage — the key never enters the config object.
+        await this.store.setKey(msg.key);
+        await this.postConfigState();
+        break;
       case 'aiTestConnection': {
         const key = await this.store.getKey();
         if (!key) { this.post({ type: 'aiConnectionResult', ok: false, ms: 0, error: 'No API key set' }); break; }

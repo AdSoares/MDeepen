@@ -2,6 +2,26 @@ import type { HostToWebview } from '../shared/messages';
 import type { OutlineNode, Page, ReaderConfig } from '../shared/types';
 import { DEFAULT_CONFIG, DEFAULT_PANELS } from '../shared/defaults';
 
+export interface AiMessage {
+  text: string;
+  sectionTitle: string;
+  pageIndex: number;
+}
+
+export interface AiState {
+  configured: boolean;
+  provider: string;
+  model: string;
+  streaming: boolean;
+  streamText: string;
+  sectionTitle: string;
+  pageIndex: number;
+  messages: AiMessage[];
+  error?: { kind: string; message: string };
+  confirm?: Omit<Extract<HostToWebview, { type: 'aiConfirmNeeded' }>, 'type'>;
+  connection?: { ok: boolean; ms: number; error?: string };
+}
+
 export interface ReaderState {
   fileName: string;
   pages: Page[];
@@ -11,16 +31,32 @@ export interface ReaderState {
   config: ReaderConfig;
   readIds: Set<string>;
   panels: { outlineVisible: boolean; aiVisible: boolean; outlineWidth: number; aiWidth: number; focus: boolean };
+  ai: AiState;
 }
+
+const initialAi: AiState = {
+  configured: false, provider: 'anthropic', model: '',
+  streaming: false, streamText: '', sectionTitle: '', pageIndex: -1,
+  messages: [],
+};
 
 const initial: ReaderState = {
   fileName: '', pages: [], outline: [], effectiveLevel: 2, activeIndex: 0,
   readIds: new Set(),
   config: { ...DEFAULT_CONFIG },
   panels: { ...DEFAULT_PANELS, focus: false },
+  ai: { ...initialAi },
 };
 
 const clamp = (i: number, len: number): number => Math.min(Math.max(i, 0), Math.max(0, len - 1));
+
+/** Ends a stream, keeping whatever text arrived so a partial answer is never thrown away. */
+function finalizeStream(ai: AiState): AiState {
+  const messages = ai.streamText
+    ? [...ai.messages, { text: ai.streamText, sectionTitle: ai.sectionTitle, pageIndex: ai.pageIndex }]
+    : ai.messages;
+  return { ...ai, streaming: false, streamText: '', messages };
+}
 
 export function createReaderState() {
   let state: ReaderState = { ...initial };
@@ -55,6 +91,39 @@ export function createReaderState() {
         activeIndex: clamp(m.keepIndex, m.pages.length),
         readIds: new Set(m.readIds),
       };
+      emit();
+    },
+    aiConfigState(configured: boolean, provider: string, model: string) {
+      state = { ...state, ai: { ...state.ai, configured, provider, model } };
+      emit();
+    },
+    aiStreamStart(sectionTitle = '', pageIndex = -1) {
+      state = { ...state, ai: { ...state.ai, streaming: true, streamText: '', sectionTitle, pageIndex, error: undefined } };
+      emit();
+    },
+    aiChunk(text: string) {
+      state = { ...state, ai: { ...state.ai, streamText: state.ai.streamText + text } };
+      emit();
+    },
+    aiDone() {
+      state = { ...state, ai: finalizeStream(state.ai) };
+      emit();
+    },
+    /** The host aborts silently on stop, so the webview closes out its own streaming state. */
+    aiStopped() {
+      state = { ...state, ai: finalizeStream(state.ai) };
+      emit();
+    },
+    aiError(kind: string, message: string) {
+      state = { ...state, ai: { ...finalizeStream(state.ai), error: { kind, message } } };
+      emit();
+    },
+    aiConfirm(confirm: AiState['confirm']) {
+      state = { ...state, ai: { ...state.ai, confirm } };
+      emit();
+    },
+    aiConnection(connection: AiState['connection']) {
+      state = { ...state, ai: { ...state.ai, connection } };
       emit();
     },
     markRead(id: string) {

@@ -24,15 +24,25 @@ export class ReaderPanel {
   private queue: Promise<void> = Promise.resolve();
   private changeTimer: ReturnType<typeof setTimeout> | undefined;
   private readonly ai: AiController;
+  private initialised = false;
+  private pendingAiConfig = false;
 
-  static open(context: vscode.ExtensionContext, uri: vscode.Uri, docStore: DocStateStore, uiStore: UiStateStore, aiStore: AiConfigStore): void {
+  static open(context: vscode.ExtensionContext, uri: vscode.Uri, docStore: DocStateStore, uiStore: UiStateStore, aiStore: AiConfigStore): ReaderPanel {
     const key = uri.toString();
     const existing = ReaderPanel.panels.get(key);
     if (existing) {
       existing.panel.reveal();
-      return;
+      return existing;
     }
-    ReaderPanel.panels.set(key, new ReaderPanel(context, uri, docStore, uiStore, aiStore));
+    const created = new ReaderPanel(context, uri, docStore, uiStore, aiStore);
+    ReaderPanel.panels.set(key, created);
+    return created;
+  }
+
+  /** Opens the AI config view. Queued until the webview is initialised, so it also works on a fresh panel. */
+  requestAiConfig(): void {
+    if (this.initialised) this.post({ type: 'aiShowConfig' });
+    else this.pendingAiConfig = true;
   }
 
   private constructor(
@@ -180,6 +190,11 @@ export class ReaderPanel {
         config: this.uiStore.get().config,
       });
       await this.ai.postConfigState();
+      this.initialised = true;
+      if (this.pendingAiConfig) {
+        this.pendingAiConfig = false;
+        this.post({ type: 'aiShowConfig' });
+      }
     } else {
       const uriString = this.uri.toString();
       this.activeIndex = reconcileIndex(oldPages, result.pages, this.activeIndex);

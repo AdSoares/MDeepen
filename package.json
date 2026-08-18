@@ -12,7 +12,8 @@
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
-      { "command": "mdeepen.openReader", "title": "MDeepen: Open in Markdown Intelligence Reader" }
+      { "command": "mdeepen.openReader", "title": "MDeepen: Open in Markdown Intelligence Reader" },
+      { "command": "mdeepen.configureAi", "title": "MDeepen: Configure AI…" }
     ],
     "menus": {
       "explorer/context": [

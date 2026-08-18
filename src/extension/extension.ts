@@ -15,7 +15,15 @@ export function activate(context: vscode.ExtensionContext): void {
     }
     ReaderPanel.open(context, target, docStore, uiStore, aiStore);
   });
-  context.subscriptions.push(cmd);
+  const configureCmd = vscode.commands.registerCommand('mdeepen.configureAi', () => {
+    const target = vscode.window.activeTextEditor?.document.uri;
+    if (!target) {
+      vscode.window.showWarningMessage('MDeepen: open a Markdown file first.');
+      return;
+    }
+    ReaderPanel.open(context, target, docStore, uiStore, aiStore).requestAiConfig();
+  });
+  context.subscriptions.push(cmd, configureCmd);
 }
 
 export function deactivate(): void {}
