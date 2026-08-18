@@ -967,20 +967,37 @@ git commit -m "feat: first-send confirmation modal with secret masking"
 
 **Interfaces:** styles only.
 
-- [ ] **Step 1: Confirm CSP needs no change**
+- [x] **Step 1: Confirm CSP needs no change**
 
 The webview makes no network calls (all AI I/O is host-side over postMessage). Verify the existing CSP (`default-src 'none'`, script nonce, style `unsafe-inline`) still covers the AI UI. No `connect-src` is needed. Document this in the commit.
 
-- [ ] **Step 2: Add AI styles to theme.css**
+> **Verified, not assumed:** scanned `dist/webview/main.js` and all 100+ lazy chunks for
+> `fetch(`, `XMLHttpRequest`, `new WebSocket`, `EventSource`, `sendBeacon` and `importScripts`.
+> The only hits were 28 `parser.fetch()` calls inside the KaTeX tokenizer (mermaid's math path) -
+> a method name, not `window.fetch`. No network API reaches the webview, so `default-src 'none'`
+> with no `connect-src` stands, and anything that ever tried would fail closed.
+> The extension bundle keeps the SDK (`api.anthropic.com` present in `dist/extension.js`,
+> absent from the webview bundle).
+
+- [x] **Step 2: Add AI styles to theme.css**
 
 Blinking caret animation for streaming (respecting `prefers-reduced-motion`), confirm-modal backdrop + card, config card, provider badge (`--md-ai` accent), secret-warning strip (`--md-warn`). Reuse existing tokens.
 
-- [ ] **Step 3: Build + tests**
+- [x] **Step 3: Build + tests**
 
 Run: `npm run build && npx tsc --noEmit && npm test`
-Expected: green.
+Expected: green. Result: **117 tests**, tsc clean, both bundles build; CSS confirmed inlined
+into the webview bundle (`md-blink` keyframes and the modal/config rules are present).
 
-- [ ] **Step 4: Commit**
+> **Polish applied:** blinking caret during streaming (the existing global
+> `prefers-reduced-motion` rule already disables it, so no duplicate guard); provider badge with a
+> `--md-ai` dot; secret-warning strip on `--md-warn`; modal and config cards moved from inline
+> styles to `theme.css` classes. A11y: streaming region is `role="status" aria-live="polite"
+> aria-busy`, citation chips carry a descriptive `aria-label` instead of a bare `title`, the copy
+> button is labelled, the API-key field is tied to its hint via `aria-describedby`, and the confirm
+> dialog now traps Tab focus inside the card while it is open.
+
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/webview/styles/theme.css src/extension/ReaderPanel.ts
