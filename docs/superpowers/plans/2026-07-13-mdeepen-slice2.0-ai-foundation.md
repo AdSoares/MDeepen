@@ -338,7 +338,7 @@ git commit -m "feat: pure local token and cost estimation"
 **Interfaces:**
 - Produces: `classifyError(err: unknown): AiErrorKind` using duck-typed checks (the tests must not import the SDK); `buildSummarizeRequest(section: { title: string; content: string }, maxTokens: number): AiRequest`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `errorMap.test.ts` — classify by a `name`/`status`-shaped duck type so the test needs no SDK:
 
@@ -386,12 +386,12 @@ describe('buildSummarizeRequest', () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify failure**
+- [x] **Step 2: Run to verify failure**
 
 Run: `npx vitest run src/extension/ai/errorMap.test.ts src/extension/ai/prompts.test.ts`
 Expected: FAIL — modules missing.
 
-- [ ] **Step 3: Implement `errorMap.ts`**
+- [x] **Step 3: Implement `errorMap.ts`**
 
 ```ts
 import type { AiErrorKind } from './types';
@@ -406,7 +406,7 @@ export function classifyError(err: unknown): AiErrorKind {
 }
 ```
 
-- [ ] **Step 4: Implement `prompts.ts`**
+- [x] **Step 4: Implement `prompts.ts`**
 
 ```ts
 import type { AiRequest } from './types';
@@ -427,12 +427,17 @@ export function buildSummarizeRequest(section: { title: string; content: string 
 }
 ```
 
-- [ ] **Step 5: Run to verify pass + full suite**
+- [x] **Step 5: Run to verify pass + full suite**
 
 Run: `npx vitest run src/extension/ai/errorMap.test.ts src/extension/ai/prompts.test.ts && npm test`
-Expected: green (98 tests).
+Expected: green (97 tests: 90 + 6 planned + 1 added — see note).
 
-- [ ] **Step 6: Commit**
+> **Deviation:** the planned duck-typing (`name`/`status`) never yields `'connection'` for real
+> SDK errors — `@anthropic-ai/sdk` leaves `name` as `'Error'` and `status` undefined on
+> `APIConnectionError`. `classifyError` also checks `constructor.name`, covered by an extra test.
+> The plan's "98 tests" was an arithmetic slip (90 + 6 = 96).
+
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/extension/ai/errorMap.ts src/extension/ai/errorMap.test.ts src/extension/ai/prompts.ts src/extension/ai/prompts.test.ts
