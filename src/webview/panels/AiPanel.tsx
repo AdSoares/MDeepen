@@ -48,12 +48,6 @@ export function AiPanel({ ai, activePageId, onConfigure, onCite, onSummarize, on
         {ai.streaming && <button class="md-btn" onClick={onStop}>Stop generating</button>}
       </div>
 
-      {ai.confirm && (
-        <p role="status" style={{ margin: 0, fontSize: '12px', color: 'var(--md-warn)' }}>
-          Waiting for your confirmation before sending...
-        </p>
-      )}
-
       {ai.error && (
         <p role="alert" style={{ margin: 0, fontSize: '12px', color: 'var(--md-warn)' }}>{ai.error.message}</p>
       )}

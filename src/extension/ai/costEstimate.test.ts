@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { estimateTokens, estimateCost } from './costEstimate';
+import { estimateTokens, estimateCost, formatCost } from './costEstimate';
 
 describe('estimateTokens', () => {
   it('approximates chars/4 rounded up', () => {
@@ -18,5 +18,17 @@ describe('estimateCost', () => {
   });
   it('falls back to opus price for an unknown model', () => {
     expect(estimateCost(1_000_000, 'mystery')).toBeCloseTo(5, 5);
+  });
+});
+
+describe('formatCost', () => {
+  it('shows four decimals for a normal estimate', () => {
+    expect(formatCost(0.0125)).toBe('$0.0125');
+  });
+  it('never renders a real cost as $0.0000', () => {
+    expect(formatCost(0.00002)).toBe('< $0.0001');
+  });
+  it('shows free as zero', () => {
+    expect(formatCost(0)).toBe('$0.0000');
   });
 });

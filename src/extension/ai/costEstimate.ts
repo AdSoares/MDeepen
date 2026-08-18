@@ -13,3 +13,9 @@ export function estimateCost(inputTokens: number, model: string): number {
   const price = INPUT_PRICE_PER_M[model] ?? INPUT_PRICE_PER_M['claude-opus-4-8'];
   return (inputTokens / 1_000_000) * price;
 }
+
+/** Renders an estimate without ever showing a real cost as $0.0000. */
+export function formatCost(usd: number): string {
+  if (usd > 0 && usd < 0.0001) return '< $0.0001';
+  return `$${usd.toFixed(4)}`;
+}

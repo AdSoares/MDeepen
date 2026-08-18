@@ -7,6 +7,7 @@ import { Outline } from './panels/Outline';
 import { Content } from './panels/Content';
 import { AiPanel } from './panels/AiPanel';
 import { AiConfig } from './panels/AiConfig';
+import { AiConfirm } from './panels/AiConfirm';
 import { ViewControls } from './panels/ViewControls';
 import { Resizer } from './panels/Resizer';
 import { findBySlug } from './anchors';
@@ -154,6 +155,18 @@ export function App() {
           />
         </div>
       </div>
+      {s.ai.confirm && (
+        <AiConfirm
+          confirm={s.ai.confirm}
+          onCancel={() => { store.aiConfirm(undefined); post({ type: 'aiCancelSend' }); }}
+          onSend={(opts) => {
+            const { sectionTitle, pageIndex } = store.get().ai;
+            store.aiConfirm(undefined);
+            store.aiStreamStart(sectionTitle, pageIndex);
+            post({ type: 'aiConfirmSend', ...opts });
+          }}
+        />
+      )}
       <div class="mdeepen-status">
         <span>{pct}% read</span>
         <span>{page ? `${page.title}` : ''}</span>
