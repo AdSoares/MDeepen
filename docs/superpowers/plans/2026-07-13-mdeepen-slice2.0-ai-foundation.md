@@ -261,7 +261,7 @@ git commit -m "feat: pure secret detection and masking"
 **Interfaces:**
 - Produces: `estimateTokens(text: string): number` (≈ `ceil(chars/4)`); `estimateCost(inputTokens: number, model: string): number` (USD, input-side only, from a small price table; unknown model → opus price).
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```ts
 import { describe, it, expect } from 'vitest';
@@ -288,12 +288,12 @@ describe('estimateCost', () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify failure**
+- [x] **Step 2: Run to verify failure**
 
 Run: `npx vitest run src/extension/ai/costEstimate.test.ts`
 Expected: FAIL — module missing.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 ```ts
 // Input-side USD per 1M tokens (from the claude-api model table).
@@ -313,12 +313,12 @@ export function estimateCost(inputTokens: number, model: string): number {
 }
 ```
 
-- [ ] **Step 4: Run to verify pass + full suite**
+- [x] **Step 4: Run to verify pass + full suite**
 
 Run: `npx vitest run src/extension/ai/costEstimate.test.ts && npm test`
 Expected: green (90 tests).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/extension/ai/costEstimate.ts src/extension/ai/costEstimate.test.ts
