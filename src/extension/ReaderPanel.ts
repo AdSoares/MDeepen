@@ -4,6 +4,8 @@ import { sectionize } from './parser/sectionize';
 import { classifyLink, reconcileIndex } from './linkAndReconcile';
 import { DocStateStore, UiStateStore } from './state/positionStore';
 import { remapReadIds } from './readState';
+import { AiController } from './ai/AiController';
+import type { AiConfigStore } from './ai/AiConfigStore';
 import type { Page } from '../shared/types';
 import type { HostToWebview, WebviewToHost } from '../shared/messages';
 import { isWebviewToHost } from '../shared/messages';
@@ -21,15 +23,16 @@ export class ReaderPanel {
   private disposed = false;
   private queue: Promise<void> = Promise.resolve();
   private changeTimer: ReturnType<typeof setTimeout> | undefined;
+  private readonly ai: AiController;
 
-  static open(context: vscode.ExtensionContext, uri: vscode.Uri, docStore: DocStateStore, uiStore: UiStateStore): void {
+  static open(context: vscode.ExtensionContext, uri: vscode.Uri, docStore: DocStateStore, uiStore: UiStateStore, aiStore: AiConfigStore): void {
     const key = uri.toString();
     const existing = ReaderPanel.panels.get(key);
     if (existing) {
       existing.panel.reveal();
       return;
     }
-    ReaderPanel.panels.set(key, new ReaderPanel(context, uri, docStore, uiStore));
+    ReaderPanel.panels.set(key, new ReaderPanel(context, uri, docStore, uiStore, aiStore));
   }
 
   private constructor(
@@ -37,6 +40,7 @@ export class ReaderPanel {
     private readonly uri: vscode.Uri,
     private readonly docStore: DocStateStore,
     private readonly uiStore: UiStateStore,
+    aiStore: AiConfigStore,
     private readonly panel = vscode.window.createWebviewPanel(
       'mdeepenReader',
       `MDeepen · ${uri.path.split('/').pop()}`,
@@ -44,6 +48,13 @@ export class ReaderPanel {
       { enableScripts: true, retainContextWhenHidden: true },
     ),
   ) {
+    this.ai = new AiController(
+      aiStore,
+      context.workspaceState,
+      (m) => this.post(m),
+      () => this.pages,
+      () => this.uri.path.split('/').pop() ?? 'document.md',
+    );
     this.panel.webview.html = this.html();
     this.panel.webview.onDidReceiveMessage((m) => { if (isWebviewToHost(m)) void this.onMessage(m); }, null, this.disposables);
     this.panel.onDidDispose(() => this.dispose(), null, this.disposables);
@@ -73,6 +84,10 @@ export class ReaderPanel {
   }
 
   private async onMessage(msg: WebviewToHost): Promise<void> {
+    if (msg.type.startsWith('ai')) {
+      await this.ai.handle(msg);
+      return;
+    }
     switch (msg.type) {
       case 'ready':
         await this.reparse('init');
@@ -164,6 +179,7 @@ export class ReaderPanel {
         panels: this.uiStore.get().panels,
         config: this.uiStore.get().config,
       });
+      await this.ai.postConfigState();
     } else {
       const uriString = this.uri.toString();
       this.activeIndex = reconcileIndex(oldPages, result.pages, this.activeIndex);
@@ -211,6 +227,7 @@ export class ReaderPanel {
 
   private dispose(): void {
     this.disposed = true;
+    this.ai.dispose();
     if (this.changeTimer) clearTimeout(this.changeTimer);
     ReaderPanel.panels.delete(this.uri.toString());
     while (this.disposables.length) this.disposables.pop()?.dispose();
