@@ -565,7 +565,7 @@ git commit -m "feat: anthropic streaming provider and registry"
 - Consumes: minimal `SecretsLike` (`get`/`store`/`delete`) and `MementoLike` (`get`/`update`).
 - Produces: `class AiConfigStore { getConfig(): AiConfig; setConfig(c): Thenable<void>; getKey(): Promise<string|undefined>; setKey(k): Thenable<void>; isConfigured(): Promise<boolean> }`. Config in globalState key `mdeepen.aiConfig` (default `DEFAULT_AI_CONFIG`); key in SecretStorage `mdeepen.anthropic.apiKey`. `isConfigured()` = a key exists.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```ts
 import { describe, it, expect } from 'vitest';
@@ -609,12 +609,12 @@ describe('AiConfigStore', () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify failure**
+- [x] **Step 2: Run to verify failure**
 
 Run: `npx vitest run src/extension/ai/AiConfigStore.test.ts`
 Expected: FAIL — module missing.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 ```ts
 import type { AiConfig } from './types';
@@ -655,12 +655,15 @@ export class AiConfigStore {
 }
 ```
 
-- [ ] **Step 4: Run to verify pass + full suite**
+- [x] **Step 4: Run to verify pass + full suite**
 
 Run: `npx vitest run src/extension/ai/AiConfigStore.test.ts && npm test`
-Expected: green (101 tests).
+Expected: green (100 tests — the plan's running totals drifted; 97 + 3 = 100).
 
-- [ ] **Step 5: Commit**
+> Also verified at compile time that `context.secrets` and `context.globalState` satisfy
+> `SecretsLike`/`MementoLike`, so Task 7 can wire them directly.
+
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/extension/ai/AiConfigStore.ts src/extension/ai/AiConfigStore.test.ts
