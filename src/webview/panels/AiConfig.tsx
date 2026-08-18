@@ -8,9 +8,6 @@ interface Props {
   onClose: () => void;
 }
 
-const row = { display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' } as const;
-const labelStyle = { fontSize: '12px', width: '92px', color: 'var(--vscode-descriptionForeground)' } as const;
-
 export function AiConfig({ ai, onClose }: Props) {
   const [model, setModel] = useState(ai.model || DEFAULT_AI_CONFIG.model);
   const [maxTokens, setMaxTokens] = useState(DEFAULT_AI_CONFIG.maxTokens);
@@ -24,36 +21,37 @@ export function AiConfig({ ai, onClose }: Props) {
   };
 
   return (
-    <div style={{ padding: '14px', borderBottom: '1px solid var(--vscode-panel-border)' }}>
-      <h2 style={{ margin: '0 0 12px', fontSize: '13px', fontWeight: 600 }}>AI configuration</h2>
+    <div class="md-config">
+      <h2>AI configuration</h2>
 
-      <div style={row}>
-        <span style={labelStyle}>Mode</span>
+      <div class="md-config-row">
+        <span class="md-config-label">Mode</span>
         <button class="md-btn primary" aria-pressed="true" disabled>Remote</button>
         <button class="md-btn" disabled title="Local models are not part of this build">Local</button>
       </div>
 
-      <div style={row}>
-        <label style={labelStyle} for="ai-model">Model</label>
+      <div class="md-config-row">
+        <label class="md-config-label" for="ai-model">Model</label>
         <select id="ai-model" value={model} onChange={(e) => setModel((e.target as HTMLSelectElement).value)}>
           {AI_MODELS.map((m) => <option key={m} value={m}>{m}</option>)}
         </select>
       </div>
 
-      <div style={row}>
-        <label style={labelStyle} for="ai-maxtokens">Max tokens</label>
+      <div class="md-config-row">
+        <label class="md-config-label" for="ai-maxtokens">Max tokens</label>
         <input id="ai-maxtokens" type="number" min={256} max={64000} step={256} value={maxTokens} style={{ width: '96px' }}
           onInput={(e) => setMaxTokens(Number((e.target as HTMLInputElement).value))} />
       </div>
 
-      <div style={row}>
-        <label style={labelStyle} for="ai-key">API key</label>
+      <div class="md-config-row">
+        <label class="md-config-label" for="ai-key">API key</label>
         <input id="ai-key" type="password" autocomplete="off" spellcheck={false}
+          aria-describedby="ai-key-hint"
           placeholder={ai.configured ? 'Saved - type to replace' : 'sk-ant-...'}
           value={key} style={{ flex: 1, minWidth: 0 }}
           onInput={(e) => setKey((e.target as HTMLInputElement).value)} />
       </div>
-      <p style={{ margin: '0 0 12px 100px', fontSize: '11px', color: 'var(--vscode-descriptionForeground)' }}>
+      <p id="ai-key-hint" class="md-config-hint">
         Stored in the VS Code secret store, never in settings or in your files.
       </p>
 
@@ -64,7 +62,7 @@ export function AiConfig({ ai, onClose }: Props) {
       </div>
 
       {ai.connection && (
-        <p role="status" style={{ marginTop: '10px', fontSize: '12px', color: ai.connection.ok ? 'var(--md-success)' : 'var(--md-warn)' }}>
+        <p class="md-config-result" data-ok={String(ai.connection.ok)} role="status">
           {ai.connection.ok ? `Connected in ${ai.connection.ms} ms` : `Failed: ${ai.connection.error ?? 'unknown error'}`}
         </p>
       )}

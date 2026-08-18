@@ -54,3 +54,38 @@ button.md-btn.primary { background: var(--vscode-button-background); }
 .md-resizer { width: 6px; cursor: col-resize; flex: 0 0 6px; background: transparent; }
 .md-resizer:hover, .md-resizer:active { background: var(--vscode-focusBorder); opacity: .6; }
 button.md-btn[aria-pressed="false"] { opacity: .55; }
+
+/* --- AI (Slice 2.0) ---------------------------------------------------- */
+/* No connect-src in the CSP: every AI network call happens in the extension
+   host and reaches this webview over postMessage. */
+.md-ai-panel { padding: 14px; display: flex; flex-direction: column; gap: 12px; height: 100%; overflow-y: auto; }
+.md-ai-head { display: flex; align-items: center; gap: 8px; }
+.md-ai-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: var(--vscode-descriptionForeground); }
+.md-ai-badge::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--md-ai); }
+.md-ai-stream { font-size: 13px; white-space: pre-wrap; }
+.md-ai-msg { border-top: 1px solid var(--vscode-panel-border); padding-top: 10px; }
+.md-ai-msg-text { font-size: 13px; white-space: pre-wrap; }
+.md-ai-msg-foot { display: flex; gap: 8px; margin-top: 8px; align-items: center; }
+.md-ai-alert { margin: 0; font-size: 12px; color: var(--md-warn); }
+.md-caret { display: inline-block; width: 6px; height: 1em; margin-left: 2px; vertical-align: text-bottom; background: var(--md-ai); animation: md-blink 1s steps(2, start) infinite; }
+@keyframes md-blink { to { visibility: hidden; } }
+
+.md-modal-backdrop { position: fixed; inset: 0; background: rgba(0, 0, 0, .5); display: flex; align-items: center; justify-content: center; z-index: 50; }
+.md-modal-card { background: var(--vscode-editor-background); border: 1px solid var(--vscode-panel-border); border-radius: 8px; padding: 18px; width: min(460px, 90vw); box-shadow: 0 8px 32px rgba(0, 0, 0, .35); }
+.md-modal-title { margin: 0 0 4px; font-size: 14px; font-weight: 600; }
+.md-modal-lede { margin: 0 0 14px; font-size: 12px; color: var(--vscode-descriptionForeground); }
+.md-modal-facts { display: grid; grid-template-columns: auto 1fr; gap: 6px 16px; margin: 0 0 14px; }
+.md-modal-facts dt { color: var(--vscode-descriptionForeground); font-size: 12px; }
+.md-modal-facts dd { font-size: 12px; text-align: right; margin: 0; }
+.md-modal-foot { display: flex; gap: 8px; justify-content: flex-end; }
+.md-secret-strip { display: flex; align-items: center; gap: 8px; padding: 8px 10px; margin-bottom: 12px; border-radius: 5px; border: 1px solid var(--md-warn); font-size: 12px; }
+.md-check { display: flex; align-items: center; gap: 6px; font-size: 12px; }
+
+.md-config { padding: 14px; border-bottom: 1px solid var(--vscode-panel-border); }
+.md-config h2 { margin: 0 0 12px; font-size: 13px; font-weight: 600; }
+.md-config-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.md-config-label { font-size: 12px; width: 92px; color: var(--vscode-descriptionForeground); }
+.md-config-hint { margin: 0 0 12px 100px; font-size: 11px; color: var(--vscode-descriptionForeground); }
+.md-config-result { margin-top: 10px; font-size: 12px; }
+.md-config-result[data-ok="true"] { color: var(--md-success); }
+.md-config-result[data-ok="false"] { color: var(--md-warn); }

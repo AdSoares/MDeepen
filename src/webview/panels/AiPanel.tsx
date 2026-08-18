@@ -15,7 +15,7 @@ export function AiPanel({ ai, activePageId, onConfigure, onCite, onSummarize, on
   if (!ai.configured) {
     return (
       <div style={{ padding: '16px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+        <div class="md-ai-head" style={{ marginBottom: '10px' }}>
           <span class="codicon codicon-sparkle" style={{ color: 'var(--md-ai)' }} aria-hidden="true" />
           <h2 style={{ margin: 0, fontSize: '13px', fontWeight: 600 }}>AI features are off</h2>
         </div>
@@ -31,10 +31,9 @@ export function AiPanel({ ai, activePageId, onConfigure, onCite, onSummarize, on
   }
 
   return (
-    <div style={{ padding: '14px', display: 'flex', flexDirection: 'column', gap: '12px', height: '100%', overflowY: 'auto' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <span class="codicon codicon-sparkle" style={{ color: 'var(--md-ai)' }} aria-hidden="true" />
-        <span style={{ fontSize: '11px', color: 'var(--vscode-descriptionForeground)' }}>Anthropic - {ai.model}</span>
+    <div class="md-ai-panel">
+      <div class="md-ai-head">
+        <span class="md-ai-badge">Anthropic &middot; {ai.model}</span>
         <span style={{ flex: 1 }} />
         <button class="md-btn" aria-label="AI configuration" onClick={onConfigure}>
           <span class="codicon codicon-gear" aria-hidden="true" />
@@ -48,24 +47,28 @@ export function AiPanel({ ai, activePageId, onConfigure, onCite, onSummarize, on
         {ai.streaming && <button class="md-btn" onClick={onStop}>Stop generating</button>}
       </div>
 
-      {ai.error && (
-        <p role="alert" style={{ margin: 0, fontSize: '12px', color: 'var(--md-warn)' }}>{ai.error.message}</p>
-      )}
+      {ai.error && <p class="md-ai-alert" role="alert">{ai.error.message}</p>}
 
       {ai.streaming && (
-        <div aria-live="polite" style={{ fontSize: '13px', whiteSpace: 'pre-wrap' }}>{ai.streamText}</div>
+        <div class="md-ai-stream" role="status" aria-live="polite" aria-busy="true">
+          {ai.streamText}
+          <span class="md-caret" aria-hidden="true" />
+        </div>
       )}
 
       {ai.messages.map((m, i) => (
-        <div key={i} style={{ borderTop: '1px solid var(--vscode-panel-border)', paddingTop: '10px' }}>
-          <div style={{ fontSize: '13px', whiteSpace: 'pre-wrap' }}>{m.text}</div>
-          <div style={{ display: 'flex', gap: '8px', marginTop: '8px', alignItems: 'center' }}>
+        <div class="md-ai-msg" key={i}>
+          <div class="md-ai-msg-text">{m.text}</div>
+          <div class="md-ai-msg-foot">
             {m.pageIndex >= 0 && (
-              <button class="md-btn" onClick={() => onCite(m.pageIndex)} title={`Go to section ${m.pageIndex + 1}`}>
+              <button class="md-btn" onClick={() => onCite(m.pageIndex)}
+                aria-label={`Go to section ${m.pageIndex + 1}: ${m.sectionTitle}`}>
                 &sect;{String(m.pageIndex + 1).padStart(2, '0')} {m.sectionTitle}
               </button>
             )}
-            <button class="md-btn" onClick={() => navigator.clipboard.writeText(m.text)}>Copy</button>
+            <button class="md-btn" aria-label="Copy this answer" onClick={() => navigator.clipboard.writeText(m.text)}>
+              Copy
+            </button>
           </div>
         </div>
       ))}
