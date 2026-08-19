@@ -12,12 +12,21 @@ export function AiConfig({ ai, onClose }: Props) {
   const [model, setModel] = useState(ai.model || DEFAULT_AI_CONFIG.model);
   const [maxTokens, setMaxTokens] = useState(DEFAULT_AI_CONFIG.maxTokens);
   const [key, setKey] = useState('');
+  const [saved, setSaved] = useState(false);
 
+  // Saving must not close the card: `configured` only flips once the host round-trips
+  // aiConfigState, and Test connection is gated on it. Closing here made "save then test"
+  // impossible without reopening the card.
   const save = () => {
     if (key.trim()) post({ type: 'aiSaveKey', key: key.trim() });
     post({ type: 'aiSaveConfig', config: { provider: 'anthropic', model, maxTokens } });
     setKey('');
-    onClose();
+    setSaved(true);
+  };
+
+  const test = () => {
+    setSaved(false);
+    post({ type: 'aiTestConnection' });
   };
 
   return (
@@ -32,7 +41,7 @@ export function AiConfig({ ai, onClose }: Props) {
 
       <div class="md-config-row">
         <label class="md-config-label" for="ai-model">Model</label>
-        <select id="ai-model" value={model} onChange={(e) => setModel((e.target as HTMLSelectElement).value)}>
+        <select id="ai-model" value={model} onChange={(e) => { setSaved(false); setModel((e.target as HTMLSelectElement).value); }}>
           {AI_MODELS.map((m) => <option key={m} value={m}>{m}</option>)}
         </select>
       </div>
@@ -40,7 +49,7 @@ export function AiConfig({ ai, onClose }: Props) {
       <div class="md-config-row">
         <label class="md-config-label" for="ai-maxtokens">Max tokens</label>
         <input id="ai-maxtokens" type="number" min={256} max={64000} step={256} value={maxTokens} style={{ width: '96px' }}
-          onInput={(e) => setMaxTokens(Number((e.target as HTMLInputElement).value))} />
+          onInput={(e) => { setSaved(false); setMaxTokens(Number((e.target as HTMLInputElement).value)); }} />
       </div>
 
       <div class="md-config-row">
@@ -49,7 +58,7 @@ export function AiConfig({ ai, onClose }: Props) {
           aria-describedby="ai-key-hint"
           placeholder={ai.configured ? 'Saved - type to replace' : 'sk-ant-...'}
           value={key} style={{ flex: 1, minWidth: 0 }}
-          onInput={(e) => setKey((e.target as HTMLInputElement).value)} />
+          onInput={(e) => { setSaved(false); setKey((e.target as HTMLInputElement).value); }} />
       </div>
       <p id="ai-key-hint" class="md-config-hint">
         Stored in the VS Code secret store, never in settings or in your files.
@@ -57,9 +66,15 @@ export function AiConfig({ ai, onClose }: Props) {
 
       <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
         <button class="md-btn primary" onClick={save}>Save</button>
-        <button class="md-btn" onClick={() => post({ type: 'aiTestConnection' })} disabled={!ai.configured}>Test connection</button>
+        <button class="md-btn" onClick={test} disabled={!ai.configured}>Test connection</button>
         <button class="md-btn" onClick={onClose}>Close</button>
       </div>
+
+      {saved && !ai.connection && (
+        <p class="md-config-result" data-ok="true" role="status">
+          Saved. {ai.configured ? 'You can test the connection now.' : 'No API key stored yet.'}
+        </p>
+      )}
 
       {ai.connection && (
         <p class="md-config-result" data-ok={String(ai.connection.ok)} role="status">
