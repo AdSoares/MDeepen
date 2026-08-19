@@ -150,7 +150,7 @@ export function App() {
               const st = store.get();
               const target = st.pages[st.activeIndex];
               if (!target) return;
-              store.aiStreamStart(target.title, st.activeIndex);
+              store.aiStreamStart({ action: 'summarize', scope: 'section', sectionTitle: target.title, pageIndex: st.activeIndex });
               post({ type: 'aiSummarizeSection', id: target.id });
             }}
             onStop={() => { store.aiStopped(); post({ type: 'aiStop' }); }}
@@ -162,9 +162,9 @@ export function App() {
           confirm={s.ai.confirm}
           onCancel={() => { store.aiConfirm(undefined); post({ type: 'aiCancelSend' }); }}
           onSend={(opts) => {
-            const { sectionTitle, pageIndex } = store.get().ai;
+            const { pending } = store.get().ai;
             store.aiConfirm(undefined);
-            store.aiStreamStart(sectionTitle, pageIndex);
+            store.aiStreamStart(pending);
             post({ type: 'aiConfirmSend', ...opts });
           }}
         />
