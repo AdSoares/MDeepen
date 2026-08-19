@@ -30,3 +30,8 @@ export interface AiConfig {
 
 export const DEFAULT_AI_CONFIG: AiConfig = { provider: 'anthropic', model: 'claude-opus-4-8', maxTokens: 4096 };
 export const AI_MODELS = ['claude-opus-4-8', 'claude-sonnet-5', 'claude-haiku-4-5'] as const;
+
+export type AiActionKind = 'summarize' | 'explain' | 'explainSimply' | 'keyTerms' | 'example';
+export type AiScope = 'section' | 'selection';
+
+export const AI_ACTIONS: readonly AiActionKind[] = ['summarize', 'explain', 'explainSimply', 'keyTerms', 'example'];
