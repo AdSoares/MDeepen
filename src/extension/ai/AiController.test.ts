@@ -232,6 +232,15 @@ describe('AiController action payloads', () => {
     expect(rec.calls).toHaveLength(0);
   });
 
+  it('ignores an aiAction naming a page id that matches no page', async () => {
+    const ws = fakeMemento();
+    await ws.update('mdeepen.ai.firstSendConfirmed', true);
+    const { c, posted } = makeController(ws);
+    await c.handle({ type: 'aiAction', action: 'explain', scope: 'section', id: 'no-such-page' });
+    expect(rec.calls).toHaveLength(0);
+    expect(posted).toHaveLength(0);
+  });
+
   it('ignores a selection larger than the payload cap', async () => {
     const ws = fakeMemento();
     await ws.update('mdeepen.ai.firstSendConfirmed', true);
