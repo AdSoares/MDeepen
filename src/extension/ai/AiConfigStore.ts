@@ -29,6 +29,9 @@ export class AiConfigStore {
   setKey(key: string): Thenable<void> {
     return this.secrets.store(SECRET_KEY, key);
   }
+  clearKey(): Thenable<void> {
+    return this.secrets.delete(SECRET_KEY);
+  }
   async isConfigured(): Promise<boolean> {
     const k = await this.secrets.get(SECRET_KEY);
     return typeof k === 'string' && k.length > 0;

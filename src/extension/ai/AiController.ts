@@ -34,6 +34,14 @@ export class AiController {
         await this.store.setConfig(msg.config);
         await this.postConfigState();
         break;
+      case 'aiClearKey':
+        // Disconnecting is a privacy action: drop anything in flight, forget the key, and
+        // revoke the first-send consent so a future key has to be confirmed again.
+        this.dispose();
+        await this.store.clearKey();
+        await this.workspaceState.update(FIRST_SEND_KEY, false);
+        await this.postConfigState();
+        break;
       case 'aiSaveKey':
         // Goes straight to SecretStorage — the key never enters the config object.
         await this.store.setKey(msg.key);

@@ -13,6 +13,7 @@ export function AiConfig({ ai, onClose }: Props) {
   const [maxTokens, setMaxTokens] = useState(DEFAULT_AI_CONFIG.maxTokens);
   const [key, setKey] = useState('');
   const [saved, setSaved] = useState(false);
+  const [armed, setArmed] = useState(false);
 
   // Saving must not close the card: `configured` only flips once the host round-trips
   // aiConfigState, and Test connection is gated on it. Closing here made "save then test"
@@ -26,7 +27,17 @@ export function AiConfig({ ai, onClose }: Props) {
 
   const test = () => {
     setSaved(false);
+    setArmed(false);
     post({ type: 'aiTestConnection' });
+  };
+
+  // Two-step, because removing the key means pasting it again from wherever it lives.
+  const disconnect = () => {
+    if (!armed) { setArmed(true); return; }
+    setArmed(false);
+    setSaved(false);
+    setKey('');
+    post({ type: 'aiClearKey' });
   };
 
   return (
@@ -66,9 +77,23 @@ export function AiConfig({ ai, onClose }: Props) {
 
       <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
         <button class="md-btn primary" onClick={save}>Save</button>
-        <button class="md-btn" onClick={test} disabled={!ai.configured}>Test connection</button>
+        <button class="md-btn accent" onClick={test} disabled={!ai.configured}>Test connection</button>
         <button class="md-btn" onClick={onClose}>Close</button>
+        <span style={{ flex: 1 }} />
+        {ai.configured && (
+          <button class={`md-btn danger${armed ? ' armed' : ''}`} onClick={disconnect}
+            onBlur={() => setArmed(false)}
+            aria-label={armed ? 'Confirm disconnecting the AI provider' : 'Disconnect the AI provider'}>
+            {armed ? 'Confirm disconnect' : 'Disconnect'}
+          </button>
+        )}
       </div>
+
+      {armed && (
+        <p class="md-config-result" data-ok="false" role="status">
+          This deletes the stored key and asks for confirmation again before the next send.
+        </p>
+      )}
 
       {saved && !ai.connection && (
         <p class="md-config-result" data-ok="true" role="status">

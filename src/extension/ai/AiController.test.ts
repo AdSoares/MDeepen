@@ -124,6 +124,47 @@ describe('AiController key handling', () => {
   });
 });
 
+describe('AiController disconnect', () => {
+  it('clears the stored key and reports not configured', async () => {
+    const posted: HostToWebview[] = [];
+    const store = new AiConfigStore(fakeSecrets('sk-live-key'), fakeMemento());
+    const c = new AiController(store, fakeMemento(), (m) => posted.push(m), () => [PAGE], () => 'doc.md');
+
+    await c.handle({ type: 'aiClearKey' });
+
+    expect(await store.getKey()).toBeUndefined();
+    const state = posted.filter((m) => m.type === 'aiConfigState').at(-1);
+    expect(state && state.type === 'aiConfigState' && state.configured).toBe(false);
+  });
+
+  it('disconnecting revokes the first-send consent, so reconnecting asks again', async () => {
+    const ws = fakeMemento();
+    await ws.update('mdeepen.ai.firstSendConfirmed', true);
+    const posted: HostToWebview[] = [];
+    const store = new AiConfigStore(fakeSecrets('sk-live-key'), fakeMemento());
+    const c = new AiController(store, ws, (m) => posted.push(m), () => [PAGE], () => 'doc.md');
+
+    await c.handle({ type: 'aiClearKey' });
+    await store.setKey('sk-new-key');
+    await c.handle({ type: 'aiSummarizeSection', id: 'p1' });
+
+    expect(rec.calls).toHaveLength(0);
+    expect(posted.some((m) => m.type === 'aiConfirmNeeded')).toBe(true);
+  });
+
+  it('aborts an in-flight request when the user disconnects', async () => {
+    rec.hold.value = true;
+    const ws = fakeMemento();
+    await ws.update('mdeepen.ai.firstSendConfirmed', true);
+    const { c } = makeController(ws);
+    const running = c.handle({ type: 'aiSummarizeSection', id: 'p1' });
+    await Promise.resolve();
+    await c.handle({ type: 'aiClearKey' });
+    await running;
+    expect(rec.calls[0].signal.aborted).toBe(true);
+  });
+});
+
 describe('AiController streaming', () => {
   it('forwards text chunks and usage to the webview', async () => {
     rec.chunks.push({ type: 'text', text: 'Hel' }, { type: 'text', text: 'lo' }, { type: 'done', usage: { inputTokens: 10, outputTokens: 3 } });

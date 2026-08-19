@@ -80,6 +80,14 @@ describe('reader store', () => {
     expect(s.get().ai.messages.at(-1)?.text).toBe('Hello');
   });
 
+  it('disconnecting drops a stale connection result', () => {
+    const s = createReaderState();
+    s.aiConfigState(true, 'anthropic', 'claude-opus-4-8');
+    s.aiConnection({ ok: true, ms: 120 });
+    s.aiConfigState(false, 'anthropic', 'claude-opus-4-8');
+    expect(s.get().ai.connection).toBeUndefined();
+  });
+
   it('keeps the partial answer when a stream errors', () => {
     const s = createReaderState();
     s.aiStreamStart('Retries', 3);

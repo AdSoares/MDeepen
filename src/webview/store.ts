@@ -94,7 +94,9 @@ export function createReaderState() {
       emit();
     },
     aiConfigState(configured: boolean, provider: string, model: string) {
-      state = { ...state, ai: { ...state.ai, configured, provider, model } };
+      // Losing the key invalidates any connection result still on screen.
+      const connection = configured ? state.ai.connection : undefined;
+      state = { ...state, ai: { ...state.ai, configured, provider, model, connection } };
       emit();
     },
     aiStreamStart(sectionTitle = '', pageIndex = -1) {

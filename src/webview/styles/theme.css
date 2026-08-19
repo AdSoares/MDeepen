@@ -55,6 +55,9 @@ button.md-btn.primary { background: var(--vscode-button-background); }
 .md-resizer:hover, .md-resizer:active { background: var(--vscode-focusBorder); opacity: .6; }
 button.md-btn[aria-pressed="false"] { opacity: .55; }
 button.md-btn:disabled { opacity: .4; cursor: default; }
+button.md-btn.accent:not(:disabled) { box-shadow: inset 0 0 0 1px var(--md-ai); }
+button.md-btn.danger:not(:disabled) { box-shadow: inset 0 0 0 1px var(--md-warn); color: var(--md-warn); }
+button.md-btn.danger.armed:not(:disabled) { background: var(--md-warn); color: var(--vscode-button-foreground); }
 button.md-btn:disabled:hover { background: var(--vscode-button-secondaryBackground); }
 button.md-btn.primary:disabled:hover { background: var(--vscode-button-background); }
 

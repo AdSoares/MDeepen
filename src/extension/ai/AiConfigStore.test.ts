@@ -28,6 +28,13 @@ describe('AiConfigStore', () => {
     await store.setConfig({ provider: 'anthropic', model: 'claude-haiku-4-5', maxTokens: 2048 });
     expect(new AiConfigStore(fakeSecrets(), mem).getConfig().model).toBe('claude-haiku-4-5');
   });
+  it('clearing the key removes it from secrets and reports not configured', async () => {
+    const store = new AiConfigStore(fakeSecrets(), fakeMemento());
+    await store.setKey('sk-test');
+    await store.clearKey();
+    expect(await store.getKey()).toBeUndefined();
+    expect(await store.isConfigured()).toBe(false);
+  });
   it('stores the key in secrets and reports configured', async () => {
     const sec = fakeSecrets();
     const store = new AiConfigStore(sec, fakeMemento());

@@ -29,10 +29,11 @@ export type WebviewToHost =
   | { type: 'aiTestConnection' }
   | { type: 'aiSaveConfig'; config: AiConfig }
   | { type: 'aiSaveKey'; key: string }
+  | { type: 'aiClearKey' }
   | { type: 'aiConfigRequest' };
 
 const HOST_TYPES = new Set(['init', 'sectionsUpdated', 'configChanged', 'aiChunk', 'aiDone', 'aiError', 'aiConfirmNeeded', 'aiConfigState', 'aiConnectionResult', 'aiShowConfig', 'navigateSection']);
-const WEBVIEW_TYPES = new Set(['ready', 'activeSectionChanged', 'sectionRead', 'uiStateChanged', 'openLink', 'refresh', 'setPaginationLevel', 'aiSummarizeSection', 'aiStop', 'aiConfirmSend', 'aiCancelSend', 'aiTestConnection', 'aiSaveConfig', 'aiSaveKey', 'aiConfigRequest']);
+const WEBVIEW_TYPES = new Set(['ready', 'activeSectionChanged', 'sectionRead', 'uiStateChanged', 'openLink', 'refresh', 'setPaginationLevel', 'aiSummarizeSection', 'aiStop', 'aiConfirmSend', 'aiCancelSend', 'aiTestConnection', 'aiSaveConfig', 'aiSaveKey', 'aiClearKey', 'aiConfigRequest']);
 
 export function isHostToWebview(m: unknown): m is HostToWebview {
   return typeof m === 'object' && m !== null && HOST_TYPES.has((m as { type?: unknown }).type as string);
