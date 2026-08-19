@@ -17,7 +17,7 @@ md.renderer.rules.fence = (tokens, idx, options, env, self) => {
   }
   const rendered = defaultFence(tokens, idx, options, env, self);
   return `<figure class="code-block" data-lang="${escapeHtml(lang)}">
-    <div class="code-toolbar"><span class="code-lang">${escapeHtml(lang)}</span>
+    <div class="code-toolbar" data-md-ui="true"><span class="code-lang">${escapeHtml(lang)}</span>
     <button class="md-btn code-copy" data-code="${escapeHtml(token.content)}" aria-label="Copy code">Copy</button></div>
     ${rendered}</figure>`;
 };
