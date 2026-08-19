@@ -3,11 +3,12 @@ import type { HostToWebview, WebviewToHost } from '../../shared/messages';
 import { AiConfigStore } from './AiConfigStore';
 import type { MementoLike } from './AiConfigStore';
 import { createProvider } from './providerRegistry';
-import { buildSummarizeRequest } from './prompts';
+import { buildActionRequest, isActionKind } from './prompts';
 import { detectSecrets, maskSecrets } from './secretDetection';
 import { estimateTokens, estimateCost } from './costEstimate';
 
 const FIRST_SEND_KEY = 'mdeepen.ai.firstSendConfirmed';
+const MAX_TEXT_CHARS = 200_000;
 
 export class AiController {
   private abort: AbortController | undefined;
@@ -54,7 +55,8 @@ export class AiController {
         this.post({ type: 'aiConnectionResult', ...result });
         break;
       }
-      case 'aiSummarizeSection': await this.startSummarize(msg.id); break;
+      case 'aiAction': await this.startAction(msg); break;
+      case 'aiSummarizeSection': await this.startAction({ type: 'aiAction', action: 'summarize', scope: 'section', id: msg.id }); break;
       case 'aiStop': this.abort?.abort(); break;
       case 'aiConfirmSend': await this.onConfirm(msg.dontAskAgain, msg.masked); break;
       case 'aiCancelSend': this.pendingRun = undefined; this.pendingRaw = ''; break;
@@ -67,11 +69,21 @@ export class AiController {
     this.abort = undefined;
   }
 
-  private async startSummarize(id: string): Promise<void> {
-    const page = this.getPages().find((p) => p.id === id);
+  private async startAction(msg: Extract<WebviewToHost, { type: 'aiAction' }>): Promise<void> {
+    if (!isActionKind(msg.action)) return;
+    if (msg.scope !== 'section' && msg.scope !== 'selection') return;
+    const page = this.getPages().find((p) => p.id === msg.id);
     if (!page) return;
+
+    let content = page.content;
+    if (msg.scope === 'selection') {
+      const text = typeof msg.text === 'string' ? msg.text : '';
+      if (!text.trim() || text.length > MAX_TEXT_CHARS) return;
+      content = text;
+    }
+
     const cfg = this.store.getConfig();
-    const req = buildSummarizeRequest({ title: page.title, content: page.content }, cfg.maxTokens);
+    const req = buildActionRequest(msg.action, msg.scope, { title: page.title, content }, cfg.maxTokens);
     const rawText = req.messages[0].content;
 
     const run = async (text: string) => {
