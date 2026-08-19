@@ -27,7 +27,18 @@ First AI slice. The reader itself is unchanged and still works with no API key.
   JWT shapes). When anything is found, masking is pre-selected and the detected
   spans are replaced before sending.
 - Connection test, model picker, and max-tokens setting in the config card.
+- **Disconnect**, which deletes the stored key, aborts anything in flight, and revokes the
+  first-send consent so a future key must be confirmed again.
 - Typed error states for authentication, rate limit, and connection failures.
+
+### Fixed
+
+- Alt+Left and Alt+Right are contributed keybindings scoped to the reader panel. They used to be
+  handled inside the webview, where VS Code resolved them as navigateBack/navigateForward first,
+  so Alt+Left jumped to another document.
+- Disabled buttons now look disabled.
+- Saving the AI configuration no longer closes the card before the connection test becomes
+  available.
 
 ### Security
 

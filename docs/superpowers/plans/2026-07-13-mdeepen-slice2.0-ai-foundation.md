@@ -1036,7 +1036,27 @@ git add package.json README.md
 git commit -m "chore: release 0.2.0 with AI foundation"
 ```
 
-- [ ] **Step 5: Human smoke (manual, needs a real Anthropic API key)** - **NOT DONE: this step is the user's.** — verify §11 completion criteria: configure AI (key saved to SecretStorage, not settings); Test connection; first Summarize triggers S16 with local token/cost estimate; secret detection + mask on a section containing an `sk-...` string; streaming with caret + Stop keeping the partial; citation navigates; Copy; error states (wrong key → auth, offline → connection); reader still works with AI unconfigured.
+- [x] **Step 5: Human smoke (manual, needs a real Anthropic API key)** - **DONE 2026-08-19.**
+
+> **Result: all 15 checks pass.** The streaming success path is now verified for real - text
+> arrives incrementally with the caret, `finalMessage()` usage lands, Stop keeps the partial, and
+> citation chips point at the right section after the confirmation round-trip. Masking was proven
+> at the boundary by breaking on `AnthropicProvider.generate` and reading
+> `request.messages[0].content`: all three planted secrets were `‹redacted›`.
+>
+> **Four defects found and fixed during the smoke** (none caught by the suite, all integration-level):
+> 1. `.md-btn` had no `:disabled` rule, so disabled buttons were pixel-identical to enabled ones.
+> 2. Alt+Left/Right lived in a webview keydown listener, which cannot override VS Code's
+>    navigateBack/navigateForward. Alt+Left jumped to another document; Alt+Right was equally
+>    broken and only looked fine because forward history was empty. Now contributed keybindings
+>    scoped by `activeWebviewPanelId`.
+> 3. Saving the config closed the card before `configured` round-tripped, making "save then test
+>    connection" impossible without reopening it.
+> 4. No way to remove a stored key. Added Disconnect, which also aborts in-flight work and revokes
+>    the first-send consent.
+>
+> **Backlog raised during the smoke:** a delete button per generated summary (goes beyond
+> FR-MVP-035's clear-all, which is also still missing). — verify §11 completion criteria: configure AI (key saved to SecretStorage, not settings); Test connection; first Summarize triggers S16 with local token/cost estimate; secret detection + mask on a section containing an `sk-...` string; streaming with caret + Stop keeping the partial; citation navigates; Copy; error states (wrong key → auth, offline → connection); reader still works with AI unconfigured.
 
 ---
 
