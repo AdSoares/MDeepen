@@ -46,6 +46,10 @@ describe('message type guards', () => {
     expect(isWebviewToHost({ type: 'aiSaveKey', key: 'sk-test' })).toBe(true);
     expect(isWebviewToHost({ type: 'aiClearKey' })).toBe(true);
   });
+  it('accepts the generic AI action message', () => {
+    expect(isWebviewToHost({ type: 'aiAction', action: 'explain', scope: 'selection', id: 'p1', text: 'x' })).toBe(true);
+    expect(isWebviewToHost({ type: 'aiAction', action: 'summarize', scope: 'section', id: 'p1' })).toBe(true);
+  });
   it('accepts new AI host->webview messages', () => {
     expect(isHostToWebview({ type: 'aiChunk', text: 'x' })).toBe(true);
     expect(isHostToWebview({ type: 'aiDone', usage: { inputTokens: 1, outputTokens: 2 } })).toBe(true);
