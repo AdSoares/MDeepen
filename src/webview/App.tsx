@@ -39,6 +39,7 @@ export function App() {
       else if (m.type === 'aiError') store.aiError(m.kind, m.message);
       else if (m.type === 'aiConnectionResult') store.aiConnection({ ok: m.ok, ms: m.ms, error: m.error });
       else if (m.type === 'aiShowConfig') { store.setPanels({ aiVisible: true }); setShowConfig(true); }
+      else if (m.type === 'navigateSection') setIndex(store.get().activeIndex + m.delta);
       else if (m.type === 'aiConfirmNeeded') {
         // The host is holding the request until the user answers, so stop showing a live stream.
         store.aiStopped();
@@ -47,10 +48,11 @@ export function App() {
     });
     post({ type: 'ready' });
     post({ type: 'aiConfigRequest' });
+    // Alt+Arrow section navigation is NOT handled here: VS Code resolves those keys as
+    // navigateBack / navigateForward before the webview can consume them. They are contributed
+    // keybindings in package.json that arrive as 'navigateSection' messages instead.
     const onKey = (e: KeyboardEvent) => {
-      if (e.altKey && e.key === 'ArrowRight') { e.preventDefault(); setIndex(store.get().activeIndex + 1); }
-      else if (e.altKey && e.key === 'ArrowLeft') { e.preventDefault(); setIndex(store.get().activeIndex - 1); }
-      else if (e.key === 'F11' && e.shiftKey && e.ctrlKey) { e.preventDefault(); store.setPanels({ focus: !store.get().panels.focus }); schedulePersist(); }
+      if (e.key === 'F11' && e.shiftKey && e.ctrlKey) { e.preventDefault(); store.setPanels({ focus: !store.get().panels.focus }); schedulePersist(); }
     };
     window.addEventListener('keydown', onKey);
     return () => { unsub(); window.removeEventListener('keydown', onKey); };

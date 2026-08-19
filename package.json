@@ -26,7 +26,9 @@
       ]
     },
     "keybindings": [
-      { "command": "mdeepen.openReader", "key": "ctrl+alt+m", "when": "editorLangId == markdown" }
+      { "command": "mdeepen.openReader", "key": "ctrl+alt+m", "when": "editorLangId == markdown" },
+      { "command": "mdeepen.nextSection", "key": "alt+right", "when": "activeWebviewPanelId == 'mdeepenReader'" },
+      { "command": "mdeepen.previousSection", "key": "alt+left", "when": "activeWebviewPanelId == 'mdeepenReader'" }
     ]
   },
   "scripts": {

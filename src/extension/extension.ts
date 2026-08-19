@@ -23,7 +23,9 @@ export function activate(context: vscode.ExtensionContext): void {
     }
     ReaderPanel.open(context, target, docStore, uiStore, aiStore).requestAiConfig();
   });
-  context.subscriptions.push(cmd, configureCmd);
+  const nextCmd = vscode.commands.registerCommand('mdeepen.nextSection', () => ReaderPanel.navigateActive(1));
+  const prevCmd = vscode.commands.registerCommand('mdeepen.previousSection', () => ReaderPanel.navigateActive(-1));
+  context.subscriptions.push(cmd, configureCmd, nextCmd, prevCmd);
 }
 
 export function deactivate(): void {}

@@ -51,4 +51,10 @@ describe('message type guards', () => {
     expect(isHostToWebview({ type: 'aiError', kind: 'auth', message: 'x' })).toBe(true);
     expect(isHostToWebview({ type: 'aiShowConfig' })).toBe(true);
   });
+  it('accepts section navigation driven by a real VS Code keybinding', () => {
+    // Arrow navigation cannot live in a webview keydown listener: VS Code resolves
+    // Alt+Left as navigateBack regardless of preventDefault.
+    expect(isHostToWebview({ type: 'navigateSection', delta: 1 })).toBe(true);
+    expect(isHostToWebview({ type: 'navigateSection', delta: -1 })).toBe(true);
+  });
 });

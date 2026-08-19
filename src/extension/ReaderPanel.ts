@@ -14,6 +14,7 @@ const DEFAULT_LEVEL = 2;
 
 export class ReaderPanel {
   private static readonly panels = new Map<string, ReaderPanel>();
+  private static active: ReaderPanel | undefined;
 
   private level = DEFAULT_LEVEL;
   private pages: Page[] = [];
@@ -32,11 +33,19 @@ export class ReaderPanel {
     const existing = ReaderPanel.panels.get(key);
     if (existing) {
       existing.panel.reveal();
+      ReaderPanel.active = existing;
       return existing;
     }
     const created = new ReaderPanel(context, uri, docStore, uiStore, aiStore);
     ReaderPanel.panels.set(key, created);
     return created;
+  }
+
+  /** Moves the active reader by one section. Driven by a real VS Code keybinding, because a
+   *  webview keydown listener cannot override Alt+Left / Alt+Right — VS Code resolves those as
+   *  navigateBack / navigateForward no matter what the webview does with the event. */
+  static navigateActive(delta: number): void {
+    ReaderPanel.active?.post({ type: 'navigateSection', delta });
   }
 
   /** Opens the AI config view. Queued until the webview is initialised, so it also works on a fresh panel. */
@@ -68,6 +77,11 @@ export class ReaderPanel {
     this.panel.webview.html = this.html();
     this.panel.webview.onDidReceiveMessage((m) => { if (isWebviewToHost(m)) void this.onMessage(m); }, null, this.disposables);
     this.panel.onDidDispose(() => this.dispose(), null, this.disposables);
+    ReaderPanel.active = this;
+    this.panel.onDidChangeViewState((e) => {
+      if (e.webviewPanel.active) ReaderPanel.active = this;
+      else if (ReaderPanel.active === this) ReaderPanel.active = undefined;
+    }, null, this.disposables);
 
     vscode.workspace.onDidChangeTextDocument((e) => {
       if (e.document.uri.toString() !== this.uri.toString()) return;
@@ -245,6 +259,7 @@ export class ReaderPanel {
     this.ai.dispose();
     if (this.changeTimer) clearTimeout(this.changeTimer);
     ReaderPanel.panels.delete(this.uri.toString());
+    if (ReaderPanel.active === this) ReaderPanel.active = undefined;
     while (this.disposables.length) this.disposables.pop()?.dispose();
   }
 }

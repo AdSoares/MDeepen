@@ -54,6 +54,9 @@ button.md-btn.primary { background: var(--vscode-button-background); }
 .md-resizer { width: 6px; cursor: col-resize; flex: 0 0 6px; background: transparent; }
 .md-resizer:hover, .md-resizer:active { background: var(--vscode-focusBorder); opacity: .6; }
 button.md-btn[aria-pressed="false"] { opacity: .55; }
+button.md-btn:disabled { opacity: .4; cursor: default; }
+button.md-btn:disabled:hover { background: var(--vscode-button-secondaryBackground); }
+button.md-btn.primary:disabled:hover { background: var(--vscode-button-background); }
 
 /* --- AI (Slice 2.0) ---------------------------------------------------- */
 /* No connect-src in the CSP: every AI network call happens in the extension
