@@ -1057,7 +1057,7 @@ git commit -m "feat: panel shows answer provenance and can delete or clear answe
 
 Every caller now posts `aiAction`. Run `grep -rn "aiSummarizeSection" src/` first: it must match only the three files above.
 
-- [ ] **Step 1: Remove the message**
+- [x] **Step 1: Remove the message**
 
 In `src/shared/messages.ts`, delete the `| { type: 'aiSummarizeSection'; id: string }` union member and remove `'aiSummarizeSection'` from `WEBVIEW_TYPES`.
 
@@ -1069,12 +1069,12 @@ In `src/extension/ai/AiController.ts`, delete the compatibility branch:
       case 'aiSummarizeSection': await this.startAction({ type: 'aiAction', action: 'summarize', scope: 'section', id: msg.id }); break;
 ```
 
-- [ ] **Step 2: Verify nothing still refers to it**
+- [x] **Step 2: Verify nothing still refers to it**
 
 Run: `grep -rn "aiSummarizeSection" src/ ; npx tsc --noEmit && npm test`
 Expected: grep prints nothing; tsc clean; suite green.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/shared/messages.ts src/shared/messages.test.ts src/extension/ai/AiController.ts
