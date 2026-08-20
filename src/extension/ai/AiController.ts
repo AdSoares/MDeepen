@@ -56,7 +56,6 @@ export class AiController {
         break;
       }
       case 'aiAction': await this.startAction(msg); break;
-      case 'aiSummarizeSection': await this.startAction({ type: 'aiAction', action: 'summarize', scope: 'section', id: msg.id }); break;
       case 'aiStop': this.abort?.abort(); break;
       case 'aiConfirmSend': await this.onConfirm(msg.dontAskAgain, msg.masked); break;
       case 'aiCancelSend': this.pendingRun = undefined; this.pendingRaw = ''; break;

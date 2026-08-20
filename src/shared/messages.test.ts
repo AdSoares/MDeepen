@@ -37,7 +37,6 @@ describe('message type guards', () => {
     ).toBe(true);
   });
   it('accepts new AI webview->host messages', () => {
-    expect(isWebviewToHost({ type: 'aiSummarizeSection', id: 'page-3' })).toBe(true);
     expect(isWebviewToHost({ type: 'aiStop' })).toBe(true);
     expect(isWebviewToHost({ type: 'aiConfirmSend', dontAskAgain: true, masked: false })).toBe(true);
     expect(isWebviewToHost({ type: 'aiSaveConfig', config: { provider: 'anthropic', model: 'claude-opus-4-8', maxTokens: 4096 } })).toBe(true);
