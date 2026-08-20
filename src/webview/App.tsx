@@ -189,12 +189,14 @@ export function App() {
             activePageId={page?.id}
             onConfigure={() => setShowConfig((v) => !v)}
             onCite={(pageIndex) => setIndex(pageIndex)}
-            onSummarize={() => {
+            onDelete={(index) => store.aiDeleteMessage(index)}
+            onClear={() => store.aiClearMessages()}
+            onAction={(action) => {
               const st = store.get();
               const target = st.pages[st.activeIndex];
               if (!target) return;
-              store.aiStreamStart({ action: 'summarize', scope: 'section', sectionTitle: target.title, pageIndex: st.activeIndex });
-              post({ type: 'aiSummarizeSection', id: target.id });
+              store.aiStreamStart({ action, scope: 'section', sectionTitle: target.title, pageIndex: st.activeIndex });
+              post({ type: 'aiAction', action, scope: 'section', id: target.id });
             }}
             onStop={() => { store.aiStopped(); post({ type: 'aiStop' }); }}
           />

@@ -1,3 +1,6 @@
+import { useState } from 'preact/hooks';
+import type { AiActionKind } from '../../extension/ai/types';
+import { actionLabel } from '../../extension/ai/prompts';
 import type { AiState } from '../store';
 
 interface Props {
@@ -5,13 +8,17 @@ interface Props {
   activePageId: string | undefined;
   onConfigure: () => void;
   onCite: (pageIndex: number) => void;
-  onSummarize: () => void;
+  onAction: (action: AiActionKind) => void;
   onStop: () => void;
+  onDelete: (index: number) => void;
+  onClear: () => void;
 }
 
 const GATED = ['Summaries', 'Chat with the document', 'Generated diagrams'];
 
-export function AiPanel({ ai, activePageId, onConfigure, onCite, onSummarize, onStop }: Props) {
+export function AiPanel({ ai, activePageId, onConfigure, onCite, onAction, onStop, onDelete, onClear }: Props) {
+  const [more, setMore] = useState(false);
+
   if (!ai.configured) {
     return (
       <div style={{ padding: '16px' }}>
@@ -30,21 +37,34 @@ export function AiPanel({ ai, activePageId, onConfigure, onCite, onSummarize, on
     );
   }
 
+  const busy = ai.streaming || !activePageId;
+
   return (
     <div class="md-ai-panel">
       <div class="md-ai-head">
         <span class="md-ai-badge">Anthropic &middot; {ai.model}</span>
         <span style={{ flex: 1 }} />
+        {ai.messages.length > 0 && (
+          <button class="md-btn" onClick={onClear} aria-label="Clear all answers">Clear all</button>
+        )}
         <button class="md-btn" aria-label="AI configuration" onClick={onConfigure}>
           <span class="codicon codicon-gear" aria-hidden="true" />
         </button>
       </div>
 
-      <div style={{ display: 'flex', gap: '8px' }}>
-        <button class="md-btn primary" disabled={!activePageId || ai.streaming} onClick={onSummarize}>
-          Summarize section
-        </button>
+      <div style={{ display: 'flex', gap: '8px', position: 'relative' }}>
+        <button class="md-btn primary" disabled={busy} onClick={() => onAction('summarize')}>Summarize section</button>
+        <button class="md-btn" disabled={busy} aria-label="More actions for this section" aria-expanded={more}
+          onClick={() => setMore((v) => !v)}>&#8943;</button>
         {ai.streaming && <button class="md-btn" onClick={onStop}>Stop generating</button>}
+        {more && (
+          <div class="md-seltoolbar-menu" role="menu">
+            {(['explain', 'explainSimply', 'keyTerms', 'example'] as AiActionKind[]).map((action) => (
+              <button key={action} class="md-btn" role="menuitem"
+                onClick={() => { setMore(false); onAction(action); }}>{actionLabel(action)}</button>
+            ))}
+          </div>
+        )}
       </div>
 
       {ai.error && <p class="md-ai-alert" role="alert">{ai.error.message}</p>}
@@ -58,6 +78,11 @@ export function AiPanel({ ai, activePageId, onConfigure, onCite, onSummarize, on
 
       {ai.messages.map((m, i) => (
         <div class="md-ai-msg" key={i}>
+          <div class="md-ai-msg-head">
+            {actionLabel(m.action)}
+            {m.pageIndex >= 0 && ` · §${String(m.pageIndex + 1).padStart(2, '0')} ${m.sectionTitle}`}
+          </div>
+          {m.excerpt && <blockquote class="md-ai-excerpt">{m.excerpt}</blockquote>}
           <div class="md-ai-msg-text">{m.text}</div>
           <div class="md-ai-msg-foot">
             {m.pageIndex >= 0 && (
@@ -66,9 +91,8 @@ export function AiPanel({ ai, activePageId, onConfigure, onCite, onSummarize, on
                 &sect;{String(m.pageIndex + 1).padStart(2, '0')} {m.sectionTitle}
               </button>
             )}
-            <button class="md-btn" aria-label="Copy this answer" onClick={() => navigator.clipboard.writeText(m.text)}>
-              Copy
-            </button>
+            <button class="md-btn" aria-label="Copy this answer" onClick={() => navigator.clipboard.writeText(m.text)}>Copy</button>
+            <button class="md-btn" aria-label="Delete this answer" onClick={() => onDelete(i)}>Delete</button>
           </div>
         </div>
       ))}
