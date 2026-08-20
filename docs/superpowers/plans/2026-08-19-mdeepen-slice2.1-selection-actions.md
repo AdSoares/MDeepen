@@ -1255,7 +1255,21 @@ git add package.json README.md CHANGELOG.md
 git commit -m "chore: release 0.3.0 with selection actions"
 ```
 
-- [ ] **Step 6: Human smoke — this step belongs to the user, not the implementer**
+- [x] **Step 6: Human smoke — this step belongs to the user, not the implementer** — **DONE 2026-08-20.**
+
+> **Result: all 15 checks pass.** No defects found, so 0.3.0 ships as packaged —
+> unlike the Slice 2.0 smoke, which surfaced four integration-level defects.
+> Walked against a purpose-built smoke document with a clean section, a section carrying
+> four planted fake credentials (`sk-ant-…`, `AKIA…`, `ghp_…`, a JWT), a mostly-code
+> section and a long scrolling section.
+>
+> The checks with no automated coverage all held: the toolbar flips below the selection
+> near the top of the viewport and stays inside the reading column at both edges
+> (`selection.test.ts` covers the geometry as a pure function, never against a real
+> `getBoundingClientRect`); a selection inside a code block does not drag the block's own
+> Copy button or language label into the excerpt; masking was confirmed at the boundary;
+> and `Ctrl+Alt+S` in a normal editor does nothing, which is the `activeWebviewPanelId`
+> scope working.
 
 Reload the Extension Development Host first: `package.json` changed, so the new keybindings are not registered until the window reloads.
 
