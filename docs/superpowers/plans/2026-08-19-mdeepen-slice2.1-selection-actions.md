@@ -1099,7 +1099,7 @@ git commit -m "refactor: retire aiSummarizeSection now that aiAction covers it"
 
 The host does not know which section is active — the webview does. So the command sends an intent and the webview turns it into an `aiAction`.
 
-- [ ] **Step 1: Write the failing contract test**
+- [x] **Step 1: Write the failing contract test**
 
 Add inside the host→webview describe block in `src/shared/messages.test.ts`:
 
@@ -1108,12 +1108,12 @@ Add inside the host→webview describe block in `src/shared/messages.test.ts`:
     expect(isHostToWebview({ type: 'focusOutline' })).toBe(true);
 ```
 
-- [ ] **Step 2: Run to verify failure**
+- [x] **Step 2: Run to verify failure**
 
 Run: `npx vitest run src/shared/messages.test.ts`
 Expected: FAIL — `expected false to be true`.
 
-- [ ] **Step 3: Extend the contract**
+- [x] **Step 3: Extend the contract**
 
 In `src/shared/messages.ts`, add to `HostToWebview`:
 
@@ -1124,7 +1124,7 @@ In `src/shared/messages.ts`, add to `HostToWebview`:
 
 Add `'quickAction'` and `'focusOutline'` to `HOST_TYPES`.
 
-- [ ] **Step 4: Contribute the keybindings**
+- [x] **Step 4: Contribute the keybindings**
 
 In `package.json`, add to `contributes.keybindings`:
 
@@ -1133,7 +1133,7 @@ In `package.json`, add to `contributes.keybindings`:
       { "command": "mdeepen.focusOutline", "key": "ctrl+alt+o", "when": "activeWebviewPanelId == 'mdeepenReader'" }
 ```
 
-- [ ] **Step 5: Route the commands to the active panel**
+- [x] **Step 5: Route the commands to the active panel**
 
 In `src/extension/ReaderPanel.ts`, next to `navigateActive`:
 
@@ -1160,7 +1160,7 @@ In `src/extension/extension.ts`, register both and add them to the existing `con
   const outlineCmd = vscode.commands.registerCommand('mdeepen.focusOutline', () => ReaderPanel.focusOutlineOnActive());
 ```
 
-- [ ] **Step 6: Handle both messages in the webview**
+- [x] **Step 6: Handle both messages in the webview**
 
 In `src/webview/App.tsx`, add to the message router:
 
@@ -1182,12 +1182,12 @@ In `src/webview/App.tsx`, add to the message router:
 
 In `src/webview/panels/Outline.tsx`, give the filter input the class the handler looks for by adding `class="md-outline-filter"` to it. If it already has a class, append this one.
 
-- [ ] **Step 7: Build, typecheck, test**
+- [x] **Step 7: Build, typecheck, test**
 
 Run: `npm run build && npx tsc --noEmit && npm test`
 Expected: green.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add package.json src/shared/messages.ts src/shared/messages.test.ts src/extension/extension.ts src/extension/ReaderPanel.ts src/webview/App.tsx src/webview/panels/Outline.tsx
