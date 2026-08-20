@@ -12,6 +12,7 @@ const FOCUSABLE = 'button, input, [href], select, textarea, [tabindex]:not([tabi
 
 export function AiConfirm({ confirm, onSend, onCancel }: Props) {
   const hasSecrets = confirm.secrets.count > 0;
+  const isDocument = confirm.summary.scope === 'document';
   // Default to masking whenever something looks like a secret: the safe choice is the pre-selected one.
   const [masked, setMasked] = useState(hasSecrets);
   const [dontAskAgain, setDontAskAgain] = useState(false);
@@ -49,18 +50,30 @@ export function AiConfirm({ confirm, onSend, onCancel }: Props) {
     <div class="md-modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) onCancel(); }}>
       <div class="md-modal-card" ref={cardRef} role="dialog" aria-modal="true" aria-labelledby="ai-confirm-title">
         <h2 id="ai-confirm-title" class="md-modal-title">Send content to Anthropic?</h2>
-        <p class="md-modal-lede">This section leaves your machine and is sent to the Anthropic API.</p>
+        <p class="md-modal-lede">
+          {isDocument
+            ? 'The whole document leaves your machine, one part at a time, and is sent to the Anthropic API.'
+            : 'This section leaves your machine and is sent to the Anthropic API.'}
+        </p>
 
         <dl class="md-modal-facts">
           <dt>Content</dt>
-          <dd>{confirm.summary.fileName} &rsaquo; {confirm.summary.sectionTitle}</dd>
+          <dd>
+            {isDocument
+              ? `${confirm.summary.fileName} · ${confirm.summary.sectionCount} sections`
+              : `${confirm.summary.fileName} › ${confirm.summary.sectionTitle}`}
+          </dd>
           <dt>Model</dt>
           <dd>{confirm.summary.model}</dd>
           <dt>Estimated tokens</dt>
-          <dd>~{confirm.summary.estTokens.toLocaleString()}</dd>
+          <dd>~{confirm.summary.estTokens.toLocaleString()}{isDocument ? ' (input, projected)' : ''}</dd>
           <dt>Estimated cost</dt>
           <dd>{formatCost(confirm.summary.estCost)}</dd>
         </dl>
+
+        {confirm.summary.truncated.length > 0 && (
+          <p class="md-ai-truncated">Too large to send whole, will be truncated: {confirm.summary.truncated.join(', ')}</p>
+        )}
 
         {hasSecrets && (
           <div class="md-secret-strip" role="alert">
@@ -73,10 +86,12 @@ export function AiConfirm({ confirm, onSend, onCancel }: Props) {
           </div>
         )}
 
-        <label class="md-check" style={{ marginBottom: '14px' }}>
-          <input type="checkbox" checked={dontAskAgain} onChange={(e) => setDontAskAgain((e.target as HTMLInputElement).checked)} />
-          Don&rsquo;t ask again in this workspace
-        </label>
+        {!isDocument && (
+          <label class="md-check" style={{ marginBottom: '14px' }}>
+            <input type="checkbox" checked={dontAskAgain} onChange={(e) => setDontAskAgain((e.target as HTMLInputElement).checked)} />
+            Don&rsquo;t ask again in this workspace
+          </label>
+        )}
 
         <div class="md-modal-foot">
           <button class="md-btn" ref={cancelRef} onClick={onCancel}>Cancel</button>

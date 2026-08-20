@@ -101,3 +101,9 @@ button.md-btn.primary:disabled:hover { background: var(--vscode-button-backgroun
 .md-seltoolbar-menu .md-btn { text-align: left; }
 .md-ai-msg-head { font-size: 11px; color: var(--vscode-descriptionForeground); margin-bottom: 6px; }
 .md-ai-excerpt { margin: 0 0 8px; padding-left: 8px; border-left: 2px solid var(--vscode-panel-border); font-size: 12px; color: var(--vscode-descriptionForeground); }
+.md-menu-group { padding: 4px 6px 2px; font-size: 10px; letter-spacing: .06em; text-transform: uppercase; color: var(--vscode-descriptionForeground); }
+.md-progress { margin: 10px 0; }
+.md-progress-label { font-size: 12px; color: var(--vscode-descriptionForeground); margin-bottom: 6px; }
+.md-progress-track { height: 4px; border-radius: 2px; background: var(--vscode-panel-border); overflow: hidden; }
+.md-progress-fill { height: 100%; background: var(--md-ai); transition: width .2s ease; }
+.md-ai-truncated { margin: 6px 0 0; font-size: 11px; color: var(--md-warn); }
