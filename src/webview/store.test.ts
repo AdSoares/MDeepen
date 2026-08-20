@@ -71,7 +71,7 @@ describe('reader store', () => {
     const s = createReaderState();
     s.aiConfigState(true, 'anthropic', 'claude-opus-4-8');
     expect(s.get().ai.configured).toBe(true);
-    s.aiStreamStart();
+    s.aiStreamStart({ action: 'summarize', scope: 'section', sectionTitle: '', pageIndex: -1 });
     s.aiChunk('Hel'); s.aiChunk('lo');
     expect(s.get().ai.streamText).toBe('Hello');
     expect(s.get().ai.streaming).toBe(true);
@@ -90,7 +90,7 @@ describe('reader store', () => {
 
   it('keeps the partial answer when a stream errors', () => {
     const s = createReaderState();
-    s.aiStreamStart('Retries', 3);
+    s.aiStreamStart({ action: 'summarize', scope: 'section', sectionTitle: 'Retries', pageIndex: 3 });
     s.aiChunk('half an ans');
     s.aiError('rate_limit', 'slow down');
     expect(s.get().ai.streaming).toBe(false);
@@ -101,7 +101,7 @@ describe('reader store', () => {
 
   it('stopping finalizes the partial answer and clears streaming', () => {
     const s = createReaderState();
-    s.aiStreamStart('Retries', 1);
+    s.aiStreamStart({ action: 'summarize', scope: 'section', sectionTitle: 'Retries', pageIndex: 1 });
     s.aiChunk('partial');
     s.aiStopped();
     expect(s.get().ai.streaming).toBe(false);
@@ -110,7 +110,7 @@ describe('reader store', () => {
 
   it('a stream with no text leaves no empty message behind', () => {
     const s = createReaderState();
-    s.aiStreamStart();
+    s.aiStreamStart({ action: 'summarize', scope: 'section', sectionTitle: '', pageIndex: -1 });
     s.aiError('auth', 'no key');
     expect(s.get().ai.messages).toHaveLength(0);
   });
@@ -133,5 +133,55 @@ describe('reader store', () => {
     });
     expect(s.get().panels.outlineVisible).toBe(false);
     expect(s.get().panels.outlineWidth).toBe(300);
+  });
+
+  it('records which action produced an answer and what it was applied to', () => {
+    const s = createReaderState();
+    s.aiStreamStart({ action: 'explain', scope: 'selection', sectionTitle: 'Retries', pageIndex: 2, excerpt: 'we retry 3x' });
+    s.aiChunk('because');
+    s.aiDone();
+    const last = s.get().ai.messages.at(-1);
+    expect(last?.action).toBe('explain');
+    expect(last?.scope).toBe('selection');
+    expect(last?.excerpt).toBe('we retry 3x');
+    expect(last?.pageIndex).toBe(2);
+  });
+
+  it('truncates a long excerpt', () => {
+    const s = createReaderState();
+    s.aiStreamStart({ action: 'explain', scope: 'selection', sectionTitle: 'Retries', pageIndex: 0, excerpt: 'x'.repeat(400) });
+    s.aiChunk('ok');
+    s.aiDone();
+    expect(s.get().ai.messages.at(-1)?.excerpt?.length).toBeLessThanOrEqual(241);
+  });
+
+  it('deletes one answer without touching the others', () => {
+    const s = createReaderState();
+    for (const text of ['first', 'second', 'third']) {
+      s.aiStreamStart({ action: 'summarize', scope: 'section', sectionTitle: 't', pageIndex: 0 });
+      s.aiChunk(text);
+      s.aiDone();
+    }
+    s.aiDeleteMessage(1);
+    expect(s.get().ai.messages.map((m) => m.text)).toEqual(['first', 'third']);
+  });
+
+  it('ignores a delete outside the range', () => {
+    const s = createReaderState();
+    s.aiStreamStart({ action: 'summarize', scope: 'section', sectionTitle: 't', pageIndex: 0 });
+    s.aiChunk('only');
+    s.aiDone();
+    s.aiDeleteMessage(7);
+    s.aiDeleteMessage(-1);
+    expect(s.get().ai.messages).toHaveLength(1);
+  });
+
+  it('clears every answer', () => {
+    const s = createReaderState();
+    s.aiStreamStart({ action: 'summarize', scope: 'section', sectionTitle: 't', pageIndex: 0 });
+    s.aiChunk('gone');
+    s.aiDone();
+    s.aiClearMessages();
+    expect(s.get().ai.messages).toHaveLength(0);
   });
 });

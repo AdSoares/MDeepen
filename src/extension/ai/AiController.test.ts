@@ -62,7 +62,7 @@ beforeEach(() => {
 describe('AiController first-send gate', () => {
   it('asks for confirmation instead of sending on the first request in a workspace', async () => {
     const { c, posted } = makeController();
-    await c.handle({ type: 'aiSummarizeSection', id: 'p1' });
+    await c.handle({ type: 'aiAction', action: 'summarize', scope: 'section', id: 'p1' });
     expect(rec.calls).toHaveLength(0);
     const confirm = posted.find((m) => m.type === 'aiConfirmNeeded');
     expect(confirm).toBeDefined();
@@ -71,7 +71,7 @@ describe('AiController first-send gate', () => {
 
   it('sends redacted text when the user confirms with masking on', async () => {
     const { c } = makeController();
-    await c.handle({ type: 'aiSummarizeSection', id: 'p1' });
+    await c.handle({ type: 'aiAction', action: 'summarize', scope: 'section', id: 'p1' });
     await c.handle({ type: 'aiConfirmSend', dontAskAgain: false, masked: true });
     expect(rec.calls).toHaveLength(1);
     expect(rec.calls[0].text).not.toContain(SECRET);
@@ -80,14 +80,14 @@ describe('AiController first-send gate', () => {
 
   it('sends the raw text when the user confirms with masking off', async () => {
     const { c } = makeController();
-    await c.handle({ type: 'aiSummarizeSection', id: 'p1' });
+    await c.handle({ type: 'aiAction', action: 'summarize', scope: 'section', id: 'p1' });
     await c.handle({ type: 'aiConfirmSend', dontAskAgain: false, masked: false });
     expect(rec.calls[0].text).toContain(SECRET);
   });
 
   it('cancelling drops the pending send', async () => {
     const { c } = makeController();
-    await c.handle({ type: 'aiSummarizeSection', id: 'p1' });
+    await c.handle({ type: 'aiAction', action: 'summarize', scope: 'section', id: 'p1' });
     await c.handle({ type: 'aiCancelSend' });
     await c.handle({ type: 'aiConfirmSend', dontAskAgain: false, masked: false });
     expect(rec.calls).toHaveLength(0);
@@ -96,12 +96,12 @@ describe('AiController first-send gate', () => {
   it('skips the modal on later sends once "do not ask again" is stored', async () => {
     const ws = fakeMemento();
     const first = makeController(ws);
-    await first.c.handle({ type: 'aiSummarizeSection', id: 'p1' });
+    await first.c.handle({ type: 'aiAction', action: 'summarize', scope: 'section', id: 'p1' });
     await first.c.handle({ type: 'aiConfirmSend', dontAskAgain: true, masked: false });
     expect(rec.calls).toHaveLength(1);
 
     const second = makeController(ws);
-    await second.c.handle({ type: 'aiSummarizeSection', id: 'p1' });
+    await second.c.handle({ type: 'aiAction', action: 'summarize', scope: 'section', id: 'p1' });
     expect(rec.calls).toHaveLength(2);
     expect(second.posted.some((m) => m.type === 'aiConfirmNeeded')).toBe(false);
   });
@@ -146,7 +146,7 @@ describe('AiController disconnect', () => {
 
     await c.handle({ type: 'aiClearKey' });
     await store.setKey('sk-new-key');
-    await c.handle({ type: 'aiSummarizeSection', id: 'p1' });
+    await c.handle({ type: 'aiAction', action: 'summarize', scope: 'section', id: 'p1' });
 
     expect(rec.calls).toHaveLength(0);
     expect(posted.some((m) => m.type === 'aiConfirmNeeded')).toBe(true);
@@ -157,7 +157,7 @@ describe('AiController disconnect', () => {
     const ws = fakeMemento();
     await ws.update('mdeepen.ai.firstSendConfirmed', true);
     const { c } = makeController(ws);
-    const running = c.handle({ type: 'aiSummarizeSection', id: 'p1' });
+    const running = c.handle({ type: 'aiAction', action: 'summarize', scope: 'section', id: 'p1' });
     await Promise.resolve();
     await c.handle({ type: 'aiClearKey' });
     await running;
@@ -171,7 +171,7 @@ describe('AiController streaming', () => {
     const ws = fakeMemento();
     await ws.update('mdeepen.ai.firstSendConfirmed', true);
     const { c, posted } = makeController(ws);
-    await c.handle({ type: 'aiSummarizeSection', id: 'p1' });
+    await c.handle({ type: 'aiAction', action: 'summarize', scope: 'section', id: 'p1' });
     expect(posted.filter((m) => m.type === 'aiChunk').map((m) => (m as { text: string }).text)).toEqual(['Hel', 'lo']);
     expect(posted.some((m) => m.type === 'aiDone')).toBe(true);
   });
@@ -181,10 +181,71 @@ describe('AiController streaming', () => {
     const ws = fakeMemento();
     await ws.update('mdeepen.ai.firstSendConfirmed', true);
     const { c } = makeController(ws);
-    const running = c.handle({ type: 'aiSummarizeSection', id: 'p1' });
+    const running = c.handle({ type: 'aiAction', action: 'summarize', scope: 'section', id: 'p1' });
     await Promise.resolve();
     await c.handle({ type: 'aiStop' });
     await running;
     expect(rec.calls[0].signal.aborted).toBe(true);
+  });
+});
+
+describe('AiController action payloads', () => {
+  it('sends the selection, not the section, when the scope is a selection', async () => {
+    const ws = fakeMemento();
+    await ws.update('mdeepen.ai.firstSendConfirmed', true);
+    const { c } = makeController(ws);
+    await c.handle({ type: 'aiAction', action: 'explain', scope: 'selection', id: 'p1', text: 'just this line' });
+    expect(rec.calls).toHaveLength(1);
+    expect(rec.calls[0].text).toContain('just this line');
+    expect(rec.calls[0].text).not.toContain('## Retries');
+  });
+
+  it('scans the selection for secrets, not the surrounding section', async () => {
+    const { c, posted } = makeController();
+    await c.handle({ type: 'aiAction', action: 'explain', scope: 'selection', id: 'p1', text: 'a clean sentence' });
+    const confirm = posted.find((m) => m.type === 'aiConfirmNeeded');
+    expect(confirm && confirm.type === 'aiConfirmNeeded' && confirm.secrets.count).toBe(0);
+  });
+
+  it('ignores an unknown action', async () => {
+    const ws = fakeMemento();
+    await ws.update('mdeepen.ai.firstSendConfirmed', true);
+    const { c } = makeController(ws);
+    await c.handle({ type: 'aiAction', action: 'translate', scope: 'section', id: 'p1' } as never);
+    expect(rec.calls).toHaveLength(0);
+  });
+
+  it('ignores an unknown scope', async () => {
+    const ws = fakeMemento();
+    await ws.update('mdeepen.ai.firstSendConfirmed', true);
+    const { c } = makeController(ws);
+    await c.handle({ type: 'aiAction', action: 'explain', scope: 'document', id: 'p1' } as never);
+    expect(rec.calls).toHaveLength(0);
+  });
+
+  it('ignores a selection action with blank or missing text', async () => {
+    const ws = fakeMemento();
+    await ws.update('mdeepen.ai.firstSendConfirmed', true);
+    const { c } = makeController(ws);
+    await c.handle({ type: 'aiAction', action: 'explain', scope: 'selection', id: 'p1', text: '   ' });
+    await c.handle({ type: 'aiAction', action: 'explain', scope: 'selection', id: 'p1' });
+    expect(rec.calls).toHaveLength(0);
+  });
+
+  it('ignores an aiAction naming a page id that matches no page', async () => {
+    const ws = fakeMemento();
+    await ws.update('mdeepen.ai.firstSendConfirmed', true);
+    const { c, posted } = makeController(ws);
+    await c.handle({ type: 'aiAction', action: 'explain', scope: 'section', id: 'no-such-page' });
+    expect(rec.calls).toHaveLength(0);
+    expect(posted).toHaveLength(0);
+  });
+
+  it('ignores a selection larger than the payload cap', async () => {
+    const ws = fakeMemento();
+    await ws.update('mdeepen.ai.firstSendConfirmed', true);
+    const { c } = makeController(ws);
+    await c.handle({ type: 'aiAction', action: 'explain', scope: 'selection', id: 'p1', text: 'x'.repeat(200_001) });
+    expect(rec.calls).toHaveLength(0);
   });
 });

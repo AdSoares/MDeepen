@@ -11,6 +11,9 @@ import { AiConfirm } from './panels/AiConfirm';
 import { ViewControls } from './panels/ViewControls';
 import { Resizer } from './panels/Resizer';
 import { findBySlug } from './anchors';
+import { SelectionToolbar } from './panels/SelectionToolbar';
+import { isUsableSelectionText, selectionText, placeToolbar, type Placement } from './selection';
+import type { AiActionKind } from '../extension/ai/types';
 
 const store = createReaderState();
 
@@ -27,6 +30,7 @@ function schedulePersist() {
 export function App() {
   const [, force] = useState(0);
   const [showConfig, setShowConfig] = useState(false);
+  const [selection, setSelection] = useState<{ text: string; placement: Placement } | null>(null);
   useEffect(() => {
     const unsub = store.subscribe(() => force((n) => n + 1));
     onMessage((m) => {
@@ -40,6 +44,19 @@ export function App() {
       else if (m.type === 'aiConnectionResult') store.aiConnection({ ok: m.ok, ms: m.ms, error: m.error });
       else if (m.type === 'aiShowConfig') { store.setPanels({ aiVisible: true }); setShowConfig(true); }
       else if (m.type === 'navigateSection') setIndex(store.get().activeIndex + m.delta);
+      else if (m.type === 'quickAction') {
+        const st = store.get();
+        const target = st.pages[st.activeIndex];
+        if (target) {
+          store.setPanels({ aiVisible: true });
+          store.aiStreamStart({ action: m.action, scope: 'section', sectionTitle: target.title, pageIndex: st.activeIndex });
+          post({ type: 'aiAction', action: m.action, scope: 'section', id: target.id });
+        }
+      }
+      else if (m.type === 'focusOutline') {
+        store.setPanels({ outlineVisible: true });
+        window.setTimeout(() => document.querySelector<HTMLInputElement>('.md-outline-filter')?.focus(), 0);
+      }
       else if (m.type === 'aiConfirmNeeded') {
         // The host is holding the request until the user answers, so stop showing a live stream.
         store.aiStopped();
@@ -59,7 +76,7 @@ export function App() {
   }, []);
 
   const s = store.get();
-  const setIndex = (i: number) => { store.setActiveIndex(i); post({ type: 'activeSectionChanged', index: store.get().activeIndex }); };
+  const setIndex = (i: number) => { setSelection(null); store.setActiveIndex(i); post({ type: 'activeSectionChanged', index: store.get().activeIndex }); };
   const page = s.pages[s.activeIndex];
   useEffect(() => {
     if (!page || store.get().readIds.has(page.id)) return;
@@ -84,6 +101,45 @@ export function App() {
       document.removeEventListener('visibilitychange', onVis);
     };
   }, [page?.id]);
+
+  useEffect(() => {
+    let timer: number | undefined;
+    const clear = () => setSelection(null);
+
+    const evaluate = () => {
+      const sel = window.getSelection();
+      const container = document.querySelector('.mdeepen-reading');
+      if (!sel || sel.rangeCount === 0 || !container) return clear();
+      const range = sel.getRangeAt(0);
+      if (!container.contains(range.commonAncestorContainer)) return clear();
+      const text = selectionText(sel);
+      if (!isUsableSelectionText(text)) return clear();
+      const rect = range.getBoundingClientRect();
+      const columnRect = container.getBoundingClientRect();
+      const placement = placeToolbar(
+        { top: rect.top, bottom: rect.bottom, left: rect.left, right: rect.right },
+        { width: window.innerWidth, height: window.innerHeight },
+        { left: columnRect.left, right: columnRect.right },
+        { width: 300, height: 32 },
+      );
+      setSelection({ text, placement });
+    };
+
+    const onSelectionChange = () => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(evaluate, 150);
+    };
+
+    document.addEventListener('selectionchange', onSelectionChange);
+    window.addEventListener('scroll', clear, true);
+    window.addEventListener('resize', clear);
+    return () => {
+      window.clearTimeout(timer);
+      document.removeEventListener('selectionchange', onSelectionChange);
+      window.removeEventListener('scroll', clear, true);
+      window.removeEventListener('resize', clear);
+    };
+  }, []);
   const pct = progressPercent(s.activeIndex, s.pages.length);
 
   return (
@@ -146,25 +202,42 @@ export function App() {
             activePageId={page?.id}
             onConfigure={() => setShowConfig((v) => !v)}
             onCite={(pageIndex) => setIndex(pageIndex)}
-            onSummarize={() => {
+            onDelete={(index) => store.aiDeleteMessage(index)}
+            onClear={() => store.aiClearMessages()}
+            onAction={(action) => {
               const st = store.get();
               const target = st.pages[st.activeIndex];
               if (!target) return;
-              store.aiStreamStart(target.title, st.activeIndex);
-              post({ type: 'aiSummarizeSection', id: target.id });
+              store.aiStreamStart({ action, scope: 'section', sectionTitle: target.title, pageIndex: st.activeIndex });
+              post({ type: 'aiAction', action, scope: 'section', id: target.id });
             }}
             onStop={() => { store.aiStopped(); post({ type: 'aiStop' }); }}
           />
         </div>
       </div>
+      {selection && page && (
+        <SelectionToolbar
+          placement={selection.placement}
+          onDismiss={() => setSelection(null)}
+          onAction={(action: AiActionKind) => {
+            const st = store.get();
+            const target = st.pages[st.activeIndex];
+            if (!target) return;
+            store.aiStreamStart({ action, scope: 'selection', sectionTitle: target.title, pageIndex: st.activeIndex, excerpt: selection.text });
+            post({ type: 'aiAction', action, scope: 'selection', id: target.id, text: selection.text });
+            setSelection(null);
+            store.setPanels({ aiVisible: true });
+          }}
+        />
+      )}
       {s.ai.confirm && (
         <AiConfirm
           confirm={s.ai.confirm}
           onCancel={() => { store.aiConfirm(undefined); post({ type: 'aiCancelSend' }); }}
           onSend={(opts) => {
-            const { sectionTitle, pageIndex } = store.get().ai;
+            const { pending } = store.get().ai;
             store.aiConfirm(undefined);
-            store.aiStreamStart(sectionTitle, pageIndex);
+            store.aiStreamStart(pending);
             post({ type: 'aiConfirmSend', ...opts });
           }}
         />

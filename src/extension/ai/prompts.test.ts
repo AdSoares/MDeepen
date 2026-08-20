@@ -1,14 +1,63 @@
 import { describe, it, expect } from 'vitest';
-import { buildSummarizeRequest } from './prompts';
+import { buildActionRequest, actionLabel, isActionKind } from './prompts';
+import { AI_ACTIONS } from './types';
 
-describe('buildSummarizeRequest', () => {
-  it('builds a summarize request from a section', () => {
-    const req = buildSummarizeRequest({ title: 'Retries', content: '## Retries\n\nWe retry 3x.' }, 4096);
+const CTX = { title: 'Retries', content: '## Retries\n\nWe retry 3x.' };
+
+describe('buildActionRequest', () => {
+  it('builds a section-scoped summarize request', () => {
+    const req = buildActionRequest('summarize', 'section', CTX, 4096);
     expect(req.maxTokens).toBe(4096);
     expect(req.system.toLowerCase()).toContain('summ');
     expect(req.messages).toHaveLength(1);
     expect(req.messages[0].role).toBe('user');
     expect(req.messages[0].content).toContain('Retries');
     expect(req.messages[0].content).toContain('retry 3x');
+  });
+
+  it('gives every action its own system prompt', () => {
+    const systems = AI_ACTIONS.map((a) => buildActionRequest(a, 'section', CTX, 100).system);
+    expect(new Set(systems).size).toBe(AI_ACTIONS.length);
+  });
+
+  it('keeps the grounding rules in every action', () => {
+    for (const action of AI_ACTIONS) {
+      const system = buildActionRequest(action, 'section', CTX, 100).system.toLowerCase();
+      expect(system).toContain('do not invent');
+      expect(system).toContain('language');
+    }
+  });
+
+  it('tells the model whether it received a whole section or an excerpt', () => {
+    const section = buildActionRequest('explain', 'section', CTX, 100).messages[0].content;
+    const selection = buildActionRequest('explain', 'selection', CTX, 100).messages[0].content;
+    expect(section).toContain('section');
+    expect(selection).toContain('excerpt');
+  });
+
+  it('carries the content verbatim for every action and scope', () => {
+    for (const action of AI_ACTIONS) {
+      for (const scope of ['section', 'selection'] as const) {
+        expect(buildActionRequest(action, scope, CTX, 100).messages[0].content).toContain('We retry 3x.');
+      }
+    }
+  });
+});
+
+describe('actionLabel', () => {
+  it('gives every action a short human label', () => {
+    for (const action of AI_ACTIONS) {
+      expect(actionLabel(action).length).toBeGreaterThan(0);
+    }
+    expect(actionLabel('keyTerms')).toBe('Key terms');
+  });
+});
+
+describe('isActionKind', () => {
+  it('accepts known actions and rejects anything else', () => {
+    expect(isActionKind('summarize')).toBe(true);
+    expect(isActionKind('translate')).toBe(false);
+    expect(isActionKind(7)).toBe(false);
+    expect(isActionKind(undefined)).toBe(false);
   });
 });

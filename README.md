@@ -30,6 +30,7 @@ Open any `.md` file and run **MDeepen: Open in Markdown Intelligence Reader**
 - Section pagination (defaults to `##`, with fallback), Previous/Next, and
   <kbd>Alt</kbd>+<kbd>←</kbd>/<kbd>→</kbd>. A picker sets the heading level (H1–H6).
 - Outline tree with filter, read marks, and section navigation.
+  <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>O</kbd> focuses the filter.
 - Reading progress and estimated time; last position remembered per file.
 - Read marks are dwell-based (5s) and persisted per file. Skipping ahead does not
   mark what you skipped, and going back does not unmark.
@@ -53,20 +54,22 @@ leaves your machine.
   opens a confirmation dialog showing the file and section, the model, and a token
   and cost estimate computed locally — producing it makes no network call.
   "Don't ask again" is scoped to that workspace.
-- **Secret detection.** The section is scanned for API-key-shaped strings
+- **Secret detection.** The text about to be sent — the selection, or the whole
+  section — is scanned for API-key-shaped strings
   (`sk-…`, `AKIA…`, `ghp_…`, JWTs) before the dialog appears. If any are found,
   masking is pre-selected and those spans are redacted before the text is sent.
   It is a safety net, not a guarantee — see [SECURITY.md](SECURITY.md).
-- **Summarize section**, streamed token by token, with Stop generating (a stopped
-  answer keeps whatever arrived), a citation chip back to the source section, and
-  Copy.
+- **Five actions, one click.** Select any text — or act on the whole section — and ask for a
+  summary, an explanation, a plain-language explanation, the key terms, or a worked example.
+  Answers stream in, cite the section they came from, and can be copied, deleted, or cleared.
+  Stop generating keeps whatever arrived. <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>S</kbd>
+  summarizes the current section without leaving the keyboard.
 - All network access happens in the extension host. The webview makes no requests,
   and its Content Security Policy carries no `connect-src`.
 - **Reading never depends on AI.** With no key configured, everything above still
   works, and every AI error is recoverable.
 
-Coming in later slices: chat with the document, selection-scoped actions, and
-generated diagrams.
+Coming in later slices: chat with the document and generated diagrams.
 
 ## Develop
 

@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-08-20
+
+### Added
+
+- Selection actions: select text in the reader and apply summarize, explain, explain simply,
+  key terms, or create an example from a floating toolbar. The same five actions run over the
+  current section from the AI panel.
+- Answers record which action produced them and what they were applied to, and show the selected
+  excerpt when the action came from a selection.
+- Delete a single answer, or clear them all.
+- `Ctrl+Alt+S` summarizes the current section; `Ctrl+Alt+O` focuses the outline filter.
+
+### Changed
+
+- Secret detection, masking and the cost estimate now run over the text actually being sent, so a
+  selection action reports on the selection rather than the whole section.
+- The `aiSummarizeSection` message was replaced by a generic `aiAction`.
+
 ## [0.2.0] - 2026-08-18
 
 First AI slice. The reader itself is unchanged and still works with no API key.
@@ -89,7 +107,8 @@ First AI slice. The reader itself is unchanged and still works with no API key.
 - Reading and focus modes, adjustable font size, column width, line spacing, and
   theme.
 
-[Unreleased]: https://github.com/AdSoares/MDeepen/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/AdSoares/MDeepen/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/AdSoares/MDeepen/releases/tag/v0.3.0
 [0.2.0]: https://github.com/AdSoares/MDeepen/releases/tag/v0.2.0
 [0.1.2]: https://github.com/AdSoares/MDeepen/releases/tag/v0.1.2
 [0.1.1]: https://github.com/AdSoares/MDeepen/releases/tag/v0.1.1

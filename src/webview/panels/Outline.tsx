@@ -55,6 +55,7 @@ export function Outline({ outline, activeIndex, pages, readIds, onSelect }: Prop
       </div>
       <div style={{ padding: '0 8px 8px' }}>
         <input
+          class="md-outline-filter"
           value={query}
           onInput={(e) => setQuery((e.target as HTMLInputElement).value)}
           placeholder="Filter sections"

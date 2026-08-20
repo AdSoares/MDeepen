@@ -1,11 +1,15 @@
 import type { HostToWebview } from '../shared/messages';
 import type { OutlineNode, Page, ReaderConfig } from '../shared/types';
 import { DEFAULT_CONFIG, DEFAULT_PANELS } from '../shared/defaults';
+import type { AiActionKind, AiScope } from '../extension/ai/types';
 
 export interface AiMessage {
   text: string;
+  action: AiActionKind;
+  scope: AiScope;
   sectionTitle: string;
   pageIndex: number;
+  excerpt?: string;
 }
 
 export interface AiState {
@@ -14,8 +18,7 @@ export interface AiState {
   model: string;
   streaming: boolean;
   streamText: string;
-  sectionTitle: string;
-  pageIndex: number;
+  pending: { action: AiActionKind; scope: AiScope; sectionTitle: string; pageIndex: number; excerpt?: string };
   messages: AiMessage[];
   error?: { kind: string; message: string };
   confirm?: Omit<Extract<HostToWebview, { type: 'aiConfirmNeeded' }>, 'type'>;
@@ -36,7 +39,8 @@ export interface ReaderState {
 
 const initialAi: AiState = {
   configured: false, provider: 'anthropic', model: '',
-  streaming: false, streamText: '', sectionTitle: '', pageIndex: -1,
+  streaming: false, streamText: '',
+  pending: { action: 'summarize', scope: 'section', sectionTitle: '', pageIndex: -1 },
   messages: [],
 };
 
@@ -50,10 +54,12 @@ const initial: ReaderState = {
 
 const clamp = (i: number, len: number): number => Math.min(Math.max(i, 0), Math.max(0, len - 1));
 
+const EXCERPT_MAX = 240;
+
 /** Ends a stream, keeping whatever text arrived so a partial answer is never thrown away. */
 function finalizeStream(ai: AiState): AiState {
   const messages = ai.streamText
-    ? [...ai.messages, { text: ai.streamText, sectionTitle: ai.sectionTitle, pageIndex: ai.pageIndex }]
+    ? [...ai.messages, { text: ai.streamText, ...ai.pending }]
     : ai.messages;
   return { ...ai, streaming: false, streamText: '', messages };
 }
@@ -99,8 +105,21 @@ export function createReaderState() {
       state = { ...state, ai: { ...state.ai, configured, provider, model, connection } };
       emit();
     },
-    aiStreamStart(sectionTitle = '', pageIndex = -1) {
-      state = { ...state, ai: { ...state.ai, streaming: true, streamText: '', sectionTitle, pageIndex, error: undefined } };
+    aiStreamStart(meta: { action: AiActionKind; scope: AiScope; sectionTitle: string; pageIndex: number; excerpt?: string }) {
+      const excerpt = meta.excerpt && meta.excerpt.length > EXCERPT_MAX
+        ? `${meta.excerpt.slice(0, EXCERPT_MAX)}…`
+        : meta.excerpt;
+      state = { ...state, ai: { ...state.ai, streaming: true, streamText: '', pending: { ...meta, excerpt }, error: undefined } };
+      emit();
+    },
+    aiDeleteMessage(index: number) {
+      if (index < 0 || index >= state.ai.messages.length) return;
+      const messages = state.ai.messages.filter((_, i) => i !== index);
+      state = { ...state, ai: { ...state.ai, messages } };
+      emit();
+    },
+    aiClearMessages() {
+      state = { ...state, ai: { ...state.ai, messages: [] } };
       emit();
     },
     aiChunk(text: string) {

@@ -2,7 +2,7 @@
   "name": "mdeepen",
   "displayName": "MDeepen — Markdown Intelligence Reader",
   "description": "Read Markdown, deeper. Paginated, section-based Markdown reader for VS Code.",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "publisher": "codartia",
   "private": true,
   "license": "Apache-2.0",
@@ -28,7 +28,9 @@
     "keybindings": [
       { "command": "mdeepen.openReader", "key": "ctrl+alt+m", "when": "editorLangId == markdown" },
       { "command": "mdeepen.nextSection", "key": "alt+right", "when": "activeWebviewPanelId == 'mdeepenReader'" },
-      { "command": "mdeepen.previousSection", "key": "alt+left", "when": "activeWebviewPanelId == 'mdeepenReader'" }
+      { "command": "mdeepen.previousSection", "key": "alt+left", "when": "activeWebviewPanelId == 'mdeepenReader'" },
+      { "command": "mdeepen.summarizeSection", "key": "ctrl+alt+s", "when": "activeWebviewPanelId == 'mdeepenReader'" },
+      { "command": "mdeepen.focusOutline", "key": "ctrl+alt+o", "when": "activeWebviewPanelId == 'mdeepenReader'" }
     ]
   },
   "scripts": {
