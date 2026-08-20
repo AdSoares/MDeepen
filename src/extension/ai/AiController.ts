@@ -97,7 +97,7 @@ export class AiController {
       for await (const chunk of provider.generate(finalReq, abort.signal)) {
         if (chunk.type === 'text') this.post({ type: 'aiChunk', text: chunk.text });
         else if (chunk.type === 'done') this.post({ type: 'aiDone', usage: chunk.usage });
-        else this.post({ type: 'aiError', kind: chunk.kind, message: chunk.message });
+        else if (chunk.type === 'error') this.post({ type: 'aiError', kind: chunk.kind, message: chunk.message });
       }
       if (this.abort === abort) this.abort = undefined;
     };

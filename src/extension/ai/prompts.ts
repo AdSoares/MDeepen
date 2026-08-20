@@ -1,4 +1,5 @@
 import type { AiActionKind, AiRequest, AiScope } from './types';
+import { MAP_SUMMARY_TARGET_WORDS } from './types';
 
 interface ActionContext {
   title: string;
@@ -7,7 +8,8 @@ interface ActionContext {
 
 const GROUNDING = 'Do not invent facts that are not present in the supplied text. Respond in the language of the supplied text.';
 
-const scopeWord = (scope: AiScope): string => (scope === 'selection' ? 'excerpt' : 'section');
+const scopeWord = (scope: AiScope): string =>
+  scope === 'selection' ? 'excerpt' : scope === 'document' ? 'document' : 'section';
 
 const ACTIONS: Record<AiActionKind, { label: string; system: string; user: (ctx: ActionContext, scope: AiScope) => string }> = {
   summarize: {
@@ -35,6 +37,26 @@ const ACTIONS: Record<AiActionKind, { label: string; system: string; user: (ctx:
     system: `You illustrate part of a Markdown document with one concrete example. Prefer a short code snippet or a worked case over prose. State any assumption the example makes. ${GROUNDING}`,
     user: (ctx, scope) => `Give one concrete example illustrating this ${scopeWord(scope)} from "${ctx.title}":\n\n${ctx.content}`,
   },
+  summarizeShort: {
+    label: 'Short summary',
+    system: `You summarize a whole Markdown document for a technical reader. Produce 3-5 sentences that convey what the document is about and how it is organised. ${GROUNDING}`,
+    user: (ctx, scope) => `Write a short summary of this ${scopeWord(scope)}, "${ctx.title}":\n\n${ctx.content}`,
+  },
+  summarizeExecutive: {
+    label: 'Executive summary',
+    system: `You summarize a whole Markdown document for a decision maker. Lead with decisions, outcomes and their implications; leave out implementation detail. ${GROUNDING}`,
+    user: (ctx, scope) => `Write an executive summary of this ${scopeWord(scope)}, "${ctx.title}":\n\n${ctx.content}`,
+  },
+  summarizeTechnical: {
+    label: 'Technical summary',
+    system: `You summarize a whole Markdown document for an engineer who will work on it. Preserve mechanisms, constraints, interfaces and numbers; prefer specifics over generalities. ${GROUNDING}`,
+    user: (ctx, scope) => `Write a technical summary of this ${scopeWord(scope)}, "${ctx.title}":\n\n${ctx.content}`,
+  },
+  keyPoints: {
+    label: 'Key points',
+    system: `You extract the load-bearing claims of a whole Markdown document. Return a list; each entry is one claim the document actually makes, stated in one sentence. ${GROUNDING}`,
+    user: (ctx, scope) => `List the key points of this ${scopeWord(scope)}, "${ctx.title}":\n\n${ctx.content}`,
+  },
 };
 
 export function actionLabel(action: AiActionKind): string {
@@ -54,7 +76,16 @@ export function buildActionRequest(action: AiActionKind, scope: AiScope, ctx: Ac
   };
 }
 
-/** @deprecated Transitional shim; removed once the controller migrates to buildActionRequest. */
-export function buildSummarizeRequest(section: { title: string; content: string }, maxTokens: number) {
-  return buildActionRequest('summarize', 'section', section, maxTokens);
+/** Condenses one map step. Deliberately neutral: the requested style is applied once, at the
+ *  reduce. A styled map would style already-styled text, and detail dropped here never returns.
+ *  Not a member of AI_ACTIONS — the user never picks it. */
+export function buildMapRequest(step: { titles: string[]; content: string }, maxTokens: number): AiRequest {
+  return {
+    system: `You condense part of a Markdown document. Preserve the claims, numbers and terms it contains, in the order it makes them. Do not editorialise, rank or conclude. Aim for about ${MAP_SUMMARY_TARGET_WORDS} words. ${GROUNDING}`,
+    messages: [{
+      role: 'user',
+      content: `Condense this part of the document, covering ${step.titles.join(', ')}:\n\n${step.content}`,
+    }],
+    maxTokens,
+  };
 }
