@@ -36,7 +36,7 @@
 - Produces: `AiActionKind`, `AiScope`, `AI_ACTIONS` (in `types.ts`); `buildActionRequest(action, scope, ctx, maxTokens)`, `actionLabel(action)`, `isActionKind(value)` (in `prompts.ts`).
 - Removes: `buildSummarizeRequest`.
 
-- [ ] **Step 1: Add the action types**
+- [x] **Step 1: Add the action types**
 
 Append to `src/extension/ai/types.ts`:
 
@@ -47,7 +47,7 @@ export type AiScope = 'section' | 'selection';
 export const AI_ACTIONS: readonly AiActionKind[] = ['summarize', 'explain', 'explainSimply', 'keyTerms', 'example'];
 ```
 
-- [ ] **Step 2: Replace the prompt test with the registry test (failing)**
+- [x] **Step 2: Replace the prompt test with the registry test (failing)**
 
 Replace the whole body of `src/extension/ai/prompts.test.ts`:
 
@@ -117,12 +117,12 @@ describe('isActionKind', () => {
 });
 ```
 
-- [ ] **Step 3: Run to verify failure**
+- [x] **Step 3: Run to verify failure**
 
 Run: `npx vitest run src/extension/ai/prompts.test.ts`
 Expected: FAIL — `buildActionRequest` is not exported.
 
-- [ ] **Step 4: Replace `prompts.ts` with the registry**
+- [x] **Step 4: Replace `prompts.ts` with the registry**
 
 ```ts
 import type { AiActionKind, AiRequest, AiScope } from './types';
@@ -182,12 +182,12 @@ export function buildActionRequest(action: AiActionKind, scope: AiScope, ctx: Ac
 }
 ```
 
-- [ ] **Step 5: Run to verify pass**
+- [x] **Step 5: Run to verify pass**
 
 Run: `npx vitest run src/extension/ai/prompts.test.ts`
 Expected: PASS. `npm test` will still fail — `AiController.ts` imports `buildSummarizeRequest`, which Task 3 replaces. That is expected between tasks; do not paper over it here.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/extension/ai/types.ts src/extension/ai/prompts.ts src/extension/ai/prompts.test.ts
@@ -208,7 +208,7 @@ git commit -m "feat: prompt registry keyed by action and scope"
 
 `aiSummarizeSection` stays for now and is retired in Task 8, once every caller has migrated. This keeps each task independently green.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Add inside the existing `describe` block in `src/shared/messages.test.ts`:
 
@@ -219,12 +219,12 @@ Add inside the existing `describe` block in `src/shared/messages.test.ts`:
   });
 ```
 
-- [ ] **Step 2: Run to verify failure**
+- [x] **Step 2: Run to verify failure**
 
 Run: `npx vitest run src/shared/messages.test.ts`
 Expected: FAIL — `expected false to be true`.
 
-- [ ] **Step 3: Extend the contract**
+- [x] **Step 3: Extend the contract**
 
 In `src/shared/messages.ts`, extend the type-only import:
 
@@ -240,12 +240,12 @@ Add to the `WebviewToHost` union, directly above `| { type: 'aiStop' }`:
 
 Add `'aiAction'` to `WEBVIEW_TYPES`.
 
-- [ ] **Step 4: Run to verify pass**
+- [x] **Step 4: Run to verify pass**
 
 Run: `npx vitest run src/shared/messages.test.ts`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/shared/messages.ts src/shared/messages.test.ts
@@ -264,7 +264,7 @@ git commit -m "feat: generic aiAction message in the host contract"
 - Consumes: `buildActionRequest`, `isActionKind` (Task 1); the `aiAction` message (Task 2).
 - Produces: `startAction`, replacing `startSummarize`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 In `src/extension/ai/AiController.test.ts`, replace every existing `{ type: 'aiSummarizeSection', id: 'p1' }` with `{ type: 'aiAction', action: 'summarize', scope: 'section', id: 'p1' }`. Then append this describe block at the end of the file:
 
@@ -322,12 +322,12 @@ describe('AiController action payloads', () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify failure**
+- [x] **Step 2: Run to verify failure**
 
 Run: `npx vitest run src/extension/ai/AiController.test.ts`
 Expected: FAIL — the module does not compile, because `buildSummarizeRequest` no longer exists.
 
-- [ ] **Step 3: Rewrite the action path in the controller**
+- [x] **Step 3: Rewrite the action path in the controller**
 
 In `src/extension/ai/AiController.ts`, change the import:
 
@@ -371,12 +371,12 @@ Rename `startSummarize` to `startAction` and replace its first six lines — eve
 
 The rest of the method — `run`, the first-send branch, the confirm payload — is unchanged.
 
-- [ ] **Step 4: Run to verify pass**
+- [x] **Step 4: Run to verify pass**
 
 Run: `npx vitest run src/extension/ai/AiController.test.ts && npm test`
 Expected: green. Suite is now **135 tests** (123 + 7 prompt/label/guard tests from Task 1 replacing 1, + 1 contract test, + 6 payload tests; the exact number may differ by one or two if you split a test — what matters is that nothing is red).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/extension/ai/AiController.ts src/extension/ai/AiController.test.ts
@@ -397,7 +397,7 @@ git commit -m "feat: controller handles generic AI actions with payload validati
 
 `selectionText` touches the DOM and is therefore not unit-tested — Vitest runs in the `node` environment. It is verified in the smoke handoff (Task 10). Everything else in this module is pure and tested here.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `src/webview/selection.test.ts`:
 
@@ -456,12 +456,12 @@ describe('placeToolbar', () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify failure**
+- [x] **Step 2: Run to verify failure**
 
 Run: `npx vitest run src/webview/selection.test.ts`
 Expected: FAIL — module missing.
 
-- [ ] **Step 3: Implement `selection.ts`**
+- [x] **Step 3: Implement `selection.ts`**
 
 ```ts
 export interface Rect {
@@ -518,7 +518,7 @@ export function placeToolbar(
 }
 ```
 
-- [ ] **Step 4: Mark the code-block toolbar as UI**
+- [x] **Step 4: Mark the code-block toolbar as UI**
 
 In `src/webview/render/markdown.ts`, in the custom fence renderer, add the marker attribute:
 
@@ -526,12 +526,12 @@ In `src/webview/render/markdown.ts`, in the custom fence renderer, add the marke
     <div class="code-toolbar" data-md-ui="true"><span class="code-lang">${escapeHtml(lang)}</span>
 ```
 
-- [ ] **Step 5: Run to verify pass**
+- [x] **Step 5: Run to verify pass**
 
 Run: `npx vitest run src/webview/selection.test.ts && npm test`
 Expected: green.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/webview/selection.ts src/webview/selection.test.ts src/webview/render/markdown.ts
@@ -552,7 +552,7 @@ git commit -m "feat: selection qualification, UI-free extraction and toolbar geo
 
 `aiStreamStart` changes from positional arguments to a single object. Task 6 and Task 7 both call the new form; the three existing store tests that call the old form are updated in Step 1.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 In `src/webview/store.test.ts`, update the three existing calls:
 - `s.aiStreamStart()` → `s.aiStreamStart({ action: 'summarize', scope: 'section', sectionTitle: '', pageIndex: -1 })`
@@ -613,12 +613,12 @@ Then append these tests inside the `describe('reader store')` block:
   });
 ```
 
-- [ ] **Step 2: Run to verify failure**
+- [x] **Step 2: Run to verify failure**
 
 Run: `npx vitest run src/webview/store.test.ts`
 Expected: FAIL — `aiDeleteMessage is not a function`, plus type errors on the new `aiStreamStart` shape.
 
-- [ ] **Step 3: Widen the store**
+- [x] **Step 3: Widen the store**
 
 In `src/webview/store.ts`, add the import:
 
@@ -706,12 +706,12 @@ Every remaining reference to `state.ai.sectionTitle` or `state.ai.pageIndex` —
           }}
 ```
 
-- [ ] **Step 4: Run to verify pass**
+- [x] **Step 4: Run to verify pass**
 
 Run: `npx vitest run src/webview/store.test.ts && npm test && npx tsc --noEmit && npm run build`
 Expected: green.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/webview/store.ts src/webview/store.test.ts src/webview/App.tsx
@@ -733,7 +733,7 @@ git commit -m "feat: answer provenance, delete and clear in the reader store"
 
 This task is webview UI and is smoke-verified; its logic was extracted into Task 4 precisely so this file can stay thin.
 
-- [ ] **Step 1: Create `SelectionToolbar.tsx`**
+- [x] **Step 1: Create `SelectionToolbar.tsx`**
 
 ```tsx
 import { useEffect, useRef, useState } from 'preact/hooks';
@@ -789,7 +789,7 @@ export function SelectionToolbar({ placement, onAction, onDismiss }: Props) {
 
 `onMouseDown` is prevented so clicking a button does not collapse the selection before the handler reads it.
 
-- [ ] **Step 2: Wire selection state into `App.tsx`**
+- [x] **Step 2: Wire selection state into `App.tsx`**
 
 Add the imports:
 
@@ -876,7 +876,7 @@ Render it just before the confirm modal:
 
 `aiStreamStart` takes the object form introduced in Task 5.
 
-- [ ] **Step 3: Add the styles**
+- [x] **Step 3: Add the styles**
 
 Append to `src/webview/styles/theme.css`:
 
@@ -886,12 +886,12 @@ Append to `src/webview/styles/theme.css`:
 .md-seltoolbar-menu .md-btn { text-align: left; }
 ```
 
-- [ ] **Step 4: Build and typecheck**
+- [x] **Step 4: Build and typecheck**
 
 Run: `npm run build && npx tsc --noEmit && npm test`
 Expected: green.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/webview/panels/SelectionToolbar.tsx src/webview/App.tsx src/webview/styles/theme.css
@@ -910,7 +910,7 @@ git commit -m "feat: floating toolbar for selection actions"
 - Consumes: `AiMessage`, `aiDeleteMessage`, `aiClearMessages` (Task 6); `actionLabel`, `AI_ACTIONS` (Task 1).
 - Produces: the panel's `onAction(action, scope)` callback shape used by `App`.
 
-- [ ] **Step 1: Rewrite the panel's configured branch**
+- [x] **Step 1: Rewrite the panel's configured branch**
 
 In `src/webview/panels/AiPanel.tsx`, replace the `Props` interface and the configured-state markup. Keep the unconfigured branch exactly as it is.
 
@@ -999,7 +999,7 @@ The configured branch, replacing everything from the `md-ai-head` div to the end
   );
 ```
 
-- [ ] **Step 2: Add the two new styles**
+- [x] **Step 2: Add the two new styles**
 
 Append to `src/webview/styles/theme.css`:
 
@@ -1008,7 +1008,7 @@ Append to `src/webview/styles/theme.css`:
 .md-ai-excerpt { margin: 0 0 8px; padding-left: 8px; border-left: 2px solid var(--vscode-panel-border); font-size: 12px; color: var(--vscode-descriptionForeground); }
 ```
 
-- [ ] **Step 3: Update the panel's call site in `App.tsx`**
+- [x] **Step 3: Update the panel's call site in `App.tsx`**
 
 Replace the `<AiPanel …>` props:
 
@@ -1031,12 +1031,12 @@ Replace the `<AiPanel …>` props:
           />
 ```
 
-- [ ] **Step 4: Build, typecheck, test**
+- [x] **Step 4: Build, typecheck, test**
 
 Run: `npm run build && npx tsc --noEmit && npm test`
 Expected: green.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/webview/panels/AiPanel.tsx src/webview/App.tsx src/webview/styles/theme.css
