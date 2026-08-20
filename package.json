@@ -2,7 +2,7 @@
   "name": "mdeepen",
   "displayName": "MDeepen — Markdown Intelligence Reader",
   "description": "Read Markdown, deeper. Paginated, section-based Markdown reader for VS Code.",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "publisher": "codartia",
   "private": true,
   "license": "Apache-2.0",
