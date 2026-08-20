@@ -1203,11 +1203,11 @@ git commit -m "feat: Ctrl+Alt+S summarizes the section and Ctrl+Alt+O focuses th
 - Modify: `README.md`
 - Modify: `CHANGELOG.md`
 
-- [ ] **Step 1: Bump the version**
+- [x] **Step 1: Bump the version**
 
 `package.json` → `"version": "0.3.0"`.
 
-- [ ] **Step 2: Update the README**
+- [x] **Step 2: Update the README**
 
 In the AI section, replace the single Summarize bullet with:
 
@@ -1217,7 +1217,7 @@ In the AI section, replace the single Summarize bullet with:
   Answers stream in, cite the section they came from, and can be copied, deleted, or cleared.
 ```
 
-- [ ] **Step 3: Add the changelog entry**
+- [x] **Step 3: Add the changelog entry**
 
 Insert above `## [0.2.0]`:
 
@@ -1243,12 +1243,12 @@ Insert above `## [0.2.0]`:
 
 Also add the compare link at the bottom, following the existing pattern.
 
-- [ ] **Step 4: Build, test, package**
+- [x] **Step 4: Build, test, package**
 
 Run: `npm run build && npx tsc --noEmit && npm test && npm run package`
 Expected: suite green; `mdeepen-0.3.0.vsix` produced.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add package.json README.md CHANGELOG.md
