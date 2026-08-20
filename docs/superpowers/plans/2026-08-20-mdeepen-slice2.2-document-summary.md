@@ -1272,7 +1272,22 @@ git add package.json README.md CHANGELOG.md
 git commit -m "chore: release 0.4.0 with document summaries"
 ```
 
-- [ ] **Step 6: Human smoke — this step belongs to the user, not the implementer**
+- [x] **Step 6: Human smoke — this step belongs to the user, not the implementer** — **DONE 2026-08-20.**
+
+> **Result: all 14 checks pass.** No defects found, so 0.4.0 ships as packaged.
+>
+> Walked against two purpose-built documents whose plans were computed in advance rather than
+> guessed: a 24-section handbook of ~22,300 characters that splits into exactly two parts, with
+> its governing decision placed in the second part so the coverage check means something; and a
+> settlement trace whose single 25,363-token section forces truncation.
+>
+> The checks with no automated coverage all held: the second part is represented in the answer,
+> so the reduce is not summarizing only the beginning; masking applied to every map request and
+> not just the first, confirmed at the breakpoint across all three stops; stopping during the
+> progress bar left no answer while stopping during the stream kept the partial; and the consent
+> pair held in both directions — a section's "Don't ask again" did not silence the document
+> dialog, and the document run did not revoke the section consent.
+
 
 Needs a real API key and a document of at least a dozen sections; the scratchpad smoke file from
 Slice 2.1 is too short to produce more than one part.
