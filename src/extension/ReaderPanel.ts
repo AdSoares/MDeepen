@@ -6,6 +6,7 @@ import { DocStateStore, UiStateStore } from './state/positionStore';
 import { remapReadIds } from './readState';
 import { AiController } from './ai/AiController';
 import type { AiConfigStore } from './ai/AiConfigStore';
+import type { AiActionKind } from './ai/types';
 import type { Page } from '../shared/types';
 import type { HostToWebview, WebviewToHost } from '../shared/messages';
 import { isWebviewToHost } from '../shared/messages';
@@ -46,6 +47,17 @@ export class ReaderPanel {
    *  navigateBack / navigateForward no matter what the webview does with the event. */
   static navigateActive(delta: number): void {
     ReaderPanel.active?.post({ type: 'navigateSection', delta });
+  }
+
+  /** Asks the active reader to run an AI action on whatever section it currently shows.
+   *  The host does not track the active section, so it sends an intent and the webview
+   *  turns it into an aiAction. */
+  static quickActionOnActive(action: AiActionKind): void {
+    ReaderPanel.active?.post({ type: 'quickAction', action });
+  }
+
+  static focusOutlineOnActive(): void {
+    ReaderPanel.active?.post({ type: 'focusOutline' });
   }
 
   /** Opens the AI config view. Queued until the webview is initialised, so it also works on a fresh panel. */

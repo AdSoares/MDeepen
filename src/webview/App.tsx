@@ -44,6 +44,19 @@ export function App() {
       else if (m.type === 'aiConnectionResult') store.aiConnection({ ok: m.ok, ms: m.ms, error: m.error });
       else if (m.type === 'aiShowConfig') { store.setPanels({ aiVisible: true }); setShowConfig(true); }
       else if (m.type === 'navigateSection') setIndex(store.get().activeIndex + m.delta);
+      else if (m.type === 'quickAction') {
+        const st = store.get();
+        const target = st.pages[st.activeIndex];
+        if (target) {
+          store.setPanels({ aiVisible: true });
+          store.aiStreamStart({ action: m.action, scope: 'section', sectionTitle: target.title, pageIndex: st.activeIndex });
+          post({ type: 'aiAction', action: m.action, scope: 'section', id: target.id });
+        }
+      }
+      else if (m.type === 'focusOutline') {
+        store.setPanels({ outlineVisible: true });
+        window.setTimeout(() => document.querySelector<HTMLInputElement>('.md-outline-filter')?.focus(), 0);
+      }
       else if (m.type === 'aiConfirmNeeded') {
         // The host is holding the request until the user answers, so stop showing a live stream.
         store.aiStopped();

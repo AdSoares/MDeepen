@@ -12,7 +12,9 @@ export type HostToWebview =
   | { type: 'aiConfigState'; configured: boolean; provider: string; model: string }
   | { type: 'aiConnectionResult'; ok: boolean; ms: number; error?: string }
   | { type: 'aiShowConfig' }
-  | { type: 'navigateSection'; delta: number };
+  | { type: 'navigateSection'; delta: number }
+  | { type: 'quickAction'; action: AiActionKind }
+  | { type: 'focusOutline' };
 
 export type WebviewToHost =
   | { type: 'ready' }
@@ -32,7 +34,7 @@ export type WebviewToHost =
   | { type: 'aiClearKey' }
   | { type: 'aiConfigRequest' };
 
-const HOST_TYPES = new Set(['init', 'sectionsUpdated', 'configChanged', 'aiChunk', 'aiDone', 'aiError', 'aiConfirmNeeded', 'aiConfigState', 'aiConnectionResult', 'aiShowConfig', 'navigateSection']);
+const HOST_TYPES = new Set(['init', 'sectionsUpdated', 'configChanged', 'aiChunk', 'aiDone', 'aiError', 'aiConfirmNeeded', 'aiConfigState', 'aiConnectionResult', 'aiShowConfig', 'navigateSection', 'quickAction', 'focusOutline']);
 const WEBVIEW_TYPES = new Set(['ready', 'activeSectionChanged', 'sectionRead', 'uiStateChanged', 'openLink', 'refresh', 'setPaginationLevel', 'aiAction', 'aiStop', 'aiConfirmSend', 'aiCancelSend', 'aiTestConnection', 'aiSaveConfig', 'aiSaveKey', 'aiClearKey', 'aiConfigRequest']);
 
 export function isHostToWebview(m: unknown): m is HostToWebview {

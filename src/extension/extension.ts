@@ -25,7 +25,9 @@ export function activate(context: vscode.ExtensionContext): void {
   });
   const nextCmd = vscode.commands.registerCommand('mdeepen.nextSection', () => ReaderPanel.navigateActive(1));
   const prevCmd = vscode.commands.registerCommand('mdeepen.previousSection', () => ReaderPanel.navigateActive(-1));
-  context.subscriptions.push(cmd, configureCmd, nextCmd, prevCmd);
+  const summarizeCmd = vscode.commands.registerCommand('mdeepen.summarizeSection', () => ReaderPanel.quickActionOnActive('summarize'));
+  const outlineCmd = vscode.commands.registerCommand('mdeepen.focusOutline', () => ReaderPanel.focusOutlineOnActive());
+  context.subscriptions.push(cmd, configureCmd, nextCmd, prevCmd, summarizeCmd, outlineCmd);
 }
 
 export function deactivate(): void {}

@@ -54,6 +54,8 @@ describe('message type guards', () => {
     expect(isHostToWebview({ type: 'aiDone', usage: { inputTokens: 1, outputTokens: 2 } })).toBe(true);
     expect(isHostToWebview({ type: 'aiError', kind: 'auth', message: 'x' })).toBe(true);
     expect(isHostToWebview({ type: 'aiShowConfig' })).toBe(true);
+    expect(isHostToWebview({ type: 'quickAction', action: 'summarize' })).toBe(true);
+    expect(isHostToWebview({ type: 'focusOutline' })).toBe(true);
   });
   it('accepts section navigation driven by a real VS Code keybinding', () => {
     // Arrow navigation cannot live in a webview keydown listener: VS Code resolves
