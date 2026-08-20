@@ -95,3 +95,7 @@ button.md-btn.primary:disabled:hover { background: var(--vscode-button-backgroun
 .md-config-result { margin-top: 10px; font-size: 12px; }
 .md-config-result[data-ok="true"] { color: var(--md-success); }
 .md-config-result[data-ok="false"] { color: var(--md-warn); }
+
+.md-seltoolbar { position: fixed; z-index: 40; display: flex; align-items: center; gap: 4px; padding: 4px 6px; border-radius: 6px; background: var(--vscode-editor-background); border: 1px solid var(--vscode-panel-border); box-shadow: 0 4px 16px rgba(0, 0, 0, .3); }
+.md-seltoolbar-menu { position: absolute; top: 100%; right: 0; margin-top: 4px; display: flex; flex-direction: column; align-items: stretch; gap: 2px; padding: 4px; border-radius: 6px; background: var(--vscode-editor-background); border: 1px solid var(--vscode-panel-border); box-shadow: 0 4px 16px rgba(0, 0, 0, .3); }
+.md-seltoolbar-menu .md-btn { text-align: left; }
