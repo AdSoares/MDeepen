@@ -39,6 +39,7 @@ export function App() {
       else if (m.type === 'configChanged') store.setConfig(m.config);
       else if (m.type === 'aiConfigState') store.aiConfigState(m.configured, m.provider, m.model);
       else if (m.type === 'aiChunk') store.aiChunk(m.text);
+      else if (m.type === 'aiProgress') store.aiProgress(m.done, m.total);
       else if (m.type === 'aiDone') store.aiDone();
       else if (m.type === 'aiError') store.aiError(m.kind, m.message);
       else if (m.type === 'aiConnectionResult') store.aiConnection({ ok: m.ok, ms: m.ms, error: m.error });
@@ -204,8 +205,13 @@ export function App() {
             onCite={(pageIndex) => setIndex(pageIndex)}
             onDelete={(index) => store.aiDeleteMessage(index)}
             onClear={() => store.aiClearMessages()}
-            onAction={(action) => {
+            onAction={(action, scope) => {
               const st = store.get();
+              if (scope === 'document') {
+                store.aiStreamStart({ action, scope: 'document', sectionTitle: st.fileName, pageIndex: -1 });
+                post({ type: 'aiAction', action, scope: 'document' });
+                return;
+              }
               const target = st.pages[st.activeIndex];
               if (!target) return;
               store.aiStreamStart({ action, scope: 'section', sectionTitle: target.title, pageIndex: st.activeIndex });
@@ -235,9 +241,10 @@ export function App() {
           confirm={s.ai.confirm}
           onCancel={() => { store.aiConfirm(undefined); post({ type: 'aiCancelSend' }); }}
           onSend={(opts) => {
-            const { pending } = store.get().ai;
+            const { pending, confirm } = store.get().ai;
             store.aiConfirm(undefined);
-            store.aiStreamStart(pending);
+            // Document scope always confirms, so the truncation list is known before the run starts.
+            store.aiStreamStart({ ...pending, truncated: confirm?.summary.truncated });
             post({ type: 'aiConfirmSend', ...opts });
           }}
         />

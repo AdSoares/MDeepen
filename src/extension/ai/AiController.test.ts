@@ -46,10 +46,10 @@ function fakeMemento() {
   };
 }
 
-function makeController(workspaceState = fakeMemento()) {
+function makeController(workspaceState = fakeMemento(), pages: Page[] = [PAGE]) {
   const posted: HostToWebview[] = [];
   const store = new AiConfigStore(fakeSecrets('sk-live-key'), fakeMemento());
-  const c = new AiController(store, workspaceState, (m) => posted.push(m), () => [PAGE], () => 'doc.md');
+  const c = new AiController(store, workspaceState, (m) => posted.push(m), () => pages, () => 'doc.md');
   return { c, posted, workspaceState };
 }
 
@@ -247,5 +247,76 @@ describe('AiController action payloads', () => {
     const { c } = makeController(ws);
     await c.handle({ type: 'aiAction', action: 'explain', scope: 'selection', id: 'p1', text: 'x'.repeat(200_001) });
     expect(rec.calls).toHaveLength(0);
+  });
+});
+
+describe('document scope', () => {
+  const bigPage = (id: string): Page => ({
+    id, title: id, level: 2, startLine: 0, endLine: 1,
+    content: 'y'.repeat(16_004), wordCount: 1,
+  });
+
+  it('always confirms, even when the workspace already consented', async () => {
+    const ws = fakeMemento();
+    await ws.update('mdeepen.ai.firstSendConfirmed', true);
+    const { c, posted } = makeController(ws);
+    rec.chunks.push({ type: 'text', text: 'x' }, { type: 'done', usage: { inputTokens: 1, outputTokens: 1 } });
+
+    await c.handle({ type: 'aiAction', action: 'summarizeShort', scope: 'document' });
+
+    const confirm = posted.find((m) => m.type === 'aiConfirmNeeded');
+    expect(confirm).toBeDefined();
+    expect(rec.calls).toHaveLength(0);
+  });
+
+  it('describes the whole document in the confirmation', async () => {
+    const { c, posted } = makeController(fakeMemento(), [PAGE, { ...PAGE, id: 'p2', title: 'Backoff' }]);
+    await c.handle({ type: 'aiAction', action: 'summarizeShort', scope: 'document' });
+
+    const confirm = posted.find((m) => m.type === 'aiConfirmNeeded') as Extract<HostToWebview, { type: 'aiConfirmNeeded' }>;
+    expect(confirm.summary.scope).toBe('document');
+    expect(confirm.summary.sectionCount).toBe(2);
+    expect(confirm.summary.truncated).toEqual([]);
+  });
+
+  it('confirming a document does not grant section-scope consent', async () => {
+    const ws = fakeMemento();
+    const { c } = makeController(ws);
+    rec.chunks.push({ type: 'done', usage: { inputTokens: 1, outputTokens: 1 } });
+
+    await c.handle({ type: 'aiAction', action: 'summarizeShort', scope: 'document' });
+    await c.handle({ type: 'aiConfirmSend', dontAskAgain: true, masked: false });
+
+    expect(ws.get('mdeepen.ai.firstSendConfirmed', false)).toBe(false);
+  });
+
+  it('masks secrets in every part that is sent', async () => {
+    const { c } = makeController(fakeMemento(), [PAGE, { ...PAGE, id: 'p2', title: 'More' }]);
+    rec.chunks.push({ type: 'done', usage: { inputTokens: 1, outputTokens: 1 } });
+
+    await c.handle({ type: 'aiAction', action: 'summarizeShort', scope: 'document' });
+    await c.handle({ type: 'aiConfirmSend', dontAskAgain: false, masked: true });
+
+    const mapCalls = rec.calls.slice(0, -1);
+    expect(mapCalls.length).toBeGreaterThan(0);
+    for (const call of mapCalls) expect(call.text).not.toContain(SECRET);
+  });
+
+  it('refuses a document over the step cap before any network call', async () => {
+    const pages = Array.from({ length: 41 }, (_, i) => bigPage(`p${i}`));
+    const { c, posted } = makeController(fakeMemento(), pages);
+
+    await c.handle({ type: 'aiAction', action: 'summarizeShort', scope: 'document' });
+
+    expect(rec.calls).toHaveLength(0);
+    expect(posted.some((m) => m.type === 'aiConfirmNeeded')).toBe(false);
+    expect(posted.find((m) => m.type === 'aiError')).toBeDefined();
+  });
+
+  it('ignores a section action with no id', async () => {
+    const { c, posted } = makeController();
+    await c.handle({ type: 'aiAction', action: 'summarize', scope: 'section' });
+    expect(rec.calls).toHaveLength(0);
+    expect(posted.some((m) => m.type === 'aiConfirmNeeded')).toBe(false);
   });
 });

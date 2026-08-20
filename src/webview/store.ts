@@ -10,6 +10,7 @@ export interface AiMessage {
   sectionTitle: string;
   pageIndex: number;
   excerpt?: string;
+  truncated?: string[];
 }
 
 export interface AiState {
@@ -18,7 +19,8 @@ export interface AiState {
   model: string;
   streaming: boolean;
   streamText: string;
-  pending: { action: AiActionKind; scope: AiScope; sectionTitle: string; pageIndex: number; excerpt?: string };
+  pending: { action: AiActionKind; scope: AiScope; sectionTitle: string; pageIndex: number; excerpt?: string; truncated?: string[] };
+  progress?: { done: number; total: number };
   messages: AiMessage[];
   error?: { kind: string; message: string };
   confirm?: Omit<Extract<HostToWebview, { type: 'aiConfirmNeeded' }>, 'type'>;
@@ -61,7 +63,7 @@ function finalizeStream(ai: AiState): AiState {
   const messages = ai.streamText
     ? [...ai.messages, { text: ai.streamText, ...ai.pending }]
     : ai.messages;
-  return { ...ai, streaming: false, streamText: '', messages };
+  return { ...ai, streaming: false, streamText: '', progress: undefined, messages };
 }
 
 export function createReaderState() {
@@ -105,11 +107,11 @@ export function createReaderState() {
       state = { ...state, ai: { ...state.ai, configured, provider, model, connection } };
       emit();
     },
-    aiStreamStart(meta: { action: AiActionKind; scope: AiScope; sectionTitle: string; pageIndex: number; excerpt?: string }) {
+    aiStreamStart(meta: { action: AiActionKind; scope: AiScope; sectionTitle: string; pageIndex: number; excerpt?: string; truncated?: string[] }) {
       const excerpt = meta.excerpt && meta.excerpt.length > EXCERPT_MAX
         ? `${meta.excerpt.slice(0, EXCERPT_MAX)}…`
         : meta.excerpt;
-      state = { ...state, ai: { ...state.ai, streaming: true, streamText: '', pending: { ...meta, excerpt }, error: undefined } };
+      state = { ...state, ai: { ...state.ai, streaming: true, streamText: '', progress: undefined, pending: { ...meta, excerpt }, error: undefined } };
       emit();
     },
     aiDeleteMessage(index: number) {
@@ -122,8 +124,13 @@ export function createReaderState() {
       state = { ...state, ai: { ...state.ai, messages: [] } };
       emit();
     },
+    aiProgress(done: number, total: number) {
+      state = { ...state, ai: { ...state.ai, progress: { done, total } } };
+      emit();
+    },
     aiChunk(text: string) {
-      state = { ...state, ai: { ...state.ai, streamText: state.ai.streamText + text } };
+      // The first token means the map is over and the reduce has begun.
+      state = { ...state, ai: { ...state.ai, progress: undefined, streamText: state.ai.streamText + text } };
       emit();
     },
     aiDone() {

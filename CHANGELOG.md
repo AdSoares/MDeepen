@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-08-20
+
+### Added
+
+- Document summaries in four styles: short, executive, technical, and key points, from the AI
+  panel's grouped action menu.
+- Documents too large for one request are split into parts, each condensed neutrally, then
+  combined into a single answer in the requested style. Progress shows which part is being read,
+  and Stop works throughout.
+- A section too large to send whole is truncated, and both the confirmation dialog and the
+  finished answer name it.
+
+### Changed
+
+- Document scope always shows the confirmation dialog, even when "Don't ask again" is set, and
+  that dialog does not offer the checkbox — the consent given for one section is not consent to
+  send a whole file. The host enforces this, so a message claiming otherwise cannot record the
+  workspace consent either.
+- The estimate for a document is labelled as projected: the reduce input is not knowable until
+  every part has been read.
+
+### Removed
+
+- `buildSummarizeRequest`, a shim left behind when the action registry landed in 0.3.0.
+
 ## [0.3.0] - 2026-08-20
 
 ### Added
@@ -107,7 +132,8 @@ First AI slice. The reader itself is unchanged and still works with no API key.
 - Reading and focus modes, adjustable font size, column width, line spacing, and
   theme.
 
-[Unreleased]: https://github.com/AdSoares/MDeepen/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/AdSoares/MDeepen/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/AdSoares/MDeepen/releases/tag/v0.4.0
 [0.3.0]: https://github.com/AdSoares/MDeepen/releases/tag/v0.3.0
 [0.2.0]: https://github.com/AdSoares/MDeepen/releases/tag/v0.2.0
 [0.1.2]: https://github.com/AdSoares/MDeepen/releases/tag/v0.1.2

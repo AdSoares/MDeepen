@@ -1,5 +1,6 @@
 import { useState } from 'preact/hooks';
 import type { AiActionKind } from '../../extension/ai/types';
+import { DOCUMENT_ACTIONS, SECTION_ACTIONS } from '../../extension/ai/types';
 import { actionLabel } from '../../extension/ai/prompts';
 import type { AiState } from '../store';
 
@@ -8,7 +9,7 @@ interface Props {
   activePageId: string | undefined;
   onConfigure: () => void;
   onCite: (pageIndex: number) => void;
-  onAction: (action: AiActionKind) => void;
+  onAction: (action: AiActionKind, scope: 'section' | 'document') => void;
   onStop: () => void;
   onDelete: (index: number) => void;
   onClear: () => void;
@@ -53,21 +54,36 @@ export function AiPanel({ ai, activePageId, onConfigure, onCite, onAction, onSto
       </div>
 
       <div style={{ display: 'flex', gap: '8px', position: 'relative' }}>
-        <button class="md-btn primary" disabled={busy} onClick={() => onAction('summarize')}>Summarize section</button>
-        <button class="md-btn" disabled={busy} aria-label="More actions for this section" aria-expanded={more}
+        <button class="md-btn primary" disabled={busy} onClick={() => onAction('summarize', 'section')}>Summarize section</button>
+        <button class="md-btn" disabled={busy} aria-label="More actions" aria-expanded={more}
           onClick={() => setMore((v) => !v)}>&#8943;</button>
         {ai.streaming && <button class="md-btn" onClick={onStop}>Stop generating</button>}
         {more && (
           <div class="md-seltoolbar-menu" role="menu">
-            {(['explain', 'explainSimply', 'keyTerms', 'example'] as AiActionKind[]).map((action) => (
+            <div class="md-menu-group">This section</div>
+            {SECTION_ACTIONS.filter((a) => a !== 'summarize').map((action) => (
               <button key={action} class="md-btn" role="menuitem"
-                onClick={() => { setMore(false); onAction(action); }}>{actionLabel(action)}</button>
+                onClick={() => { setMore(false); onAction(action, 'section'); }}>{actionLabel(action)}</button>
+            ))}
+            <div class="md-menu-group">Whole document</div>
+            {DOCUMENT_ACTIONS.map((action) => (
+              <button key={action} class="md-btn" role="menuitem"
+                onClick={() => { setMore(false); onAction(action, 'document'); }}>{actionLabel(action)}</button>
             ))}
           </div>
         )}
       </div>
 
       {ai.error && <p class="md-ai-alert" role="alert">{ai.error.message}</p>}
+
+      {ai.progress && (
+        <div class="md-progress" role="status" aria-live="polite">
+          <div class="md-progress-label">Reading part {ai.progress.done + 1} of {ai.progress.total}</div>
+          <div class="md-progress-track">
+            <div class="md-progress-fill" style={{ width: `${Math.round((ai.progress.done / Math.max(1, ai.progress.total)) * 100)}%` }} />
+          </div>
+        </div>
+      )}
 
       {ai.streaming && (
         <div class="md-ai-stream" role="status" aria-live="polite" aria-busy="true">
@@ -84,6 +100,9 @@ export function AiPanel({ ai, activePageId, onConfigure, onCite, onAction, onSto
           </div>
           {m.excerpt && <blockquote class="md-ai-excerpt">{m.excerpt}</blockquote>}
           <div class="md-ai-msg-text">{m.text}</div>
+          {m.truncated && m.truncated.length > 0 && (
+            <p class="md-ai-truncated">Truncated to fit: {m.truncated.join(', ')}</p>
+          )}
           <div class="md-ai-msg-foot">
             {m.pageIndex >= 0 && (
               <button class="md-btn" onClick={() => onCite(m.pageIndex)}

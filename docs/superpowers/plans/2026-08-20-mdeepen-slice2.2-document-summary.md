@@ -37,7 +37,7 @@
 - Produces: `AiScope` including `'document'`; four new `AiActionKind` members; `SECTION_ACTIONS`, `DOCUMENT_ACTIONS`; `MAP_STEP_BUDGET_TOKENS`, `MAP_SUMMARY_TARGET_WORDS`, `MAX_MAP_STEPS`; the `progress` variant of `AiChunk`; `buildMapRequest(step, maxTokens)`.
 - Removes: `buildSummarizeRequest` — a dead shim Slice 2.1 was meant to delete; nothing imports it.
 
-- [ ] **Step 1: Widen the types**
+- [x] **Step 1: Widen the types**
 
 In `src/extension/ai/types.ts`, replace the `AiChunk` union, the two action lines at the bottom, and add the constants:
 
@@ -66,7 +66,7 @@ export const MAP_SUMMARY_TARGET_WORDS = 200;
 export const MAX_MAP_STEPS = 40;
 ```
 
-- [ ] **Step 2: Write the failing tests**
+- [x] **Step 2: Write the failing tests**
 
 Append to `src/extension/ai/prompts.test.ts`, and add `buildMapRequest` plus `DOCUMENT_ACTIONS` to the existing import lines:
 
@@ -104,12 +104,12 @@ describe('buildMapRequest', () => {
 });
 ```
 
-- [ ] **Step 3: Run to verify failure**
+- [x] **Step 3: Run to verify failure**
 
 Run: `npx vitest run src/extension/ai/prompts.test.ts`
 Expected: FAIL — `buildMapRequest` is not exported.
 
-- [ ] **Step 4: Extend the registry**
+- [x] **Step 4: Extend the registry**
 
 In `src/extension/ai/prompts.ts`, widen `scopeWord`, add the four entries, add `buildMapRequest`, and delete `buildSummarizeRequest`:
 
@@ -166,12 +166,12 @@ export function buildMapRequest(step: { titles: string[]; content: string }, max
 }
 ```
 
-- [ ] **Step 5: Run to verify pass**
+- [x] **Step 5: Run to verify pass**
 
 Run: `npx vitest run src/extension/ai/prompts.test.ts && npx tsc --noEmit`
 Expected: PASS, and the compiler clean — the widened `AiChunk` is not yet consumed anywhere that breaks.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/extension/ai/types.ts src/extension/ai/prompts.ts src/extension/ai/prompts.test.ts
@@ -190,7 +190,7 @@ git commit -m "feat: document scope, four document summaries and a neutral map p
 - Consumes: `estimateTokens` from `./costEstimate`; `MAP_SUMMARY_TARGET_WORDS` from `./types`; `Page` from `../../shared/types`.
 - Produces: `MapStep`, `DocumentPlan`, `planDocumentSummary(pages, budgetTokens)`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `src/extension/ai/documentPlan.test.ts`:
 
@@ -258,12 +258,12 @@ describe('planDocumentSummary', () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify failure**
+- [x] **Step 2: Run to verify failure**
 
 Run: `npx vitest run src/extension/ai/documentPlan.test.ts`
 Expected: FAIL — cannot find module `./documentPlan`.
 
-- [ ] **Step 3: Implement `documentPlan.ts`**
+- [x] **Step 3: Implement `documentPlan.ts`**
 
 ```ts
 import type { Page } from '../../shared/types';
@@ -334,12 +334,12 @@ export function planDocumentSummary(pages: Page[], budgetTokens: number): Docume
 }
 ```
 
-- [ ] **Step 4: Run to verify pass**
+- [x] **Step 4: Run to verify pass**
 
 Run: `npx vitest run src/extension/ai/documentPlan.test.ts`
 Expected: PASS, 7 tests.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/extension/ai/documentPlan.ts src/extension/ai/documentPlan.test.ts
@@ -358,7 +358,7 @@ git commit -m "feat: plan a document summary as budgeted map steps"
 - Consumes: `DocumentPlan` (Task 2); `buildActionRequest`, `buildMapRequest` (Task 1); `AiProvider`, `AiChunk`, `AiConfig` from `./types`.
 - Produces: `runDocumentSummary(plan, action, ctx, cfg, provider, signal): AsyncIterable<AiChunk>`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `src/extension/ai/documentRun.test.ts`:
 
@@ -462,12 +462,12 @@ describe('runDocumentSummary', () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify failure**
+- [x] **Step 2: Run to verify failure**
 
 Run: `npx vitest run src/extension/ai/documentRun.test.ts`
 Expected: FAIL — cannot find module `./documentRun`.
 
-- [ ] **Step 3: Implement `documentRun.ts`**
+- [x] **Step 3: Implement `documentRun.ts`**
 
 ```ts
 import type { DocumentPlan } from './documentPlan';
@@ -526,12 +526,12 @@ export async function* runDocumentSummary(
 }
 ```
 
-- [ ] **Step 4: Run to verify pass**
+- [x] **Step 4: Run to verify pass**
 
 Run: `npx vitest run src/extension/ai/documentRun.test.ts`
 Expected: PASS, 5 tests.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/extension/ai/documentRun.ts src/extension/ai/documentRun.test.ts
@@ -549,7 +549,7 @@ git commit -m "feat: map-reduce executor yielding provider-shaped chunks"
 **Interfaces:**
 - Produces: `aiAction` with optional `id`; host→webview `aiProgress`; `aiConfirmNeeded.summary` carrying `scope`, `sectionCount` and `truncated`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 In `src/shared/messages.test.ts`, add to the `it('accepts the generic AI action message', …)` block:
 
@@ -563,12 +563,12 @@ And add to the `it('accepts new AI host->webview messages', …)` block:
     expect(isHostToWebview({ type: 'aiProgress', done: 1, total: 4 })).toBe(true);
 ```
 
-- [ ] **Step 2: Run to verify failure**
+- [x] **Step 2: Run to verify failure**
 
 Run: `npx vitest run src/shared/messages.test.ts`
 Expected: FAIL — `expected false to be true` on the `aiProgress` line.
 
-- [ ] **Step 3: Extend the contract**
+- [x] **Step 3: Extend the contract**
 
 In `src/shared/messages.ts`:
 
@@ -592,12 +592,12 @@ Add to `HostToWebview`, after `navigateSection`:
 
 Add `'aiProgress'` to `HOST_TYPES`.
 
-- [ ] **Step 4: Run to verify pass**
+- [x] **Step 4: Run to verify pass**
 
 Run: `npx vitest run src/shared/messages.test.ts`
 Expected: PASS. `npx tsc --noEmit` will now fail in `AiController.ts` and `AiConfirm.tsx`, which Tasks 5 and 7 fix — that is expected and is why this task does not run the compiler.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/shared/messages.ts src/shared/messages.test.ts
@@ -616,7 +616,7 @@ git commit -m "feat: contract carries run progress and document-scope confirmati
 - Consumes: `planDocumentSummary`, `MAP_STEP_BUDGET_TOKENS`, `MAX_MAP_STEPS`, `runDocumentSummary`.
 - Produces: no new exports. `pendingRun` changes shape from `(text: string) => Promise<void>` to `(masked: boolean) => Promise<void>`, and `pendingRaw` disappears — a document has no single text to hold.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 In `src/extension/ai/AiController.test.ts`, replace the `makeController` helper so tests can supply pages:
 
@@ -704,12 +704,12 @@ describe('document scope', () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify failure**
+- [x] **Step 2: Run to verify failure**
 
 Run: `npx vitest run src/extension/ai/AiController.test.ts`
 Expected: FAIL — the document branch does not exist, so nothing is posted.
 
-- [ ] **Step 3: Rewrite the action path in the controller**
+- [x] **Step 3: Rewrite the action path in the controller**
 
 In `src/extension/ai/AiController.ts`, extend the imports:
 
@@ -862,12 +862,12 @@ Replace `startAction` and `onConfirm` with:
 > The document dialog has no "Don't ask again" checkbox (Task 7), so `dontAskAgain` arrives false
 > for a document run and the flag is never set. The test in Step 1 pins that behaviour.
 
-- [ ] **Step 4: Run to verify pass**
+- [x] **Step 4: Run to verify pass**
 
 Run: `npx vitest run src/extension/ai/AiController.test.ts && npx tsc --noEmit`
 Expected: tests PASS. The compiler still reports `AiConfirm.tsx`, fixed in Task 7.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/extension/ai/AiController.ts src/extension/ai/AiController.test.ts
@@ -885,7 +885,7 @@ git commit -m "feat: controller runs document summaries behind a mandatory confi
 **Interfaces:**
 - Produces: `AiState.progress`; `aiProgress(done, total)`; `truncated?: string[]` on `AiMessage` and on the `aiStreamStart` meta.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Append to `src/webview/store.test.ts`:
 
@@ -929,12 +929,12 @@ describe('document run progress', () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify failure**
+- [x] **Step 2: Run to verify failure**
 
 Run: `npx vitest run src/webview/store.test.ts`
 Expected: FAIL — `store.aiProgress is not a function`.
 
-- [ ] **Step 3: Widen the store**
+- [x] **Step 3: Widen the store**
 
 In `src/webview/store.ts`:
 
@@ -987,12 +987,12 @@ Add `aiProgress` immediately before `aiChunk`, and clear progress inside `aiChun
     },
 ```
 
-- [ ] **Step 4: Run to verify pass**
+- [x] **Step 4: Run to verify pass**
 
 Run: `npx vitest run src/webview/store.test.ts`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/webview/store.ts src/webview/store.test.ts
@@ -1015,7 +1015,7 @@ git commit -m "feat: store tracks map progress and document answer provenance"
 
 This task is webview UI and is smoke-verified; its logic lives in the tested modules.
 
-- [ ] **Step 1: Group the panel menu and show progress**
+- [x] **Step 1: Group the panel menu and show progress**
 
 In `src/webview/panels/AiPanel.tsx`, replace the imports and `Props`:
 
@@ -1084,7 +1084,7 @@ In the answer body, add the truncation note immediately after the `md-ai-msg-tex
           )}
 ```
 
-- [ ] **Step 2: Make the confirmation dialog document-aware**
+- [x] **Step 2: Make the confirmation dialog document-aware**
 
 In `src/webview/panels/AiConfirm.tsx`, add after `const hasSecrets = …`:
 
@@ -1137,7 +1137,7 @@ Wrap the "Don't ask again" label so it never renders for a document — offering
         )}
 ```
 
-- [ ] **Step 3: Wire it up in `App.tsx`**
+- [x] **Step 3: Wire it up in `App.tsx`**
 
 Add the progress message to the router, immediately after the `aiChunk` line:
 
@@ -1173,7 +1173,7 @@ Carry the truncation list from the dialog into the answer — document scope alw
           }}
 ```
 
-- [ ] **Step 4: Add the styles**
+- [x] **Step 4: Add the styles**
 
 Append to `src/webview/styles/theme.css`:
 
@@ -1186,12 +1186,12 @@ Append to `src/webview/styles/theme.css`:
 .md-ai-truncated { margin: 6px 0 0; font-size: 11px; color: var(--md-warn); }
 ```
 
-- [ ] **Step 5: Build, typecheck, test**
+- [x] **Step 5: Build, typecheck, test**
 
 Run: `npm run build && npx tsc --noEmit && npm test`
 Expected: green, and the compiler now clean everywhere.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/webview/panels/AiPanel.tsx src/webview/panels/AiConfirm.tsx src/webview/App.tsx src/webview/styles/theme.css
@@ -1207,11 +1207,11 @@ git commit -m "feat: grouped action menu, run progress and a document confirmati
 - Modify: `README.md`
 - Modify: `CHANGELOG.md`
 
-- [ ] **Step 1: Bump the version**
+- [x] **Step 1: Bump the version**
 
 `package.json` → `"version": "0.4.0"`.
 
-- [ ] **Step 2: Update the README**
+- [x] **Step 2: Update the README**
 
 In the AI section, immediately after the "Five actions, one click" bullet, add:
 
@@ -1222,7 +1222,7 @@ In the AI section, immediately after the "Five actions, one click" bullet, add:
   sent, however you answered the dialog for a section.
 ```
 
-- [ ] **Step 3: Add the changelog entry**
+- [x] **Step 3: Add the changelog entry**
 
 Insert above `## [0.3.0]`:
 
@@ -1260,19 +1260,34 @@ At the bottom of the file, replace the first two link lines with:
 [0.3.0]: https://github.com/AdSoares/MDeepen/releases/tag/v0.3.0
 ```
 
-- [ ] **Step 4: Build, test, package**
+- [x] **Step 4: Build, test, package**
 
 Run: `npm run build && npx tsc --noEmit && npm test && npm run package`
 Expected: suite green; `mdeepen-0.4.0.vsix` produced.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add package.json README.md CHANGELOG.md
 git commit -m "chore: release 0.4.0 with document summaries"
 ```
 
-- [ ] **Step 6: Human smoke — this step belongs to the user, not the implementer**
+- [x] **Step 6: Human smoke — this step belongs to the user, not the implementer** — **DONE 2026-08-20.**
+
+> **Result: all 14 checks pass.** No defects found, so 0.4.0 ships as packaged.
+>
+> Walked against two purpose-built documents whose plans were computed in advance rather than
+> guessed: a 24-section handbook of ~22,300 characters that splits into exactly two parts, with
+> its governing decision placed in the second part so the coverage check means something; and a
+> settlement trace whose single 25,363-token section forces truncation.
+>
+> The checks with no automated coverage all held: the second part is represented in the answer,
+> so the reduce is not summarizing only the beginning; masking applied to every map request and
+> not just the first, confirmed at the breakpoint across all three stops; stopping during the
+> progress bar left no answer while stopping during the stream kept the partial; and the consent
+> pair held in both directions — a section's "Don't ask again" did not silence the document
+> dialog, and the document run did not revoke the section consent.
+
 
 Needs a real API key and a document of at least a dozen sections; the scratchpad smoke file from
 Slice 2.1 is too short to produce more than one part.

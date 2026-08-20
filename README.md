@@ -64,6 +64,10 @@ leaves your machine.
   Answers stream in, cite the section they came from, and can be copied, deleted, or cleared.
   Stop generating keeps whatever arrived. <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>S</kbd>
   summarizes the current section without leaving the keyboard.
+- **Summarize the whole document** in four styles — short, executive, technical, or key points.
+  Long documents are read in parts and combined, so the summary covers the whole file rather than
+  the beginning of it. Progress is visible while it runs, and a document always asks before it is
+  sent, however you answered the dialog for a section.
 - All network access happens in the extension host. The webview makes no requests,
   and its Content Security Policy carries no `connect-src`.
 - **Reading never depends on AI.** With no key configured, everything above still

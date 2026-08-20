@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { buildActionRequest, actionLabel, isActionKind } from './prompts';
-import { AI_ACTIONS } from './types';
+import { buildActionRequest, buildMapRequest, actionLabel, isActionKind } from './prompts';
+import { AI_ACTIONS, DOCUMENT_ACTIONS } from './types';
 
 const CTX = { title: 'Retries', content: '## Retries\n\nWe retry 3x.' };
 
@@ -59,5 +59,37 @@ describe('isActionKind', () => {
     expect(isActionKind('translate')).toBe(false);
     expect(isActionKind(7)).toBe(false);
     expect(isActionKind(undefined)).toBe(false);
+  });
+});
+
+describe('document scope', () => {
+  it('calls the supplied text a document', () => {
+    const content = buildActionRequest('summarizeShort', 'document', CTX, 100).messages[0].content;
+    expect(content).toContain('document');
+    expect(content).not.toContain('excerpt');
+  });
+
+  it('gives each document summary its own system prompt', () => {
+    const systems = DOCUMENT_ACTIONS.map((a) => buildActionRequest(a, 'document', CTX, 100).system);
+    expect(new Set(systems).size).toBe(DOCUMENT_ACTIONS.length);
+  });
+});
+
+describe('buildMapRequest', () => {
+  const STEP = { titles: ['Retries', 'Backoff'], content: 'We retry 3x.' };
+
+  it('carries the part content verbatim', () => {
+    expect(buildMapRequest(STEP, 1024).messages[0].content).toContain('We retry 3x.');
+  });
+
+  it('names the target length so parts condense to a predictable size', () => {
+    expect(buildMapRequest(STEP, 1024).system).toContain('200');
+  });
+
+  it('is neutral: its system prompt matches no user-facing action', () => {
+    const system = buildMapRequest(STEP, 1024).system;
+    const actionSystems = AI_ACTIONS.map((a) => buildActionRequest(a, 'section', CTX, 100).system);
+    expect(actionSystems).not.toContain(system);
+    expect(system.toLowerCase()).toContain('do not invent');
   });
 });
