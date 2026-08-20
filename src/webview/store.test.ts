@@ -117,7 +117,7 @@ describe('reader store', () => {
 
   it('holds and clears the confirm payload', () => {
     const s = createReaderState();
-    s.aiConfirm({ summary: { fileName: 'a.md', sectionTitle: 'Retries', model: 'claude-opus-4-8', estTokens: 10, estCost: 0.00005 }, secrets: { label: '1 possible secret detected', count: 1 } });
+    s.aiConfirm({ summary: { fileName: 'a.md', sectionTitle: 'Retries', scope: 'section', sectionCount: 1, truncated: [], model: 'claude-opus-4-8', estTokens: 10, estCost: 0.00005 }, secrets: { label: '1 possible secret detected', count: 1 } });
     expect(s.get().ai.confirm?.secrets.count).toBe(1);
     s.aiConfirm(undefined);
     expect(s.get().ai.confirm).toBeUndefined();
@@ -183,5 +183,43 @@ describe('reader store', () => {
     s.aiDone();
     s.aiClearMessages();
     expect(s.get().ai.messages).toHaveLength(0);
+  });
+});
+
+describe('document run progress', () => {
+  it('records progress and clears it once the reduce starts streaming', () => {
+    const store = createReaderState();
+    store.aiStreamStart({ action: 'summarizeShort', scope: 'document', sectionTitle: 'doc.md', pageIndex: -1 });
+
+    store.aiProgress(1, 4);
+    expect(store.get().ai.progress).toEqual({ done: 1, total: 4 });
+
+    store.aiChunk('first token');
+    expect(store.get().ai.progress).toBeUndefined();
+  });
+
+  it('clears progress when the run ends', () => {
+    const store = createReaderState();
+    store.aiStreamStart({ action: 'summarizeShort', scope: 'document', sectionTitle: 'doc.md', pageIndex: -1 });
+    store.aiProgress(2, 4);
+    store.aiChunk('text');
+    store.aiDone();
+    expect(store.get().ai.progress).toBeUndefined();
+    expect(store.get().ai.streaming).toBe(false);
+  });
+
+  it('clears stale progress when a new run starts', () => {
+    const store = createReaderState();
+    store.aiProgress(3, 4);
+    store.aiStreamStart({ action: 'summarize', scope: 'section', sectionTitle: 'A', pageIndex: 0 });
+    expect(store.get().ai.progress).toBeUndefined();
+  });
+
+  it('carries the truncated section list into the finished answer', () => {
+    const store = createReaderState();
+    store.aiStreamStart({ action: 'summarizeShort', scope: 'document', sectionTitle: 'doc.md', pageIndex: -1, truncated: ['Huge'] });
+    store.aiChunk('answer');
+    store.aiDone();
+    expect(store.get().ai.messages[0].truncated).toEqual(['Huge']);
   });
 });
