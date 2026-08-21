@@ -320,3 +320,122 @@ describe('document scope', () => {
     expect(posted.some((m) => m.type === 'aiConfirmNeeded')).toBe(false);
   });
 });
+
+describe('chat', () => {
+  const BACKOFF: Page = { id: 'p2', title: 'Backoff', level: 2, startLine: 3, endLine: 5, content: '## Backoff\n\ncapped at eight seconds', wordCount: 4 };
+  const CLEAN: Page = { id: 'p0', title: 'Overview', level: 2, startLine: 0, endLine: 2, content: '## Overview\n\npayments end to end', wordCount: 4 };
+
+  // PAGES carries no secret: the gate tests must not trip the secret interrupt, which is
+  // exercised separately below with PAGE.
+  const PAGES: Page[] = [CLEAN, BACKOFF];
+
+  it('confirms the first question, then never again', async () => {
+    const ws = fakeMemento();
+    const { c, posted } = makeController(ws, PAGES);
+    rec.chunks.push({ type: 'done', usage: { inputTokens: 1, outputTokens: 1 } });
+
+    await c.handle({ type: 'aiChat', question: 'how long is the backoff?', history: [] });
+    expect(posted.filter((m) => m.type === 'aiConfirmNeeded')).toHaveLength(1);
+    expect(rec.calls).toHaveLength(0);
+
+    await c.handle({ type: 'aiConfirmSend', dontAskAgain: false, masked: false });
+    expect(rec.calls).toHaveLength(1);
+
+    posted.length = 0;
+    await c.handle({ type: 'aiChat', question: 'and the cap?', history: [] });
+    expect(posted.some((m) => m.type === 'aiConfirmNeeded')).toBe(false);
+    expect(rec.calls).toHaveLength(2);
+  });
+
+  it('does not accept the section consent as chat consent', async () => {
+    const ws = fakeMemento();
+    await ws.update('mdeepen.ai.firstSendConfirmed', true);
+    const { c, posted } = makeController(ws, PAGES);
+    rec.chunks.push({ type: 'done', usage: { inputTokens: 1, outputTokens: 1 } });
+
+    await c.handle({ type: 'aiChat', question: 'how long?', history: [] });
+
+    expect(posted.some((m) => m.type === 'aiConfirmNeeded')).toBe(true);
+    expect(rec.calls).toHaveLength(0);
+  });
+
+  it('does not let chat consent silence a section action', async () => {
+    const ws = fakeMemento();
+    await ws.update('mdeepen.ai.chatConfirmed', true);
+    const { c, posted } = makeController(ws, PAGES);
+    rec.chunks.push({ type: 'done', usage: { inputTokens: 1, outputTokens: 1 } });
+
+    await c.handle({ type: 'aiAction', action: 'summarize', scope: 'section', id: 'p2' });
+
+    expect(posted.some((m) => m.type === 'aiConfirmNeeded')).toBe(true);
+    expect(rec.calls).toHaveLength(0);
+  });
+
+  it('posts the sections it used before the first chunk', async () => {
+    const ws = fakeMemento();
+    await ws.update('mdeepen.ai.chatConfirmed', true);
+    const { c, posted } = makeController(ws, PAGES);
+    rec.chunks.push({ type: 'text', text: 'eight seconds' }, { type: 'done', usage: { inputTokens: 1, outputTokens: 1 } });
+
+    await c.handle({ type: 'aiChat', question: 'backoff cap?', history: [] });
+
+    const sourcesAt = posted.findIndex((m) => m.type === 'aiSources');
+    const chunkAt = posted.findIndex((m) => m.type === 'aiChunk');
+    expect(sourcesAt).toBeGreaterThanOrEqual(0);
+    expect(sourcesAt).toBeLessThan(chunkAt);
+  });
+
+  it('interrupts with the dialog when a turn carries a secret, even after the gate', async () => {
+    const ws = fakeMemento();
+    await ws.update('mdeepen.ai.chatConfirmed', true);
+    // PAGE is the active section here and contains SECRET, so it is pinned into the payload.
+    const { c, posted } = makeController(ws, [PAGE, BACKOFF]);
+    rec.chunks.push({ type: 'done', usage: { inputTokens: 1, outputTokens: 1 } });
+
+    await c.handle({ type: 'aiChat', question: 'what is configured?', history: [] });
+
+    const confirm = posted.find((m) => m.type === 'aiConfirmNeeded') as Extract<HostToWebview, { type: 'aiConfirmNeeded' }>;
+    expect(confirm).toBeDefined();
+    expect(confirm.summary.scope).toBe('chat');
+    expect(confirm.secrets.count).toBeGreaterThan(0);
+    expect(rec.calls).toHaveLength(0);
+  });
+
+  it('scans history for secrets too', async () => {
+    const ws = fakeMemento();
+    await ws.update('mdeepen.ai.chatConfirmed', true);
+    const { c, posted } = makeController(ws, [BACKOFF]);
+    rec.chunks.push({ type: 'done', usage: { inputTokens: 1, outputTokens: 1 } });
+
+    await c.handle({
+      type: 'aiChat', question: 'is that safe?',
+      history: [{ role: 'assistant', text: `earlier I said the key is ${SECRET}` }],
+    });
+
+    expect(posted.some((m) => m.type === 'aiConfirmNeeded')).toBe(true);
+    expect(rec.calls).toHaveLength(0);
+  });
+
+  it('ignores an empty question and an oversized one', async () => {
+    const ws = fakeMemento();
+    await ws.update('mdeepen.ai.chatConfirmed', true);
+    const { c, posted } = makeController(ws, PAGES);
+
+    await c.handle({ type: 'aiChat', question: '   ', history: [] });
+    await c.handle({ type: 'aiChat', question: 'x'.repeat(4001), history: [] });
+
+    expect(rec.calls).toHaveLength(0);
+    expect(posted.some((m) => m.type === 'aiConfirmNeeded')).toBe(false);
+  });
+
+  it('ignores a history that is too long', async () => {
+    const ws = fakeMemento();
+    await ws.update('mdeepen.ai.chatConfirmed', true);
+    const { c } = makeController(ws, PAGES);
+    const history = Array.from({ length: 41 }, () => ({ role: 'user' as const, text: 'hi' }));
+
+    await c.handle({ type: 'aiChat', question: 'why?', history });
+
+    expect(rec.calls).toHaveLength(0);
+  });
+});

@@ -3,23 +3,29 @@ import type { HostToWebview, WebviewToHost } from '../../shared/messages';
 import { AiConfigStore } from './AiConfigStore';
 import type { MementoLike } from './AiConfigStore';
 import { createProvider } from './providerRegistry';
-import { buildActionRequest, isActionKind } from './prompts';
+import { buildActionRequest, isActionKind, CHAT_SYSTEM } from './prompts';
+import { planChatTurn, type ChatTurn } from './chatContext';
 import { planDocumentSummary, type DocumentPlan } from './documentPlan';
 import { runDocumentSummary } from './documentRun';
-import { MAP_STEP_BUDGET_TOKENS, MAX_MAP_STEPS } from './types';
+import { CHAT_HISTORY_BUDGET_TOKENS, CHAT_SECTION_BUDGET_TOKENS, MAP_STEP_BUDGET_TOKENS, MAX_MAP_STEPS } from './types';
 import type { AiActionKind, AiChunk, AiConfig } from './types';
 import { detectSecrets, maskSecrets } from './secretDetection';
 import { estimateTokens, estimateCost } from './costEstimate';
 
 const FIRST_SEND_KEY = 'mdeepen.ai.firstSendConfirmed';
+const CHAT_KEY = 'mdeepen.ai.chatConfirmed';
 const MAX_TEXT_CHARS = 200_000;
+const MAX_QUESTION_CHARS = 4_000;
+const MAX_HISTORY_TURNS = 40;
+const MAX_HISTORY_TURN_CHARS = 20_000;
 
 export class AiController {
   private abort: AbortController | undefined;
   private pendingRun: ((masked: boolean) => Promise<void>) | undefined;
-  /** Whether the pending run is one whose confirmation may record workspace consent. A document
-   *  run never may, and that is enforced here rather than by the dialog omitting the checkbox. */
-  private pendingGrantsConsent = false;
+  /** Which consent a pending confirmation may record, if any. `auto` means pressing Send grants
+   *  it — the chat dialog is itself the consent, so it offers no checkbox. A document run carries
+   *  no descriptor at all and can never record consent. */
+  private pendingConsent: { key: string; auto: boolean } | undefined;
 
   constructor(
     private readonly store: AiConfigStore,
@@ -27,6 +33,7 @@ export class AiController {
     private readonly post: (msg: HostToWebview) => void,
     private readonly getPages: () => Page[],
     private readonly getFileName: () => string,
+    private readonly getActiveIndex: () => number = () => 0,
   ) {}
 
   async postConfigState(): Promise<void> {
@@ -62,9 +69,10 @@ export class AiController {
         break;
       }
       case 'aiAction': await this.startAction(msg); break;
+      case 'aiChat': await this.startChat(msg); break;
       case 'aiStop': this.abort?.abort(); break;
       case 'aiConfirmSend': await this.onConfirm(msg.dontAskAgain, msg.masked); break;
-      case 'aiCancelSend': this.pendingRun = undefined; this.pendingGrantsConsent = false; break;
+      case 'aiCancelSend': this.pendingRun = undefined; this.pendingConsent = undefined; break;
     }
   }
 
@@ -122,7 +130,7 @@ export class AiController {
       return;
     }
     this.pendingRun = run;
-    this.pendingGrantsConsent = true;
+    this.pendingConsent = { key: FIRST_SEND_KEY, auto: false };
     this.postConfirm(rawText, cfg, {
       sectionTitle: page.title, scope: msg.scope, sectionCount: 1, truncated: [], estTokens: estimateTokens(rawText),
     });
@@ -159,17 +167,68 @@ export class AiController {
       if (this.abort === abort) this.abort = undefined;
     };
 
-    this.pendingGrantsConsent = false;
+    this.pendingConsent = undefined;
     this.postConfirm(rawText, cfg, {
       sectionTitle: '', scope: 'document', sectionCount: plan.sectionCount,
       truncated: plan.truncated, estTokens: plan.estInputTokens,
     });
   }
 
+
+  /** Chat has its own gate: consent to send one section the user chose is not consent to send
+   *  whatever a scoring function selects. After the gate, the dialog returns only for secrets. */
+  private async startChat(msg: Extract<WebviewToHost, { type: 'aiChat' }>): Promise<void> {
+    const question = typeof msg.question === 'string' ? msg.question : '';
+    if (!question.trim() || question.length > MAX_QUESTION_CHARS) return;
+
+    const history: ChatTurn[] = Array.isArray(msg.history) ? msg.history : [];
+    if (history.length > MAX_HISTORY_TURNS) return;
+    if (history.some((t) => typeof t.text !== 'string' || t.text.length > MAX_HISTORY_TURN_CHARS)) return;
+
+    const pages = this.getPages();
+    if (pages.length === 0) return;
+
+    const cfg = this.store.getConfig();
+    const plan = planChatTurn(
+      question, history, pages, this.getActiveIndex(), { fileName: this.getFileName() },
+      { sectionTokens: CHAT_SECTION_BUDGET_TOKENS, historyTokens: CHAT_HISTORY_BUDGET_TOKENS },
+    );
+
+    // What is scanned and masked is what is sent: the chosen sections and the history alike.
+    const rawText = plan.messages.map((m) => m.content).join('\n\n');
+
+    const run = async (masked: boolean) => {
+      const key = await this.store.getKey();
+      if (!key) { this.post({ type: 'aiError', kind: 'auth', message: 'No API key set' }); return; }
+      this.abort?.abort();
+      const abort = new AbortController();
+      this.abort = abort;
+      this.post({ type: 'aiSources', sections: plan.usedSections, droppedTurns: plan.droppedTurns });
+      const messages = plan.messages.map((m) => ({ role: m.role, content: masked ? maskSecrets(m.content) : m.content }));
+      await this.pump(createProvider(cfg, key).generate({ system: CHAT_SYSTEM, messages, maxTokens: cfg.maxTokens }, abort.signal));
+      if (this.abort === abort) this.abort = undefined;
+    };
+
+    const consented = this.workspaceState.get<boolean>(CHAT_KEY, false);
+    const secrets = detectSecrets(rawText).length;
+    if (consented && secrets === 0) {
+      await run(false);
+      return;
+    }
+
+    this.pendingRun = run;
+    // Before the gate, sending grants consent. After it, this dialog is only about masking.
+    this.pendingConsent = consented ? undefined : { key: CHAT_KEY, auto: true };
+    this.postConfirm(rawText, cfg, {
+      sectionTitle: '', scope: 'chat', sectionCount: plan.usedSections.length, truncated: [],
+      estTokens: estimateTokens(rawText),
+    });
+  }
+
   private postConfirm(
     rawText: string,
     cfg: AiConfig,
-    facts: { sectionTitle: string; scope: 'section' | 'selection' | 'document'; sectionCount: number; truncated: string[]; estTokens: number },
+    facts: { sectionTitle: string; scope: 'section' | 'selection' | 'document' | 'chat'; sectionCount: number; truncated: string[]; estTokens: number },
   ): void {
     const count = detectSecrets(rawText).length;
     this.post({
@@ -189,12 +248,13 @@ export class AiController {
   }
 
   private async onConfirm(dontAskAgain: boolean, masked: boolean): Promise<void> {
-    // A document run never records consent, whatever the message claims: the dialog omits the
-    // checkbox, but the guarantee cannot rest on the UI alone.
-    if (dontAskAgain && this.pendingGrantsConsent) await this.workspaceState.update(FIRST_SEND_KEY, true);
+    const consent = this.pendingConsent;
+    // `auto` grants on send (chat); otherwise only the checkbox grants. A document run carries no
+    // descriptor, so it can never record consent whatever the message claims.
+    if (consent && (consent.auto || dontAskAgain)) await this.workspaceState.update(consent.key, true);
     const run = this.pendingRun;
     this.pendingRun = undefined;
-    this.pendingGrantsConsent = false;
+    this.pendingConsent = undefined;
     if (run) await run(masked);
   }
 }
