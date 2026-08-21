@@ -68,6 +68,10 @@ leaves your machine.
   Long documents are read in parts and combined, so the summary covers the whole file rather than
   the beginning of it. Progress is visible while it runs, and a document always asks before it is
   sent, however you answered the dialog for a section.
+- **Ask about the document.** Type a question and MDeepen answers from the file in front of you,
+  choosing the relevant sections itself and naming them under the answer, each one a link back to
+  that section. The ranking is local: no embeddings, no index, nothing to rebuild when you edit.
+  <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>A</kbd> jumps to the question field.
 - All network access happens in the extension host. The webview makes no requests,
   and its Content Security Policy carries no `connect-src`.
 - **Reading never depends on AI.** With no key configured, everything above still
