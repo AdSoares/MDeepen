@@ -27,6 +27,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The AI panel is one timeline: quick actions and questions produce entries in the same list, and
   Clear all clears the conversation.
 
+### Fixed
+
+- Disconnect now revokes the chat consent as well as the first-send consent. It only cleared the
+  latter, so a newly configured key would have inherited permission to send chat context that it
+  was never granted.
+
 ## [0.4.0] - 2026-08-20
 
 ### Added

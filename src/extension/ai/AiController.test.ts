@@ -438,4 +438,21 @@ describe('chat', () => {
 
     expect(rec.calls).toHaveLength(0);
   });
+
+  it('revokes the chat consent on disconnect, so a new key cannot inherit it', async () => {
+    const ws = fakeMemento();
+    await ws.update('mdeepen.ai.chatConfirmed', true);
+    await ws.update('mdeepen.ai.firstSendConfirmed', true);
+    const { c, posted } = makeController(ws, PAGES);
+
+    await c.handle({ type: 'aiClearKey' });
+
+    expect(ws.get('mdeepen.ai.chatConfirmed', false)).toBe(false);
+    expect(ws.get('mdeepen.ai.firstSendConfirmed', false)).toBe(false);
+
+    // And a question now asks again rather than sending.
+    await c.handle({ type: 'aiChat', question: 'why?', history: [] });
+    expect(posted.some((m) => m.type === 'aiConfirmNeeded')).toBe(true);
+    expect(rec.calls).toHaveLength(0);
+  });
 });

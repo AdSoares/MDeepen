@@ -50,10 +50,12 @@ export class AiController {
         break;
       case 'aiClearKey':
         // Disconnecting is a privacy action: drop anything in flight, forget the key, and
-        // revoke the first-send consent so a future key has to be confirmed again.
+        // revoke every consent, so a future key has to be confirmed again for each kind of
+        // send. Leaving one standing would let a new key inherit permission it never had.
         this.dispose();
         await this.store.clearKey();
         await this.workspaceState.update(FIRST_SEND_KEY, false);
+        await this.workspaceState.update(CHAT_KEY, false);
         await this.postConfigState();
         break;
       case 'aiSaveKey':
