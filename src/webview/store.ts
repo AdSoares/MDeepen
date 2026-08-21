@@ -3,15 +3,18 @@ import type { OutlineNode, Page, ReaderConfig } from '../shared/types';
 import { DEFAULT_CONFIG, DEFAULT_PANELS } from '../shared/defaults';
 import type { AiActionKind, AiScope } from '../extension/ai/types';
 
-export interface AiMessage {
-  text: string;
-  action: AiActionKind;
-  scope: AiScope;
-  sectionTitle: string;
+export interface AiSource {
+  title: string;
   pageIndex: number;
-  excerpt?: string;
-  truncated?: string[];
 }
+
+export type AiPending =
+  | { kind: 'action'; action: AiActionKind; scope: AiScope; sectionTitle: string; pageIndex: number; excerpt?: string; truncated?: string[] }
+  | { kind: 'chat'; question: string; sources: AiSource[]; droppedTurns: number };
+
+/** An entry is a pending run plus the text that arrived, which is exactly how finalizeStream
+ *  builds it — so the union propagates for free. */
+export type AiMessage = AiPending & { text: string };
 
 export interface AiState {
   configured: boolean;
@@ -19,7 +22,7 @@ export interface AiState {
   model: string;
   streaming: boolean;
   streamText: string;
-  pending: { action: AiActionKind; scope: AiScope; sectionTitle: string; pageIndex: number; excerpt?: string; truncated?: string[] };
+  pending: AiPending;
   progress?: { done: number; total: number };
   messages: AiMessage[];
   error?: { kind: string; message: string };
@@ -42,7 +45,7 @@ export interface ReaderState {
 const initialAi: AiState = {
   configured: false, provider: 'anthropic', model: '',
   streaming: false, streamText: '',
-  pending: { action: 'summarize', scope: 'section', sectionTitle: '', pageIndex: -1 },
+  pending: { kind: 'action', action: 'summarize', scope: 'section', sectionTitle: '', pageIndex: -1 },
   messages: [],
 };
 
@@ -107,11 +110,17 @@ export function createReaderState() {
       state = { ...state, ai: { ...state.ai, configured, provider, model, connection } };
       emit();
     },
-    aiStreamStart(meta: { action: AiActionKind; scope: AiScope; sectionTitle: string; pageIndex: number; excerpt?: string; truncated?: string[] }) {
-      const excerpt = meta.excerpt && meta.excerpt.length > EXCERPT_MAX
-        ? `${meta.excerpt.slice(0, EXCERPT_MAX)}…`
-        : meta.excerpt;
-      state = { ...state, ai: { ...state.ai, streaming: true, streamText: '', progress: undefined, pending: { ...meta, excerpt }, error: undefined } };
+    aiStreamStart(meta: AiPending) {
+      const pending: AiPending = meta.kind === 'action' && meta.excerpt && meta.excerpt.length > EXCERPT_MAX
+        ? { ...meta, excerpt: `${meta.excerpt.slice(0, EXCERPT_MAX)}…` }
+        : meta;
+      state = { ...state, ai: { ...state.ai, streaming: true, streamText: '', progress: undefined, pending, error: undefined } };
+      emit();
+    },
+    /** Sources belong to a chat turn; an action that is streaming has its own provenance already. */
+    aiSources(sources: AiSource[], droppedTurns: number) {
+      if (state.ai.pending.kind !== 'chat') return;
+      state = { ...state, ai: { ...state.ai, pending: { ...state.ai.pending, sources, droppedTurns } } };
       emit();
     },
     aiDeleteMessage(index: number) {
