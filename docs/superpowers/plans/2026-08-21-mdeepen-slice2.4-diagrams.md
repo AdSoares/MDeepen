@@ -978,7 +978,26 @@ git add package.json README.md CHANGELOG.md
 git commit -m "chore: release 0.6.0 with generated diagrams"
 ```
 
-- [ ] **Step 6: Human smoke — this step belongs to the user, not the implementer**
+- [ ] **Step 6: Human smoke — this step belongs to the user, not the implementer** — **DEFERRED 2026-08-21.**
+
+> **Not run.** The user deferred it to a later round, deliberately, and this checkbox stays open
+> until it is walked. Unlike Slices 2.0 through 2.3, this slice therefore merges with its
+> integration behaviour unverified.
+>
+> **What ships unverified:** `ReaderPanel.insertDiagram` is the only production code in the
+> project with no unit test, because it needs a `vscode` stub that does not exist here. Its
+> decisions live in `diagramInsert.ts`, which is pure and covered — but the `WorkspaceEdit` call,
+> the single-undo property and the two refusal paths are covered by nothing but checks 9, 12 and
+> 13 of this table.
+>
+> **The check that matters most is 12 and 13.** If insertion succeeds where it should refuse, it
+> wrote to the wrong place in a file the user maintains, silently. That is the worst defect this
+> product can have, and nothing automated would catch it.
+>
+> The materials are ready: `smoke-2.4.md` (a disposable document with sections built for each
+> diagram type and two prepared for the refusal cases) and `smoke-2.4-guia.md`, both written on
+> 2026-08-21.
+
 
 Use a scratch copy of a Markdown file, not one you care about: this is the first release that
 writes. Reload the Extension Development Host first.
