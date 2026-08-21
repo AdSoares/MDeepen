@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { buildActionRequest, buildMapRequest, actionLabel, isActionKind } from './prompts';
-import { AI_ACTIONS, DOCUMENT_ACTIONS } from './types';
+import { AI_ACTIONS, DIAGRAM_ACTIONS, DOCUMENT_ACTIONS } from './types';
 
 const CTX = { title: 'Retries', content: '## Retries\n\nWe retry 3x.' };
 
@@ -91,5 +91,31 @@ describe('buildMapRequest', () => {
     const actionSystems = AI_ACTIONS.map((a) => buildActionRequest(a, 'section', CTX, 100).system);
     expect(actionSystems).not.toContain(system);
     expect(system.toLowerCase()).toContain('do not invent');
+  });
+});
+
+describe('diagram actions', () => {
+  it('gives each diagram type its own system prompt', () => {
+    const systems = DIAGRAM_ACTIONS.map((a) => buildActionRequest(a, 'selection', CTX, 100).system);
+    expect(new Set(systems).size).toBe(DIAGRAM_ACTIONS.length);
+  });
+
+  it('names its Mermaid diagram type in the prompt', () => {
+    expect(buildActionRequest('diagramSequence', 'selection', CTX, 100).system).toContain('sequenceDiagram');
+    expect(buildActionRequest('diagramMindmap', 'selection', CTX, 100).system).toContain('mindmap');
+    expect(buildActionRequest('diagramState', 'selection', CTX, 100).system).toContain('stateDiagram');
+    expect(buildActionRequest('diagramFlowchart', 'selection', CTX, 100).system).toContain('flowchart');
+  });
+
+  it('asks for Mermaid source and nothing else', () => {
+    for (const action of DIAGRAM_ACTIONS) {
+      const system = buildActionRequest(action, 'selection', CTX, 100).system.toLowerCase();
+      expect(system).toContain('only');
+      expect(system).toContain('mermaid');
+    }
+  });
+
+  it('still carries the selected text', () => {
+    expect(buildActionRequest('diagramFlowchart', 'selection', CTX, 100).messages[0].content).toContain('We retry 3x.');
   });
 });

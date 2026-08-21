@@ -6,6 +6,7 @@ interface ActionContext {
   content: string;
 }
 
+const DIAGRAM_RULES = 'Reply with Mermaid source only: no prose, no explanation, no code fence. Keep node labels short and quote any label containing punctuation.';
 const GROUNDING = 'Do not invent facts that are not present in the supplied text. Respond in the language of the supplied text.';
 
 const scopeWord = (scope: AiScope): string =>
@@ -56,6 +57,26 @@ const ACTIONS: Record<AiActionKind, { label: string; system: string; user: (ctx:
     label: 'Key points',
     system: `You extract the load-bearing claims of a whole Markdown document. Return a list; each entry is one claim the document actually makes, stated in one sentence. ${GROUNDING}`,
     user: (ctx, scope) => `List the key points of this ${scopeWord(scope)}, "${ctx.title}":\n\n${ctx.content}`,
+  },
+  diagramFlowchart: {
+    label: 'Flowchart',
+    system: `You turn part of a Markdown document into a Mermaid flowchart, beginning with "flowchart TD". ${DIAGRAM_RULES} ${GROUNDING}`,
+    user: (ctx, scope) => `Draw a flowchart of this ${scopeWord(scope)} from "${ctx.title}":\n\n${ctx.content}`,
+  },
+  diagramSequence: {
+    label: 'Sequence diagram',
+    system: `You turn part of a Markdown document into a Mermaid sequence diagram, beginning with "sequenceDiagram". ${DIAGRAM_RULES} ${GROUNDING}`,
+    user: (ctx, scope) => `Draw a sequence diagram of this ${scopeWord(scope)} from "${ctx.title}":\n\n${ctx.content}`,
+  },
+  diagramMindmap: {
+    label: 'Mind map',
+    system: `You turn part of a Markdown document into a Mermaid mindmap, beginning with "mindmap". ${DIAGRAM_RULES} ${GROUNDING}`,
+    user: (ctx, scope) => `Draw a mind map of this ${scopeWord(scope)} from "${ctx.title}":\n\n${ctx.content}`,
+  },
+  diagramState: {
+    label: 'State diagram',
+    system: `You turn part of a Markdown document into a Mermaid state diagram, beginning with "stateDiagram-v2". ${DIAGRAM_RULES} ${GROUNDING}`,
+    user: (ctx, scope) => `Draw a state diagram of this ${scopeWord(scope)} from "${ctx.title}":\n\n${ctx.content}`,
   },
 };
 
