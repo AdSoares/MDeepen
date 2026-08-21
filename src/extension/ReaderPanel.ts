@@ -85,6 +85,7 @@ export class ReaderPanel {
       (m) => this.post(m),
       () => this.pages,
       () => this.uri.path.split('/').pop() ?? 'document.md',
+      () => this.activeIndex,
     );
     this.panel.webview.html = this.html();
     this.panel.webview.onDidReceiveMessage((m) => { if (isWebviewToHost(m)) void this.onMessage(m); }, null, this.disposables);

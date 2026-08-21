@@ -94,8 +94,10 @@ describe('reader store', () => {
     s.aiChunk('half an ans');
     s.aiError('rate_limit', 'slow down');
     expect(s.get().ai.streaming).toBe(false);
-    expect(s.get().ai.messages.at(-1)?.text).toBe('half an ans');
-    expect(s.get().ai.messages.at(-1)?.pageIndex).toBe(3);
+    const partial = s.get().ai.messages.at(-1);
+    expect(partial?.text).toBe('half an ans');
+    if (partial?.kind !== 'action') throw new Error('expected an action message');
+    expect(partial.pageIndex).toBe(3);
     expect(s.get().ai.error?.kind).toBe('rate_limit');
   });
 
@@ -141,9 +143,10 @@ describe('reader store', () => {
     s.aiChunk('because');
     s.aiDone();
     const last = s.get().ai.messages.at(-1);
-    expect(last?.action).toBe('explain');
-    expect(last?.scope).toBe('selection');
-    expect(last?.excerpt).toBe('we retry 3x');
+    if (last?.kind !== 'action') throw new Error('expected an action message');
+    expect(last.action).toBe('explain');
+    expect(last.scope).toBe('selection');
+    expect(last.excerpt).toBe('we retry 3x');
     expect(last?.pageIndex).toBe(2);
   });
 
@@ -152,7 +155,9 @@ describe('reader store', () => {
     s.aiStreamStart({ kind: 'action', action: 'explain', scope: 'selection', sectionTitle: 'Retries', pageIndex: 0, excerpt: 'x'.repeat(400) });
     s.aiChunk('ok');
     s.aiDone();
-    expect(s.get().ai.messages.at(-1)?.excerpt?.length).toBeLessThanOrEqual(241);
+    const trimmed = s.get().ai.messages.at(-1);
+    if (trimmed?.kind !== 'action') throw new Error('expected an action message');
+    expect(trimmed.excerpt?.length).toBeLessThanOrEqual(241);
   });
 
   it('deletes one answer without touching the others', () => {
@@ -220,7 +225,9 @@ describe('document run progress', () => {
     store.aiStreamStart({ kind: 'action', action: 'summarizeShort', scope: 'document', sectionTitle: 'doc.md', pageIndex: -1, truncated: ['Huge'] });
     store.aiChunk('answer');
     store.aiDone();
-    expect(store.get().ai.messages[0].truncated).toEqual(['Huge']);
+    const doc = store.get().ai.messages[0];
+    if (doc.kind !== 'action') throw new Error('expected an action message');
+    expect(doc.truncated).toEqual(['Huge']);
   });
 });
 
