@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-08-21
+
+### Added
+
+- Generated diagrams: select text, choose Diagram in the selection toolbar, and pick one of four
+  Mermaid types. The result renders in the panel with its source editable — editing re-renders
+  immediately, with no further calls.
+- Insert the diagram into the document at the end of the section the selection came from, as one
+  undoable edit. The button names its destination, and the entry reports the line it used.
+- Before writing, MDeepen re-reads the document and relocates the section by title and level. If
+  the section has moved, vanished or become ambiguous, nothing is written and the entry says why.
+
+### Changed
+
+- The reader and the panel now share one Mermaid rendering engine, so a diagram fails the same way
+  in both places: an error with the source preserved, never a blank space.
+
 ## [0.5.0] - 2026-08-21
 
 ### Added
@@ -158,7 +175,8 @@ First AI slice. The reader itself is unchanged and still works with no API key.
 - Reading and focus modes, adjustable font size, column width, line spacing, and
   theme.
 
-[Unreleased]: https://github.com/AdSoares/MDeepen/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/AdSoares/MDeepen/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/AdSoares/MDeepen/releases/tag/v0.6.0
 [0.5.0]: https://github.com/AdSoares/MDeepen/releases/tag/v0.5.0
 [0.4.0]: https://github.com/AdSoares/MDeepen/releases/tag/v0.4.0
 [0.3.0]: https://github.com/AdSoares/MDeepen/releases/tag/v0.3.0

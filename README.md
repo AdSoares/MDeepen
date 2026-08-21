@@ -72,6 +72,10 @@ leaves your machine.
   choosing the relevant sections itself and naming them under the answer, each one a link back to
   that section. The ranking is local: no embeddings, no index, nothing to rebuild when you edit.
   <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>A</kbd> jumps to the question field.
+- **Diagrams from a selection.** Select text, choose Diagram, and pick a flowchart, sequence
+  diagram, mind map or state diagram. It renders in the panel, the Mermaid source is editable
+  and re-renders as you type, and one click inserts it at the end of the section it came from —
+  as a single edit you can undo.
 - All network access happens in the extension host. The webview makes no requests,
   and its Content Security Policy carries no `connect-src`.
 - **Reading never depends on AI.** With no key configured, everything above still
