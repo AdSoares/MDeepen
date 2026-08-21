@@ -9,10 +9,11 @@ const OVERFLOW: AiActionKind[] = ['explainSimply', 'example'];
 interface Props {
   placement: Placement;
   onAction: (action: AiActionKind) => void;
+  onDiagram: () => void;
   onDismiss: () => void;
 }
 
-export function SelectionToolbar({ placement, onAction, onDismiss }: Props) {
+export function SelectionToolbar({ placement, onAction, onDiagram, onDismiss }: Props) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -42,6 +43,7 @@ export function SelectionToolbar({ placement, onAction, onDismiss }: Props) {
               {actionLabel(action)}
             </button>
           ))}
+          <button class="md-btn" role="menuitem" onClick={onDiagram}>Diagram</button>
         </div>
       )}
     </div>
