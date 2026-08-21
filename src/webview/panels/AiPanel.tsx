@@ -1,6 +1,7 @@
 import { useState } from 'preact/hooks';
 import type { AiActionKind } from '../../extension/ai/types';
-import { DOCUMENT_ACTIONS, SECTION_ACTIONS } from '../../extension/ai/types';
+import { DIAGRAM_ACTION_BY_KIND, DIAGRAM_ACTIONS, DOCUMENT_ACTIONS, SECTION_ACTIONS } from '../../extension/ai/types';
+import { DiagramView } from './DiagramView';
 import { actionLabel } from '../../extension/ai/prompts';
 import type { AiState } from '../store';
 
@@ -11,6 +12,10 @@ interface Props {
   onCite: (pageIndex: number) => void;
   onAction: (action: AiActionKind, scope: 'section' | 'document') => void;
   onAsk: (question: string) => void;
+  onDiagramType: (action: AiActionKind) => void;
+  onDiagramCancel: () => void;
+  onEditDiagram: (index: number, source: string) => void;
+  onInsertDiagram: (index: number) => void;
   onStop: () => void;
   onDelete: (index: number) => void;
   onClear: () => void;
@@ -18,7 +23,7 @@ interface Props {
 
 const GATED = ['Summaries', 'Chat with the document', 'Generated diagrams'];
 
-export function AiPanel({ ai, activePageId, onConfigure, onCite, onAction, onAsk, onStop, onDelete, onClear }: Props) {
+export function AiPanel({ ai, activePageId, onConfigure, onCite, onAction, onAsk, onDiagramType, onDiagramCancel, onEditDiagram, onInsertDiagram, onStop, onDelete, onClear }: Props) {
   const [more, setMore] = useState(false);
   const [question, setQuestion] = useState('');
 
@@ -54,6 +59,18 @@ export function AiPanel({ ai, activePageId, onConfigure, onCite, onAction, onAsk
           <span class="codicon codicon-gear" aria-hidden="true" />
         </button>
       </div>
+
+      {ai.draft && (
+        <div class="md-diagram-picker">
+          <div class="md-menu-group">Diagram from the selection</div>
+          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+            {DIAGRAM_ACTIONS.map((action) => (
+              <button key={action} class="md-btn" onClick={() => onDiagramType(action)}>{actionLabel(action)}</button>
+            ))}
+            <button class="md-btn" onClick={onDiagramCancel}>Cancel</button>
+          </div>
+        </div>
+      )}
 
       <div style={{ display: 'flex', gap: '8px', position: 'relative' }}>
         <button class="md-btn primary" disabled={busy} onClick={() => onAction('summarize', 'section')}>Summarize section</button>
@@ -96,7 +113,34 @@ export function AiPanel({ ai, activePageId, onConfigure, onCite, onAction, onAsk
 
       {ai.messages.map((m, i) => (
         <div class="md-ai-msg" key={i}>
-          {m.kind === 'chat' ? (
+          {m.kind === 'diagram' ? (
+            <>
+              <div class="md-ai-msg-head">
+                {actionLabel(DIAGRAM_ACTION_BY_KIND[m.diagramType])}
+                {` · §${String(m.pageIndex + 1).padStart(2, '0')} ${m.sectionTitle}`}
+              </div>
+              <DiagramView source={m.text} />
+              <textarea
+                class="md-diagram-source"
+                value={m.text}
+                rows={6}
+                aria-label="Diagram source"
+                onInput={(e) => onEditDiagram(i, (e.target as HTMLTextAreaElement).value)}
+              />
+              {m.inserted && (
+                <p class="md-ai-truncated">
+                  {'line' in m.inserted ? `Inserted at line ${m.inserted.line}` : m.inserted.error}
+                </p>
+              )}
+              <div class="md-ai-msg-foot">
+                <button class="md-btn primary" onClick={() => onInsertDiagram(i)}>
+                  Insert at the end of &sect;{String(m.pageIndex + 1).padStart(2, '0')} {m.sectionTitle}
+                </button>
+                <button class="md-btn" aria-label="Copy this diagram source" onClick={() => navigator.clipboard.writeText(m.text)}>Copy</button>
+                <button class="md-btn" aria-label="Delete this diagram" onClick={() => onDelete(i)}>Delete</button>
+              </div>
+            </>
+          ) : m.kind === 'chat' ? (
             <>
               <div class="md-ai-question">{m.question}</div>
               <div class="md-ai-msg-text">{m.text}</div>

@@ -14,6 +14,7 @@ import { findBySlug } from './anchors';
 import { SelectionToolbar } from './panels/SelectionToolbar';
 import { isUsableSelectionText, selectionText, placeToolbar, type Placement } from './selection';
 import type { AiActionKind } from '../extension/ai/types';
+import { DIAGRAM_KIND_BY_ACTION } from '../extension/ai/types';
 
 const store = createReaderState();
 
@@ -41,6 +42,7 @@ export function App() {
       else if (m.type === 'aiChunk') store.aiChunk(m.text);
       else if (m.type === 'aiProgress') store.aiProgress(m.done, m.total);
       else if (m.type === 'aiSources') store.aiSources(m.sections, m.droppedTurns);
+      else if (m.type === 'diagramInserted') store.aiDiagramResult(m.entryIndex, { ok: m.ok, line: m.line, error: m.error });
       else if (m.type === 'aiDone') store.aiDone();
       else if (m.type === 'aiError') store.aiError(m.kind, m.message);
       else if (m.type === 'aiConnectionResult') store.aiConnection({ ok: m.ok, ms: m.ms, error: m.error });
@@ -232,6 +234,27 @@ export function App() {
               store.setPanels({ aiVisible: true });
               post({ type: 'aiChat', question: q, history });
             }}
+            onDiagramType={(action) => {
+              const st = store.get();
+              const draft = st.ai.draft;
+              if (!draft) return;
+              store.aiDiagramDraft(undefined);
+              store.aiStreamStart({
+                kind: 'diagram', diagramType: DIAGRAM_KIND_BY_ACTION[action], sectionId: draft.sectionId,
+                sectionTitle: draft.sectionTitle, sectionLevel: draft.sectionLevel, pageIndex: draft.pageIndex,
+              });
+              post({ type: 'aiAction', action, scope: 'selection', id: draft.sectionId, text: draft.text });
+            }}
+            onDiagramCancel={() => store.aiDiagramDraft(undefined)}
+            onEditDiagram={(index, source) => store.aiEditDiagram(index, source)}
+            onInsertDiagram={(index) => {
+              const m = store.get().ai.messages[index];
+              if (!m || m.kind !== 'diagram') return;
+              post({
+                type: 'insertDiagram', entryIndex: index, sectionId: m.sectionId,
+                sectionTitle: m.sectionTitle, sectionLevel: m.sectionLevel, code: m.text,
+              });
+            }}
             onStop={() => { store.aiStopped(); post({ type: 'aiStop' }); }}
           />
         </div>
@@ -240,6 +263,17 @@ export function App() {
         <SelectionToolbar
           placement={selection.placement}
           onDismiss={() => setSelection(null)}
+          onDiagram={() => {
+            const st = store.get();
+            const target = st.pages[st.activeIndex];
+            if (!target) return;
+            store.aiDiagramDraft({
+              text: selection.text, sectionId: target.id, sectionTitle: target.title,
+              sectionLevel: target.level, pageIndex: st.activeIndex,
+            });
+            store.setPanels({ aiVisible: true });
+            setSelection(null);
+          }}
           onAction={(action: AiActionKind) => {
             const st = store.get();
             const target = st.pages[st.activeIndex];

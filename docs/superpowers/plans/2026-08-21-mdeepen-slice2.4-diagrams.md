@@ -49,7 +49,7 @@ an entry mid-insert.
 **Interfaces:**
 - Produces: `DiagramKind`, `DIAGRAM_ACTIONS`, `DIAGRAM_KIND_BY_ACTION` (in `types.ts`); four registry entries.
 
-- [ ] **Step 1: Add the types**
+- [x] **Step 1: Add the types**
 
 Append to `src/extension/ai/types.ts`, and extend the action union and `AI_ACTIONS`:
 
@@ -86,7 +86,7 @@ export type AiActionKind =
 export const AI_ACTIONS: readonly AiActionKind[] = [...SECTION_ACTIONS, ...DOCUMENT_ACTIONS, ...DIAGRAM_ACTIONS];
 ```
 
-- [ ] **Step 2: Write the failing tests**
+- [x] **Step 2: Write the failing tests**
 
 Append to `src/extension/ai/prompts.test.ts`, adding `DIAGRAM_ACTIONS` to the `./types` import:
 
@@ -118,12 +118,12 @@ describe('diagram actions', () => {
 });
 ```
 
-- [ ] **Step 3: Run to verify failure**
+- [x] **Step 3: Run to verify failure**
 
 Run: `npx vitest run src/extension/ai/prompts.test.ts`
 Expected: FAIL — `DIAGRAM_ACTIONS` is not exported.
 
-- [ ] **Step 4: Add the registry entries**
+- [x] **Step 4: Add the registry entries**
 
 Add inside `ACTIONS` in `src/extension/ai/prompts.ts`, after `keyPoints`. `DIAGRAM_RULES` is shared
 so the four differ only in the diagram they ask for:
@@ -157,12 +157,12 @@ Add the shared clause next to `GROUNDING`:
 const DIAGRAM_RULES = 'Reply with Mermaid source only: no prose, no explanation, no code fence. Keep node labels short and quote any label containing punctuation.';
 ```
 
-- [ ] **Step 5: Run to verify pass**
+- [x] **Step 5: Run to verify pass**
 
 Run: `npx vitest run src/extension/ai/prompts.test.ts && npx tsc --noEmit`
 Expected: PASS; compiler clean.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/extension/ai/types.ts src/extension/ai/prompts.ts src/extension/ai/prompts.test.ts
@@ -180,7 +180,7 @@ git commit -m "feat: four diagram actions producing Mermaid source"
 **Interfaces:**
 - Produces: `locateSection(pages, title, level)`, `buildDiagramBlock(code)`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `src/extension/diagramInsert.test.ts`:
 
@@ -246,12 +246,12 @@ describe('buildDiagramBlock', () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify failure**
+- [x] **Step 2: Run to verify failure**
 
 Run: `npx vitest run src/extension/diagramInsert.test.ts`
 Expected: FAIL — cannot find module `./diagramInsert`.
 
-- [ ] **Step 3: Implement it**
+- [x] **Step 3: Implement it**
 
 Create `src/extension/diagramInsert.ts`:
 
@@ -286,12 +286,12 @@ export function buildDiagramBlock(code: string): string {
 }
 ```
 
-- [ ] **Step 4: Run to verify pass**
+- [x] **Step 4: Run to verify pass**
 
 Run: `npx vitest run src/extension/diagramInsert.test.ts`
 Expected: PASS, 8 tests.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/extension/diagramInsert.ts src/extension/diagramInsert.test.ts
@@ -309,7 +309,7 @@ git commit -m "feat: locate a section by title and normalise a mermaid block"
 **Interfaces:**
 - Produces: webview→host `insertDiagram`; host→webview `diagramInserted`. Both carry `entryIndex`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Add to `src/shared/messages.test.ts`, in the webview→host block:
 
@@ -323,12 +323,12 @@ and in the host→webview block:
     expect(isHostToWebview({ type: 'diagramInserted', entryIndex: 0, ok: true, line: 21 })).toBe(true);
 ```
 
-- [ ] **Step 2: Run to verify failure**
+- [x] **Step 2: Run to verify failure**
 
 Run: `npx vitest run src/shared/messages.test.ts`
 Expected: FAIL — two `expected false to be true`.
 
-- [ ] **Step 3: Extend the contract**
+- [x] **Step 3: Extend the contract**
 
 In `src/shared/messages.ts`, add to `WebviewToHost`:
 
@@ -347,12 +347,12 @@ Add `'insertDiagram'` to `WEBVIEW_TYPES` and `'diagramInserted'` to `HOST_TYPES`
 > `insertDiagram` deliberately does not begin with `ai`: `ReaderPanel.onMessage` forwards every
 > `ai*` message to `AiController`, and this one must reach the panel, which owns the document.
 
-- [ ] **Step 4: Run to verify pass**
+- [x] **Step 4: Run to verify pass**
 
 Run: `npx vitest run src/shared/messages.test.ts`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/shared/messages.ts src/shared/messages.test.ts
@@ -372,7 +372,7 @@ git commit -m "feat: contract carries a diagram insertion and its result"
 This task is VS Code integration and is smoke-verified — its decisions live in the pure module
 tested in Task 2. Nothing here guesses: it relocates or it refuses.
 
-- [ ] **Step 1: Add the handler**
+- [x] **Step 1: Add the handler**
 
 In `src/extension/ReaderPanel.ts`, extend the imports:
 
@@ -431,12 +431,12 @@ Add the method, next to `readText`:
 
 > `line` is 0-based for the edit and reported 1-based, which is what an editor shows.
 
-- [ ] **Step 2: Build and typecheck**
+- [x] **Step 2: Build and typecheck**
 
 Run: `npm run build && npx tsc --noEmit && npm test`
 Expected: green.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/extension/ReaderPanel.ts
@@ -454,7 +454,7 @@ git commit -m "feat: insert a diagram after relocating its section in the live d
 - Produces: `renderMermaidSource(src): Promise<{ svg: string } | { error: string }>`.
 - `renderMermaidIn` keeps its signature and behaviour exactly, now built on the new primitive.
 
-- [ ] **Step 1: Extract the primitive**
+- [x] **Step 1: Extract the primitive**
 
 Replace the body of `src/webview/render/mermaid.ts` below `errorBox` with:
 
@@ -517,12 +517,12 @@ Delete the now-unused `counter` declaration at the top of the file, keeping `ini
 > Behaviour is preserved deliberately, including the early return when there are no nodes — with
 > an empty list the loop simply does nothing, and the dynamic import is no longer paid for.
 
-- [ ] **Step 2: Build and typecheck**
+- [x] **Step 2: Build and typecheck**
 
 Run: `npm run build && npx tsc --noEmit && npm test`
 Expected: green. Rendering itself is smoke-verified.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/webview/render/mermaid.ts
@@ -540,7 +540,7 @@ git commit -m "refactor: one mermaid engine for the reader and the panel"
 **Interfaces:**
 - Produces: the `diagram` variant of `AiPending`; `AiState.draft`; `aiDiagramDraft`, `aiEditDiagram`, `aiDiagramResult`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Append to `src/webview/store.test.ts`:
 
@@ -624,12 +624,12 @@ describe('diagram entries', () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify failure**
+- [x] **Step 2: Run to verify failure**
 
 Run: `npx vitest run src/webview/store.test.ts`
 Expected: FAIL — `s.aiEditDiagram is not a function`.
 
-- [ ] **Step 3: Widen the store**
+- [x] **Step 3: Widen the store**
 
 In `src/webview/store.ts`, add the third variant to `AiPending`:
 
@@ -676,12 +676,12 @@ Add the three mutators after `aiSources`:
     },
 ```
 
-- [ ] **Step 4: Run to verify pass**
+- [x] **Step 4: Run to verify pass**
 
 Run: `npx vitest run src/webview/store.test.ts`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/webview/store.ts src/webview/store.test.ts
@@ -704,7 +704,7 @@ git commit -m "feat: store holds diagram drafts, their source and where they lan
 
 This task is webview UI and is smoke-verified.
 
-- [ ] **Step 1: A preview that renders one source**
+- [x] **Step 1: A preview that renders one source**
 
 Create `src/webview/panels/DiagramView.tsx`:
 
@@ -734,7 +734,7 @@ export function DiagramView({ source }: Props) {
 }
 ```
 
-- [ ] **Step 2: Add Diagram to the selection toolbar**
+- [x] **Step 2: Add Diagram to the selection toolbar**
 
 In `src/webview/panels/SelectionToolbar.tsx`, add a prop and a button. The toolbar posts an
 intent rather than an action, because the type is chosen in the panel:
@@ -754,7 +754,7 @@ Add to the overflow menu, after the `OVERFLOW` entries:
           <button class="md-btn" role="menuitem" onClick={onDiagram}>Diagram</button>
 ```
 
-- [ ] **Step 3: The type picker and the diagram entry in the panel**
+- [x] **Step 3: The type picker and the diagram entry in the panel**
 
 In `src/webview/panels/AiPanel.tsx`, add to `Props`:
 
@@ -829,7 +829,7 @@ Add a third branch to the entry renderer, before the `chat` branch:
 > source. That is the Re-render button of FR-MVP-026, made continuous — there is no call to
 > spend, only a local render.
 
-- [ ] **Step 4: Wire it in `App.tsx`**
+- [x] **Step 4: Wire it in `App.tsx`**
 
 Add the result to the message router:
 
@@ -885,7 +885,7 @@ and the import:
 import { DIAGRAM_KIND_BY_ACTION } from '../extension/ai/types';
 ```
 
-- [ ] **Step 5: Add the styles**
+- [x] **Step 5: Add the styles**
 
 Append to `src/webview/styles/theme.css`:
 
@@ -897,12 +897,12 @@ Append to `src/webview/styles/theme.css`:
 .md-diagram-picker { margin-bottom: 10px; }
 ```
 
-- [ ] **Step 6: Build, typecheck, test**
+- [x] **Step 6: Build, typecheck, test**
 
 Run: `npm run build && npx tsc --noEmit && npm test`
 Expected: green.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/webview/panels/SelectionToolbar.tsx src/webview/panels/DiagramView.tsx src/webview/panels/AiPanel.tsx src/webview/App.tsx src/webview/styles/theme.css
@@ -918,11 +918,11 @@ git commit -m "feat: generate, preview, edit and insert diagrams from the panel"
 - Modify: `README.md`
 - Modify: `CHANGELOG.md`
 
-- [ ] **Step 1: Bump the version**
+- [x] **Step 1: Bump the version**
 
 `package.json` → `"version": "0.6.0"`.
 
-- [ ] **Step 2: Update the README**
+- [x] **Step 2: Update the README**
 
 In the AI section, after the chat bullet, add:
 
@@ -935,7 +935,7 @@ In the AI section, after the chat bullet, add:
 
 In the Reading section, no change.
 
-- [ ] **Step 3: Add the changelog entry**
+- [x] **Step 3: Add the changelog entry**
 
 Insert above `## [0.5.0]`:
 
@@ -966,19 +966,38 @@ At the bottom of the file, replace the first two link lines with:
 [0.5.0]: https://github.com/AdSoares/MDeepen/releases/tag/v0.5.0
 ```
 
-- [ ] **Step 4: Build, test, package**
+- [x] **Step 4: Build, test, package**
 
 Run: `npm run build && npx tsc --noEmit && npm test && npm run package`
 Expected: suite green; `mdeepen-0.6.0.vsix` produced.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add package.json README.md CHANGELOG.md
 git commit -m "chore: release 0.6.0 with generated diagrams"
 ```
 
-- [ ] **Step 6: Human smoke — this step belongs to the user, not the implementer**
+- [ ] **Step 6: Human smoke — this step belongs to the user, not the implementer** — **DEFERRED 2026-08-21.**
+
+> **Not run.** The user deferred it to a later round, deliberately, and this checkbox stays open
+> until it is walked. Unlike Slices 2.0 through 2.3, this slice therefore merges with its
+> integration behaviour unverified.
+>
+> **What ships unverified:** `ReaderPanel.insertDiagram` is the only production code in the
+> project with no unit test, because it needs a `vscode` stub that does not exist here. Its
+> decisions live in `diagramInsert.ts`, which is pure and covered — but the `WorkspaceEdit` call,
+> the single-undo property and the two refusal paths are covered by nothing but checks 9, 12 and
+> 13 of this table.
+>
+> **The check that matters most is 12 and 13.** If insertion succeeds where it should refuse, it
+> wrote to the wrong place in a file the user maintains, silently. That is the worst defect this
+> product can have, and nothing automated would catch it.
+>
+> The materials are ready: `smoke-2.4.md` (a disposable document with sections built for each
+> diagram type and two prepared for the refusal cases) and `smoke-2.4-guia.md`, both written on
+> 2026-08-21.
+
 
 Use a scratch copy of a Markdown file, not one you care about: this is the first release that
 writes. Reload the Extension Development Host first.
@@ -995,7 +1014,8 @@ writes. Reload the Extension Development Host first.
 | 8 | Click Insert | The diagram appears at the end of that section, correctly fenced, and the entry reports the line |
 | 9 | Open the file and press `Ctrl+Z` | The whole block goes in one undo |
 | 10 | Insert, then check the reader | The section now renders the diagram inline, like any other Mermaid block |
-| 11 | In another editor, add a heading above the section, then click Insert on an old entry | It refuses and says the reader should be refreshed — nothing is written |
+| 11 | In another editor, add a heading **above** the section, then click Insert on an old entry | It **succeeds**, at the end of the right section — relocation survives the document moving. This is the positive proof, not a refusal |
+| 11b | Rename that section's heading, then click Insert on an entry generated from it | It refuses as missing and says to refresh — nothing is written |
 | 12 | Duplicate a section heading so two are identical, then Insert | It refuses as ambiguous — nothing is written |
 | 13 | Delete a diagram entry, then Clear all | The draft goes; the timeline empties |
 | 14 | Select text containing a fake `sk-…` key and generate a diagram | The usual secret dialog appears — a diagram action is a selection action |

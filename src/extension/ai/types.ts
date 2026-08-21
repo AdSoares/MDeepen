@@ -34,12 +34,30 @@ export const AI_MODELS = ['claude-opus-4-8', 'claude-sonnet-5', 'claude-haiku-4-
 
 export type AiActionKind =
   | 'summarize' | 'explain' | 'explainSimply' | 'keyTerms' | 'example'
-  | 'summarizeShort' | 'summarizeExecutive' | 'summarizeTechnical' | 'keyPoints';
+  | 'summarizeShort' | 'summarizeExecutive' | 'summarizeTechnical' | 'keyPoints'
+  | 'diagramFlowchart' | 'diagramSequence' | 'diagramMindmap' | 'diagramState';
 export type AiScope = 'section' | 'selection' | 'document';
 
 export const SECTION_ACTIONS: readonly AiActionKind[] = ['summarize', 'explain', 'explainSimply', 'keyTerms', 'example'];
 export const DOCUMENT_ACTIONS: readonly AiActionKind[] = ['summarizeShort', 'summarizeExecutive', 'summarizeTechnical', 'keyPoints'];
-export const AI_ACTIONS: readonly AiActionKind[] = [...SECTION_ACTIONS, ...DOCUMENT_ACTIONS];
+export const DIAGRAM_ACTIONS: readonly AiActionKind[] = ['diagramFlowchart', 'diagramSequence', 'diagramMindmap', 'diagramState'];
+export const AI_ACTIONS: readonly AiActionKind[] = [...SECTION_ACTIONS, ...DOCUMENT_ACTIONS, ...DIAGRAM_ACTIONS];
+
+export type DiagramKind = 'flowchart' | 'sequence' | 'mindmap' | 'state';
+
+export const DIAGRAM_ACTION_BY_KIND: Record<DiagramKind, AiActionKind> = {
+  flowchart: 'diagramFlowchart',
+  sequence: 'diagramSequence',
+  mindmap: 'diagramMindmap',
+  state: 'diagramState',
+};
+
+export const DIAGRAM_KIND_BY_ACTION: Record<string, DiagramKind> = {
+  diagramFlowchart: 'flowchart',
+  diagramSequence: 'sequence',
+  diagramMindmap: 'mindmap',
+  diagramState: 'state',
+};
 
 /** A map step is capped well below the model limit: a 20:1 squeeze loses the detail the
  *  technical summary needs, while one call per section would cost sixty-one requests. */

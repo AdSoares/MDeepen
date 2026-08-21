@@ -110,3 +110,8 @@ button.md-btn.primary:disabled:hover { background: var(--vscode-button-backgroun
 .md-ai-question { font-size: 12px; color: var(--vscode-descriptionForeground); border-left: 2px solid var(--md-ai); padding-left: 8px; margin-bottom: 8px; }
 .md-ask { display: flex; gap: 6px; align-items: flex-end; padding: 8px 0 0; border-top: 1px solid var(--vscode-panel-border); margin-top: 10px; }
 .md-ask-input { flex: 1; resize: vertical; padding: 6px 8px; font-family: inherit; font-size: 12px; background: var(--vscode-input-background); color: var(--vscode-input-foreground); border: 1px solid var(--vscode-input-border); border-radius: 5px; }
+.md-diagram { margin: 8px 0; overflow-x: auto; }
+.md-diagram svg { max-width: 100%; height: auto; }
+.md-diagram-pending { margin: 8px 0; font-size: 12px; color: var(--vscode-descriptionForeground); }
+.md-diagram-source { width: 100%; resize: vertical; margin: 6px 0; padding: 6px 8px; font-family: var(--md-mono); font-size: 11px; background: var(--vscode-input-background); color: var(--vscode-input-foreground); border: 1px solid var(--vscode-input-border); border-radius: 5px; }
+.md-diagram-picker { margin-bottom: 10px; }
