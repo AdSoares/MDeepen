@@ -25,19 +25,17 @@ function errorBox(src: string, message: string): HTMLElement {
   return err;
 }
 
-export async function renderMermaidIn(root: HTMLElement): Promise<void> {
-  const nodes = Array.from(root.querySelectorAll<HTMLElement>('.mermaid-src'));
-  if (nodes.length === 0) return;
-
+/**
+ * Renders one Mermaid source. Never rejects: a chunk that fails to load, an engine that fails to
+ * initialize and a source that fails to parse all resolve to an error, so every caller can show
+ * the source instead of losing it.
+ */
+export async function renderMermaidSource(src: string): Promise<{ svg: string } | { error: string }> {
   let mermaid: typeof import('mermaid').default;
   try {
     mermaid = (await import('mermaid')).default;
   } catch {
-    // Chunk failed to load (CSP, missing asset). Degrade to error boxes; never reject.
-    for (const node of nodes) {
-      node.replaceWith(errorBox(node.dataset.src ?? '', '⚠ Diagram renderer failed to load. Source preserved below.'));
-    }
-    return;
+    return { error: '⚠ Diagram renderer failed to load. Source preserved below.' };
   }
 
   if (!initialized) {
@@ -45,27 +43,34 @@ export async function renderMermaidIn(root: HTMLElement): Promise<void> {
       mermaid.initialize({ startOnLoad: false, theme: isDark() ? 'dark' : 'default', securityLevel: 'strict' });
       initialized = true;
     } catch {
-      for (const node of nodes) {
-        node.replaceWith(errorBox(node.dataset.src ?? '', '⚠ Diagram renderer failed to initialize. Source preserved below.'));
-      }
-      return;
+      return { error: '⚠ Diagram renderer failed to initialize. Source preserved below.' };
     }
   }
 
+  const id = `mmd-${counter++}`;
+  try {
+    const { svg } = await mermaid.render(id, src);
+    return { svg };
+  } catch {
+    // mermaid.render can leave a temporary container in document.body on parse failure.
+    document.getElementById(id)?.remove();
+    document.getElementById(`d${id}`)?.remove();
+    return { error: '⚠ Diagram could not be rendered. Source preserved below.' };
+  }
+}
+
+export async function renderMermaidIn(root: HTMLElement): Promise<void> {
+  const nodes = Array.from(root.querySelectorAll<HTMLElement>('.mermaid-src'));
   for (const node of nodes) {
     const src = node.dataset.src ?? '';
-    const id = `mmd-${counter++}`;
-    try {
-      const { svg } = await mermaid.render(id, src);
+    const result = await renderMermaidSource(src);
+    if ('svg' in result) {
       const wrap = document.createElement('div');
       wrap.className = 'mermaid-rendered';
-      wrap.innerHTML = svg;
+      wrap.innerHTML = result.svg;
       node.replaceWith(wrap);
-    } catch {
-      // mermaid.render can leave a temporary container in document.body on parse failure.
-      document.getElementById(id)?.remove();
-      document.getElementById(`d${id}`)?.remove();
-      node.replaceWith(errorBox(src, '⚠ Diagram could not be rendered. Source preserved below.'));
+    } else {
+      node.replaceWith(errorBox(src, result.error));
     }
   }
 }
