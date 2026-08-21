@@ -1,4 +1,6 @@
 import type { Page } from '../../shared/types';
+import { estimateTokens } from './costEstimate';
+import { MAX_CHAT_SECTIONS } from './types';
 
 export interface ScoredSection {
   pageIndex: number;
@@ -63,4 +65,70 @@ export function rankSections(question: string, pages: Page[], activeIndex: numbe
   });
 
   return scored.sort((a, b) => Number(b.pinned) - Number(a.pinned) || b.score - a.score);
+}
+
+export interface ChatTurn {
+  role: 'user' | 'assistant';
+  text: string;
+}
+
+export interface ChatPlan {
+  messages: { role: 'user' | 'assistant'; content: string }[];
+  usedSections: { title: string; pageIndex: number }[];
+  droppedTurns: number;
+}
+
+const label = (pageIndex: number): string => `§${String(pageIndex + 1).padStart(2, '0')}`;
+
+/**
+ * Assembles one chat turn. Sections claim the budget first and history is trimmed oldest-first
+ * from what remains: the document is the source of truth, and a long conversation must not
+ * starve the answer of the material it is supposed to answer from.
+ */
+export function planChatTurn(
+  question: string,
+  history: ChatTurn[],
+  pages: Page[],
+  activeIndex: number,
+  ctx: { fileName: string },
+  budget: { sectionTokens: number; historyTokens: number },
+): ChatPlan {
+  const chosen: ScoredSection[] = [];
+  let spent = 0;
+  for (const section of rankSections(question, pages, activeIndex)) {
+    if (!section.pinned && section.score <= 0) continue;
+    if (chosen.length >= MAX_CHAT_SECTIONS) break;
+    const tokens = estimateTokens(pages[section.pageIndex].content);
+    // The pinned section is always included; it is truncated below if it alone overruns.
+    if (!section.pinned && spent + tokens > budget.sectionTokens) break;
+    chosen.push(section);
+    spent += tokens;
+  }
+  chosen.sort((a, b) => a.pageIndex - b.pageIndex);
+
+  const blocks = chosen.map((s) => {
+    const content = pages[s.pageIndex].content.slice(0, budget.sectionTokens * 4);
+    return `## ${label(s.pageIndex)} ${s.title}\n\n${content}`;
+  });
+
+  const kept: ChatTurn[] = [];
+  let historySpent = 0;
+  for (let i = history.length - 1; i >= 0; i--) {
+    const tokens = estimateTokens(history[i].text);
+    if (historySpent + tokens > budget.historyTokens) break;
+    kept.unshift(history[i]);
+    historySpent += tokens;
+  }
+
+  return {
+    messages: [
+      ...kept.map((t) => ({ role: t.role, content: t.text })),
+      {
+        role: 'user' as const,
+        content: `Sections from "${ctx.fileName}":\n\n${blocks.join('\n\n')}\n\nQuestion: ${question}`,
+      },
+    ],
+    usedSections: chosen.map((s) => ({ title: s.title, pageIndex: s.pageIndex })),
+    droppedTurns: history.length - kept.length,
+  };
 }
