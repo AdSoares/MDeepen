@@ -995,7 +995,8 @@ writes. Reload the Extension Development Host first.
 | 8 | Click Insert | The diagram appears at the end of that section, correctly fenced, and the entry reports the line |
 | 9 | Open the file and press `Ctrl+Z` | The whole block goes in one undo |
 | 10 | Insert, then check the reader | The section now renders the diagram inline, like any other Mermaid block |
-| 11 | In another editor, add a heading above the section, then click Insert on an old entry | It refuses and says the reader should be refreshed — nothing is written |
+| 11 | In another editor, add a heading **above** the section, then click Insert on an old entry | It **succeeds**, at the end of the right section — relocation survives the document moving. This is the positive proof, not a refusal |
+| 11b | Rename that section's heading, then click Insert on an entry generated from it | It refuses as missing and says to refresh — nothing is written |
 | 12 | Duplicate a section heading so two are identical, then Insert | It refuses as ambiguous — nothing is written |
 | 13 | Delete a diagram entry, then Clear all | The draft goes; the timeline empties |
 | 14 | Select text containing a fake `sk-…` key and generate a diagram | The usual secret dialog appears — a diagram action is a selection action |
