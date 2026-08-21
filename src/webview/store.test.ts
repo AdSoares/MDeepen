@@ -282,3 +282,81 @@ describe('chat entries', () => {
     expect(m.kind).toBe('action');
   });
 });
+
+describe('diagram entries', () => {
+  const START = {
+    kind: 'diagram' as const, diagramType: 'flowchart' as const,
+    sectionId: 'page-5', sectionTitle: 'Retries', sectionLevel: 2, pageIndex: 1,
+  };
+
+  it('finishes a generated diagram as a diagram entry', () => {
+    const s = createReaderState();
+    s.aiStreamStart(START);
+    s.aiChunk('flowchart TD');
+    s.aiDone();
+
+    const [m] = s.get().ai.messages;
+    expect(m.kind).toBe('diagram');
+    if (m.kind !== 'diagram') throw new Error('expected a diagram message');
+    expect(m.text).toBe('flowchart TD');
+    expect(m.diagramType).toBe('flowchart');
+    expect(m.sectionTitle).toBe('Retries');
+  });
+
+  it('edits the source of a diagram entry in place', () => {
+    const s = createReaderState();
+    s.aiStreamStart(START);
+    s.aiChunk('flowchart TD');
+    s.aiDone();
+
+    s.aiEditDiagram(0, 'flowchart LR');
+    const [m] = s.get().ai.messages;
+    if (m.kind !== 'diagram') throw new Error('expected a diagram message');
+    expect(m.text).toBe('flowchart LR');
+  });
+
+  it('records where an insert landed', () => {
+    const s = createReaderState();
+    s.aiStreamStart(START);
+    s.aiChunk('flowchart TD');
+    s.aiDone();
+
+    s.aiDiagramResult(0, { ok: true, line: 21 });
+    const [m] = s.get().ai.messages;
+    if (m.kind !== 'diagram') throw new Error('expected a diagram message');
+    expect(m.inserted).toEqual({ line: 21 });
+  });
+
+  it('records a refusal on the entry rather than losing it', () => {
+    const s = createReaderState();
+    s.aiStreamStart(START);
+    s.aiChunk('flowchart TD');
+    s.aiDone();
+
+    s.aiDiagramResult(0, { ok: false, error: 'The section is no longer in this document.' });
+    const [m] = s.get().ai.messages;
+    if (m.kind !== 'diagram') throw new Error('expected a diagram message');
+    expect(m.inserted).toEqual({ error: 'The section is no longer in this document.' });
+  });
+
+  it('ignores an edit or a result aimed at an entry that is not a diagram', () => {
+    const s = createReaderState();
+    s.aiStreamStart({ kind: 'action', action: 'summarize', scope: 'section', sectionTitle: 'A', pageIndex: 0 });
+    s.aiChunk('a summary');
+    s.aiDone();
+
+    s.aiEditDiagram(0, 'flowchart TD');
+    s.aiDiagramResult(0, { ok: true, line: 3 });
+    const [m] = s.get().ai.messages;
+    expect(m.kind).toBe('action');
+    expect(m.text).toBe('a summary');
+  });
+
+  it('holds and clears the captured selection waiting for a type', () => {
+    const s = createReaderState();
+    s.aiDiagramDraft({ text: 'we retry 3x', sectionId: 'page-5', sectionTitle: 'Retries', sectionLevel: 2, pageIndex: 1 });
+    expect(s.get().ai.draft?.text).toBe('we retry 3x');
+    s.aiDiagramDraft(undefined);
+    expect(s.get().ai.draft).toBeUndefined();
+  });
+});

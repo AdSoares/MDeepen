@@ -1,7 +1,7 @@
 import type { HostToWebview } from '../shared/messages';
 import type { OutlineNode, Page, ReaderConfig } from '../shared/types';
 import { DEFAULT_CONFIG, DEFAULT_PANELS } from '../shared/defaults';
-import type { AiActionKind, AiScope } from '../extension/ai/types';
+import type { AiActionKind, AiScope, DiagramKind } from '../extension/ai/types';
 
 export interface AiSource {
   title: string;
@@ -10,7 +10,8 @@ export interface AiSource {
 
 export type AiPending =
   | { kind: 'action'; action: AiActionKind; scope: AiScope; sectionTitle: string; pageIndex: number; excerpt?: string; truncated?: string[] }
-  | { kind: 'chat'; question: string; sources: AiSource[]; droppedTurns: number };
+  | { kind: 'chat'; question: string; sources: AiSource[]; droppedTurns: number }
+  | { kind: 'diagram'; diagramType: DiagramKind; sectionId: string; sectionTitle: string; sectionLevel: number; pageIndex: number; inserted?: { line: number } | { error: string } };
 
 /** An entry is a pending run plus the text that arrived, which is exactly how finalizeStream
  *  builds it — so the union propagates for free. */
@@ -24,6 +25,8 @@ export interface AiState {
   streamText: string;
   pending: AiPending;
   progress?: { done: number; total: number };
+  /** A selection captured by the toolbar, waiting for the user to pick a diagram type. */
+  draft?: { text: string; sectionId: string; sectionTitle: string; sectionLevel: number; pageIndex: number };
   messages: AiMessage[];
   error?: { kind: string; message: string };
   confirm?: Omit<Extract<HostToWebview, { type: 'aiConfirmNeeded' }>, 'type'>;
@@ -121,6 +124,28 @@ export function createReaderState() {
     aiSources(sources: AiSource[], droppedTurns: number) {
       if (state.ai.pending.kind !== 'chat') return;
       state = { ...state, ai: { ...state.ai, pending: { ...state.ai.pending, sources, droppedTurns } } };
+      emit();
+    },
+    aiDiagramDraft(draft: AiState['draft']) {
+      state = { ...state, ai: { ...state.ai, draft } };
+      emit();
+    },
+    aiEditDiagram(index: number, source: string) {
+      const target = state.ai.messages[index];
+      if (!target || target.kind !== 'diagram') return;
+      const messages = state.ai.messages.map((m, i) => (i === index ? { ...m, text: source } : m));
+      state = { ...state, ai: { ...state.ai, messages } };
+      emit();
+    },
+    /** The result carries the index it was asked for; an entry deleted mid-insert simply drops it. */
+    aiDiagramResult(index: number, result: { ok: boolean; line?: number; error?: string }) {
+      const target = state.ai.messages[index];
+      if (!target || target.kind !== 'diagram') return;
+      const inserted = result.ok && typeof result.line === 'number'
+        ? { line: result.line }
+        : { error: result.error ?? 'The diagram could not be inserted.' };
+      const messages = state.ai.messages.map((m, i) => (i === index ? { ...m, inserted } : m));
+      state = { ...state, ai: { ...state.ai, messages } };
       emit();
     },
     aiDeleteMessage(index: number) {
