@@ -1276,7 +1276,21 @@ git add package.json README.md CHANGELOG.md
 git commit -m "chore: release 0.5.0 with chat"
 ```
 
-- [ ] **Step 6: Human smoke — this step belongs to the user, not the implementer**
+- [x] **Step 6: Human smoke — this step belongs to the user, not the implementer** — **DONE 2026-08-21.**
+
+> **Result: all 16 checks pass**, as reported by the user.
+>
+> Walked against the Slice 2.2 smoke document, whose term distribution was measured first so the
+> checks could name expected outcomes rather than describe them: `chrony` occurs in exactly one
+> section (§20), while `acquirer` and `settlement` occur in 16 of 24 — the pair that makes the
+> IDF check meaningful, since a naive keyword match would return the document in order.
+>
+> **One defect found while writing the smoke guide, before it was run.** Disconnect revoked only
+> `firstSendConfirmed`, leaving `chatConfirmed` standing, so a newly configured key would have
+> inherited permission to send chat context that was never granted to it. Fixed with a regression
+> test asserting both flags clear and that the next question asks again. It was found by writing
+> down the expected behaviour and checking whether the code agreed — not by a test or a review.
+
 
 Reload the Extension Development Host first: `package.json` changed, so `Ctrl+Alt+A` is not
 registered until the window reloads. Use a document with a dozen or more sections, and one section
