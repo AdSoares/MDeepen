@@ -8,14 +8,16 @@ export type HostToWebview =
   | { type: 'aiChunk'; text: string }
   | { type: 'aiDone'; usage: { inputTokens: number; outputTokens: number } }
   | { type: 'aiError'; kind: AiErrorKind; message: string }
-  | { type: 'aiConfirmNeeded'; summary: { fileName: string; sectionTitle: string; scope: AiScope; sectionCount: number; truncated: string[]; model: string; estTokens: number; estCost: number }; secrets: { label: string; count: number } }
+  | { type: 'aiConfirmNeeded'; summary: { fileName: string; sectionTitle: string; scope: AiScope | 'chat'; sectionCount: number; truncated: string[]; model: string; estTokens: number; estCost: number }; secrets: { label: string; count: number } }
   | { type: 'aiConfigState'; configured: boolean; provider: string; model: string }
   | { type: 'aiConnectionResult'; ok: boolean; ms: number; error?: string }
   | { type: 'aiShowConfig' }
   | { type: 'navigateSection'; delta: number }
   | { type: 'quickAction'; action: AiActionKind }
   | { type: 'focusOutline' }
-  | { type: 'aiProgress'; done: number; total: number };
+  | { type: 'focusChat' }
+  | { type: 'aiProgress'; done: number; total: number }
+  | { type: 'aiSources'; sections: { title: string; pageIndex: number }[]; droppedTurns: number };
 
 export type WebviewToHost =
   | { type: 'ready' }
@@ -26,6 +28,7 @@ export type WebviewToHost =
   | { type: 'refresh' }
   | { type: 'setPaginationLevel'; level: number }
   | { type: 'aiAction'; action: AiActionKind; scope: AiScope; id?: string; text?: string }
+  | { type: 'aiChat'; question: string; history: { role: 'user' | 'assistant'; text: string }[] }
   | { type: 'aiStop' }
   | { type: 'aiConfirmSend'; dontAskAgain: boolean; masked: boolean }
   | { type: 'aiCancelSend' }
@@ -35,8 +38,8 @@ export type WebviewToHost =
   | { type: 'aiClearKey' }
   | { type: 'aiConfigRequest' };
 
-const HOST_TYPES = new Set(['init', 'sectionsUpdated', 'configChanged', 'aiChunk', 'aiDone', 'aiError', 'aiConfirmNeeded', 'aiConfigState', 'aiConnectionResult', 'aiShowConfig', 'navigateSection', 'quickAction', 'focusOutline', 'aiProgress']);
-const WEBVIEW_TYPES = new Set(['ready', 'activeSectionChanged', 'sectionRead', 'uiStateChanged', 'openLink', 'refresh', 'setPaginationLevel', 'aiAction', 'aiStop', 'aiConfirmSend', 'aiCancelSend', 'aiTestConnection', 'aiSaveConfig', 'aiSaveKey', 'aiClearKey', 'aiConfigRequest']);
+const HOST_TYPES = new Set(['init', 'sectionsUpdated', 'configChanged', 'aiChunk', 'aiDone', 'aiError', 'aiConfirmNeeded', 'aiConfigState', 'aiConnectionResult', 'aiShowConfig', 'navigateSection', 'quickAction', 'focusOutline', 'focusChat', 'aiProgress', 'aiSources']);
+const WEBVIEW_TYPES = new Set(['ready', 'activeSectionChanged', 'sectionRead', 'uiStateChanged', 'openLink', 'refresh', 'setPaginationLevel', 'aiAction', 'aiChat', 'aiStop', 'aiConfirmSend', 'aiCancelSend', 'aiTestConnection', 'aiSaveConfig', 'aiSaveKey', 'aiClearKey', 'aiConfigRequest']);
 
 export function isHostToWebview(m: unknown): m is HostToWebview {
   return typeof m === 'object' && m !== null && HOST_TYPES.has((m as { type?: unknown }).type as string);

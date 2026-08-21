@@ -71,7 +71,7 @@ describe('reader store', () => {
     const s = createReaderState();
     s.aiConfigState(true, 'anthropic', 'claude-opus-4-8');
     expect(s.get().ai.configured).toBe(true);
-    s.aiStreamStart({ action: 'summarize', scope: 'section', sectionTitle: '', pageIndex: -1 });
+    s.aiStreamStart({ kind: 'action', action: 'summarize', scope: 'section', sectionTitle: '', pageIndex: -1 });
     s.aiChunk('Hel'); s.aiChunk('lo');
     expect(s.get().ai.streamText).toBe('Hello');
     expect(s.get().ai.streaming).toBe(true);
@@ -90,18 +90,20 @@ describe('reader store', () => {
 
   it('keeps the partial answer when a stream errors', () => {
     const s = createReaderState();
-    s.aiStreamStart({ action: 'summarize', scope: 'section', sectionTitle: 'Retries', pageIndex: 3 });
+    s.aiStreamStart({ kind: 'action', action: 'summarize', scope: 'section', sectionTitle: 'Retries', pageIndex: 3 });
     s.aiChunk('half an ans');
     s.aiError('rate_limit', 'slow down');
     expect(s.get().ai.streaming).toBe(false);
-    expect(s.get().ai.messages.at(-1)?.text).toBe('half an ans');
-    expect(s.get().ai.messages.at(-1)?.pageIndex).toBe(3);
+    const partial = s.get().ai.messages.at(-1);
+    expect(partial?.text).toBe('half an ans');
+    if (partial?.kind !== 'action') throw new Error('expected an action message');
+    expect(partial.pageIndex).toBe(3);
     expect(s.get().ai.error?.kind).toBe('rate_limit');
   });
 
   it('stopping finalizes the partial answer and clears streaming', () => {
     const s = createReaderState();
-    s.aiStreamStart({ action: 'summarize', scope: 'section', sectionTitle: 'Retries', pageIndex: 1 });
+    s.aiStreamStart({ kind: 'action', action: 'summarize', scope: 'section', sectionTitle: 'Retries', pageIndex: 1 });
     s.aiChunk('partial');
     s.aiStopped();
     expect(s.get().ai.streaming).toBe(false);
@@ -110,7 +112,7 @@ describe('reader store', () => {
 
   it('a stream with no text leaves no empty message behind', () => {
     const s = createReaderState();
-    s.aiStreamStart({ action: 'summarize', scope: 'section', sectionTitle: '', pageIndex: -1 });
+    s.aiStreamStart({ kind: 'action', action: 'summarize', scope: 'section', sectionTitle: '', pageIndex: -1 });
     s.aiError('auth', 'no key');
     expect(s.get().ai.messages).toHaveLength(0);
   });
@@ -137,28 +139,31 @@ describe('reader store', () => {
 
   it('records which action produced an answer and what it was applied to', () => {
     const s = createReaderState();
-    s.aiStreamStart({ action: 'explain', scope: 'selection', sectionTitle: 'Retries', pageIndex: 2, excerpt: 'we retry 3x' });
+    s.aiStreamStart({ kind: 'action', action: 'explain', scope: 'selection', sectionTitle: 'Retries', pageIndex: 2, excerpt: 'we retry 3x' });
     s.aiChunk('because');
     s.aiDone();
     const last = s.get().ai.messages.at(-1);
-    expect(last?.action).toBe('explain');
-    expect(last?.scope).toBe('selection');
-    expect(last?.excerpt).toBe('we retry 3x');
+    if (last?.kind !== 'action') throw new Error('expected an action message');
+    expect(last.action).toBe('explain');
+    expect(last.scope).toBe('selection');
+    expect(last.excerpt).toBe('we retry 3x');
     expect(last?.pageIndex).toBe(2);
   });
 
   it('truncates a long excerpt', () => {
     const s = createReaderState();
-    s.aiStreamStart({ action: 'explain', scope: 'selection', sectionTitle: 'Retries', pageIndex: 0, excerpt: 'x'.repeat(400) });
+    s.aiStreamStart({ kind: 'action', action: 'explain', scope: 'selection', sectionTitle: 'Retries', pageIndex: 0, excerpt: 'x'.repeat(400) });
     s.aiChunk('ok');
     s.aiDone();
-    expect(s.get().ai.messages.at(-1)?.excerpt?.length).toBeLessThanOrEqual(241);
+    const trimmed = s.get().ai.messages.at(-1);
+    if (trimmed?.kind !== 'action') throw new Error('expected an action message');
+    expect(trimmed.excerpt?.length).toBeLessThanOrEqual(241);
   });
 
   it('deletes one answer without touching the others', () => {
     const s = createReaderState();
     for (const text of ['first', 'second', 'third']) {
-      s.aiStreamStart({ action: 'summarize', scope: 'section', sectionTitle: 't', pageIndex: 0 });
+      s.aiStreamStart({ kind: 'action', action: 'summarize', scope: 'section', sectionTitle: 't', pageIndex: 0 });
       s.aiChunk(text);
       s.aiDone();
     }
@@ -168,7 +173,7 @@ describe('reader store', () => {
 
   it('ignores a delete outside the range', () => {
     const s = createReaderState();
-    s.aiStreamStart({ action: 'summarize', scope: 'section', sectionTitle: 't', pageIndex: 0 });
+    s.aiStreamStart({ kind: 'action', action: 'summarize', scope: 'section', sectionTitle: 't', pageIndex: 0 });
     s.aiChunk('only');
     s.aiDone();
     s.aiDeleteMessage(7);
@@ -178,7 +183,7 @@ describe('reader store', () => {
 
   it('clears every answer', () => {
     const s = createReaderState();
-    s.aiStreamStart({ action: 'summarize', scope: 'section', sectionTitle: 't', pageIndex: 0 });
+    s.aiStreamStart({ kind: 'action', action: 'summarize', scope: 'section', sectionTitle: 't', pageIndex: 0 });
     s.aiChunk('gone');
     s.aiDone();
     s.aiClearMessages();
@@ -189,7 +194,7 @@ describe('reader store', () => {
 describe('document run progress', () => {
   it('records progress and clears it once the reduce starts streaming', () => {
     const store = createReaderState();
-    store.aiStreamStart({ action: 'summarizeShort', scope: 'document', sectionTitle: 'doc.md', pageIndex: -1 });
+    store.aiStreamStart({ kind: 'action', action: 'summarizeShort', scope: 'document', sectionTitle: 'doc.md', pageIndex: -1 });
 
     store.aiProgress(1, 4);
     expect(store.get().ai.progress).toEqual({ done: 1, total: 4 });
@@ -200,7 +205,7 @@ describe('document run progress', () => {
 
   it('clears progress when the run ends', () => {
     const store = createReaderState();
-    store.aiStreamStart({ action: 'summarizeShort', scope: 'document', sectionTitle: 'doc.md', pageIndex: -1 });
+    store.aiStreamStart({ kind: 'action', action: 'summarizeShort', scope: 'document', sectionTitle: 'doc.md', pageIndex: -1 });
     store.aiProgress(2, 4);
     store.aiChunk('text');
     store.aiDone();
@@ -211,15 +216,69 @@ describe('document run progress', () => {
   it('clears stale progress when a new run starts', () => {
     const store = createReaderState();
     store.aiProgress(3, 4);
-    store.aiStreamStart({ action: 'summarize', scope: 'section', sectionTitle: 'A', pageIndex: 0 });
+    store.aiStreamStart({ kind: 'action', action: 'summarize', scope: 'section', sectionTitle: 'A', pageIndex: 0 });
     expect(store.get().ai.progress).toBeUndefined();
   });
 
   it('carries the truncated section list into the finished answer', () => {
     const store = createReaderState();
-    store.aiStreamStart({ action: 'summarizeShort', scope: 'document', sectionTitle: 'doc.md', pageIndex: -1, truncated: ['Huge'] });
+    store.aiStreamStart({ kind: 'action', action: 'summarizeShort', scope: 'document', sectionTitle: 'doc.md', pageIndex: -1, truncated: ['Huge'] });
     store.aiChunk('answer');
     store.aiDone();
-    expect(store.get().ai.messages[0].truncated).toEqual(['Huge']);
+    const doc = store.get().ai.messages[0];
+    if (doc.kind !== 'action') throw new Error('expected an action message');
+    expect(doc.truncated).toEqual(['Huge']);
+  });
+});
+
+describe('chat entries', () => {
+  it('finishes a chat turn as a chat message carrying its question', () => {
+    const s = createReaderState();
+    s.aiStreamStart({ kind: 'chat', question: 'how long is the backoff?', sources: [], droppedTurns: 0 });
+    s.aiSources([{ title: 'Backoff', pageIndex: 1 }], 0);
+    s.aiChunk('eight seconds');
+    s.aiDone();
+
+    const [m] = s.get().ai.messages;
+    expect(m.kind).toBe('chat');
+    if (m.kind !== 'chat') throw new Error('expected a chat message');
+    expect(m.question).toBe('how long is the backoff?');
+    expect(m.sources).toEqual([{ title: 'Backoff', pageIndex: 1 }]);
+    expect(m.text).toBe('eight seconds');
+  });
+
+  it('records that older turns were trimmed', () => {
+    const s = createReaderState();
+    s.aiStreamStart({ kind: 'chat', question: 'and then?', sources: [], droppedTurns: 0 });
+    s.aiSources([], 4);
+    s.aiChunk('...');
+    s.aiDone();
+
+    const [m] = s.get().ai.messages;
+    if (m.kind !== 'chat') throw new Error('expected a chat message');
+    expect(m.droppedTurns).toBe(4);
+  });
+
+  it('keeps action entries distinguishable from chat entries', () => {
+    const s = createReaderState();
+    s.aiStreamStart({ kind: 'action', action: 'summarize', scope: 'section', sectionTitle: 'A', pageIndex: 0 });
+    s.aiChunk('a summary');
+    s.aiDone();
+
+    const [m] = s.get().ai.messages;
+    expect(m.kind).toBe('action');
+    if (m.kind !== 'action') throw new Error('expected an action message');
+    expect(m.action).toBe('summarize');
+  });
+
+  it('ignores sources that arrive while an action is streaming', () => {
+    const s = createReaderState();
+    s.aiStreamStart({ kind: 'action', action: 'summarize', scope: 'section', sectionTitle: 'A', pageIndex: 0 });
+    s.aiSources([{ title: 'X', pageIndex: 3 }], 2);
+    s.aiChunk('text');
+    s.aiDone();
+
+    const [m] = s.get().ai.messages;
+    expect(m.kind).toBe('action');
   });
 });

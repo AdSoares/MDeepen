@@ -40,6 +40,7 @@ export function App() {
       else if (m.type === 'aiConfigState') store.aiConfigState(m.configured, m.provider, m.model);
       else if (m.type === 'aiChunk') store.aiChunk(m.text);
       else if (m.type === 'aiProgress') store.aiProgress(m.done, m.total);
+      else if (m.type === 'aiSources') store.aiSources(m.sections, m.droppedTurns);
       else if (m.type === 'aiDone') store.aiDone();
       else if (m.type === 'aiError') store.aiError(m.kind, m.message);
       else if (m.type === 'aiConnectionResult') store.aiConnection({ ok: m.ok, ms: m.ms, error: m.error });
@@ -50,13 +51,17 @@ export function App() {
         const target = st.pages[st.activeIndex];
         if (target) {
           store.setPanels({ aiVisible: true });
-          store.aiStreamStart({ action: m.action, scope: 'section', sectionTitle: target.title, pageIndex: st.activeIndex });
+          store.aiStreamStart({ kind: 'action', action: m.action, scope: 'section', sectionTitle: target.title, pageIndex: st.activeIndex });
           post({ type: 'aiAction', action: m.action, scope: 'section', id: target.id });
         }
       }
       else if (m.type === 'focusOutline') {
         store.setPanels({ outlineVisible: true });
         window.setTimeout(() => document.querySelector<HTMLInputElement>('.md-outline-filter')?.focus(), 0);
+      }
+      else if (m.type === 'focusChat') {
+        store.setPanels({ aiVisible: true });
+        window.setTimeout(() => document.querySelector<HTMLTextAreaElement>('.md-ask-input')?.focus(), 0);
       }
       else if (m.type === 'aiConfirmNeeded') {
         // The host is holding the request until the user answers, so stop showing a live stream.
@@ -208,14 +213,24 @@ export function App() {
             onAction={(action, scope) => {
               const st = store.get();
               if (scope === 'document') {
-                store.aiStreamStart({ action, scope: 'document', sectionTitle: st.fileName, pageIndex: -1 });
+                store.aiStreamStart({ kind: 'action', action, scope: 'document', sectionTitle: st.fileName, pageIndex: -1 });
                 post({ type: 'aiAction', action, scope: 'document' });
                 return;
               }
               const target = st.pages[st.activeIndex];
               if (!target) return;
-              store.aiStreamStart({ action, scope: 'section', sectionTitle: target.title, pageIndex: st.activeIndex });
+              store.aiStreamStart({ kind: 'action', action, scope: 'section', sectionTitle: target.title, pageIndex: st.activeIndex });
               post({ type: 'aiAction', action, scope: 'section', id: target.id });
+            }}
+            onAsk={(q) => {
+              const st = store.get();
+              const history = st.ai.messages.flatMap((m) =>
+                m.kind === 'chat'
+                  ? [{ role: 'user' as const, text: m.question }, { role: 'assistant' as const, text: m.text }]
+                  : []);
+              store.aiStreamStart({ kind: 'chat', question: q, sources: [], droppedTurns: 0 });
+              store.setPanels({ aiVisible: true });
+              post({ type: 'aiChat', question: q, history });
             }}
             onStop={() => { store.aiStopped(); post({ type: 'aiStop' }); }}
           />
@@ -229,7 +244,7 @@ export function App() {
             const st = store.get();
             const target = st.pages[st.activeIndex];
             if (!target) return;
-            store.aiStreamStart({ action, scope: 'selection', sectionTitle: target.title, pageIndex: st.activeIndex, excerpt: selection.text });
+            store.aiStreamStart({ kind: 'action', action, scope: 'selection', sectionTitle: target.title, pageIndex: st.activeIndex, excerpt: selection.text });
             post({ type: 'aiAction', action, scope: 'selection', id: target.id, text: selection.text });
             setSelection(null);
             store.setPanels({ aiVisible: true });
@@ -244,7 +259,10 @@ export function App() {
             const { pending, confirm } = store.get().ai;
             store.aiConfirm(undefined);
             // Document scope always confirms, so the truncation list is known before the run starts.
-            store.aiStreamStart({ ...pending, truncated: confirm?.summary.truncated });
+            // Only an action entry carries a truncation list; a chat turn has none.
+            store.aiStreamStart(pending.kind === 'action'
+              ? { ...pending, truncated: confirm?.summary.truncated }
+              : pending);
             post({ type: 'aiConfirmSend', ...opts });
           }}
         />

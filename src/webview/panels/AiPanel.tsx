@@ -10,6 +10,7 @@ interface Props {
   onConfigure: () => void;
   onCite: (pageIndex: number) => void;
   onAction: (action: AiActionKind, scope: 'section' | 'document') => void;
+  onAsk: (question: string) => void;
   onStop: () => void;
   onDelete: (index: number) => void;
   onClear: () => void;
@@ -17,8 +18,9 @@ interface Props {
 
 const GATED = ['Summaries', 'Chat with the document', 'Generated diagrams'];
 
-export function AiPanel({ ai, activePageId, onConfigure, onCite, onAction, onStop, onDelete, onClear }: Props) {
+export function AiPanel({ ai, activePageId, onConfigure, onCite, onAction, onAsk, onStop, onDelete, onClear }: Props) {
   const [more, setMore] = useState(false);
+  const [question, setQuestion] = useState('');
 
   if (!ai.configured) {
     return (
@@ -94,27 +96,76 @@ export function AiPanel({ ai, activePageId, onConfigure, onCite, onAction, onSto
 
       {ai.messages.map((m, i) => (
         <div class="md-ai-msg" key={i}>
-          <div class="md-ai-msg-head">
-            {actionLabel(m.action)}
-            {m.pageIndex >= 0 && ` · §${String(m.pageIndex + 1).padStart(2, '0')} ${m.sectionTitle}`}
-          </div>
-          {m.excerpt && <blockquote class="md-ai-excerpt">{m.excerpt}</blockquote>}
-          <div class="md-ai-msg-text">{m.text}</div>
-          {m.truncated && m.truncated.length > 0 && (
-            <p class="md-ai-truncated">Truncated to fit: {m.truncated.join(', ')}</p>
+          {m.kind === 'chat' ? (
+            <>
+              <div class="md-ai-question">{m.question}</div>
+              <div class="md-ai-msg-text">{m.text}</div>
+              {m.droppedTurns > 0 && (
+                <p class="md-ai-truncated">Earlier turns trimmed to fit ({m.droppedTurns})</p>
+              )}
+              <div class="md-ai-msg-foot">
+                {m.sources.map((s) => (
+                  <button key={s.pageIndex} class="md-btn" onClick={() => onCite(s.pageIndex)}
+                    aria-label={`Go to section ${s.pageIndex + 1}: ${s.title}`}>
+                    &sect;{String(s.pageIndex + 1).padStart(2, '0')} {s.title}
+                  </button>
+                ))}
+                <button class="md-btn" aria-label="Copy this answer" onClick={() => navigator.clipboard.writeText(m.text)}>Copy</button>
+                <button class="md-btn" aria-label="Delete this answer" onClick={() => onDelete(i)}>Delete</button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div class="md-ai-msg-head">
+                {actionLabel(m.action)}
+                {m.pageIndex >= 0 && ` · §${String(m.pageIndex + 1).padStart(2, '0')} ${m.sectionTitle}`}
+              </div>
+              {m.excerpt && <blockquote class="md-ai-excerpt">{m.excerpt}</blockquote>}
+              <div class="md-ai-msg-text">{m.text}</div>
+              {m.truncated && m.truncated.length > 0 && (
+                <p class="md-ai-truncated">Truncated to fit: {m.truncated.join(', ')}</p>
+              )}
+              <div class="md-ai-msg-foot">
+                {m.pageIndex >= 0 && (
+                  <button class="md-btn" onClick={() => onCite(m.pageIndex)}
+                    aria-label={`Go to section ${m.pageIndex + 1}: ${m.sectionTitle}`}>
+                    &sect;{String(m.pageIndex + 1).padStart(2, '0')} {m.sectionTitle}
+                  </button>
+                )}
+                <button class="md-btn" aria-label="Copy this answer" onClick={() => navigator.clipboard.writeText(m.text)}>Copy</button>
+                <button class="md-btn" aria-label="Delete this answer" onClick={() => onDelete(i)}>Delete</button>
+              </div>
+            </>
           )}
-          <div class="md-ai-msg-foot">
-            {m.pageIndex >= 0 && (
-              <button class="md-btn" onClick={() => onCite(m.pageIndex)}
-                aria-label={`Go to section ${m.pageIndex + 1}: ${m.sectionTitle}`}>
-                &sect;{String(m.pageIndex + 1).padStart(2, '0')} {m.sectionTitle}
-              </button>
-            )}
-            <button class="md-btn" aria-label="Copy this answer" onClick={() => navigator.clipboard.writeText(m.text)}>Copy</button>
-            <button class="md-btn" aria-label="Delete this answer" onClick={() => onDelete(i)}>Delete</button>
-          </div>
         </div>
       ))}
+
+      <form class="md-ask" onSubmit={(e) => {
+        e.preventDefault();
+        const q = question.trim();
+        if (!q || ai.streaming) return;
+        setQuestion('');
+        onAsk(q);
+      }}>
+        <textarea
+          class="md-ask-input"
+          value={question}
+          maxLength={4000}
+          rows={2}
+          placeholder="Ask about this document"
+          aria-label="Ask about this document"
+          disabled={ai.streaming}
+          onInput={(e) => setQuestion((e.target as HTMLTextAreaElement).value)}
+          onKeyDown={(e) => {
+            // Enter sends; Shift+Enter is a newline. requestSubmit keeps one submit path.
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault();
+              (e.currentTarget as HTMLTextAreaElement).form?.requestSubmit();
+            }
+          }}
+        />
+        <button class="md-btn primary" type="submit" disabled={ai.streaming || !question.trim()}>Ask</button>
+      </form>
     </div>
   );
 }

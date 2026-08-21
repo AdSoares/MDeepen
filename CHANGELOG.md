@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-08-21
+
+### Added
+
+- Chat with the open document: a question field in the AI panel, answers streamed into the same
+  timeline as the actions, and a chip per section the answer was based on, each navigating to that
+  section.
+- Relevance ranking that needs no index and no embeddings — BM25 over IDF computed from the
+  document's own sections, which is also why it needs no stopword list and works the same in any
+  language. The section you are reading is always included.
+- `Ctrl+Alt+A` focuses the question field.
+- Chat has its own consent gate. The first question explains that every turn sends the sections
+  MDeepen picks; after that it stops asking, and the dialog returns only when a secret is found in
+  what that turn would send — the conversation history included.
+
+### Changed
+
+- The AI panel is one timeline: quick actions and questions produce entries in the same list, and
+  Clear all clears the conversation.
+
+### Fixed
+
+- Disconnect now revokes the chat consent as well as the first-send consent. It only cleared the
+  latter, so a newly configured key would have inherited permission to send chat context that it
+  was never granted.
+
 ## [0.4.0] - 2026-08-20
 
 ### Added
@@ -132,7 +158,8 @@ First AI slice. The reader itself is unchanged and still works with no API key.
 - Reading and focus modes, adjustable font size, column width, line spacing, and
   theme.
 
-[Unreleased]: https://github.com/AdSoares/MDeepen/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/AdSoares/MDeepen/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/AdSoares/MDeepen/releases/tag/v0.5.0
 [0.4.0]: https://github.com/AdSoares/MDeepen/releases/tag/v0.4.0
 [0.3.0]: https://github.com/AdSoares/MDeepen/releases/tag/v0.3.0
 [0.2.0]: https://github.com/AdSoares/MDeepen/releases/tag/v0.2.0

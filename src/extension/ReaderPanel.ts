@@ -60,6 +60,10 @@ export class ReaderPanel {
     ReaderPanel.active?.post({ type: 'focusOutline' });
   }
 
+  static focusChatOnActive(): void {
+    ReaderPanel.active?.post({ type: 'focusChat' });
+  }
+
   /** Opens the AI config view. Queued until the webview is initialised, so it also works on a fresh panel. */
   requestAiConfig(): void {
     if (this.initialised) this.post({ type: 'aiShowConfig' });
@@ -85,6 +89,7 @@ export class ReaderPanel {
       (m) => this.post(m),
       () => this.pages,
       () => this.uri.path.split('/').pop() ?? 'document.md',
+      () => this.activeIndex,
     );
     this.panel.webview.html = this.html();
     this.panel.webview.onDidReceiveMessage((m) => { if (isWebviewToHost(m)) void this.onMessage(m); }, null, this.disposables);

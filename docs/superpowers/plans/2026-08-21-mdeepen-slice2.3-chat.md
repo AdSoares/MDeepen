@@ -42,7 +42,7 @@
 **Interfaces:**
 - Produces: `CHAT_SECTION_BUDGET_TOKENS`, `CHAT_HISTORY_BUDGET_TOKENS`, `MAX_CHAT_SECTIONS` (in `types.ts`); `ScoredSection`, `rankSections(question, pages, activeIndex)` (in `chatContext.ts`).
 
-- [ ] **Step 1: Add the constants**
+- [x] **Step 1: Add the constants**
 
 Append to `src/extension/ai/types.ts`, next to the Slice 2.2 constants:
 
@@ -54,7 +54,7 @@ export const CHAT_HISTORY_BUDGET_TOKENS = 2_000;
 export const MAX_CHAT_SECTIONS = 8;
 ```
 
-- [ ] **Step 2: Write the failing tests**
+- [x] **Step 2: Write the failing tests**
 
 Create `src/extension/ai/chatContext.test.ts`:
 
@@ -118,12 +118,12 @@ describe('rankSections', () => {
 });
 ```
 
-- [ ] **Step 3: Run to verify failure**
+- [x] **Step 3: Run to verify failure**
 
 Run: `npx vitest run src/extension/ai/chatContext.test.ts`
 Expected: FAIL — cannot find module `./chatContext`.
 
-- [ ] **Step 4: Implement `rankSections`**
+- [x] **Step 4: Implement `rankSections`**
 
 Create `src/extension/ai/chatContext.ts`:
 
@@ -196,12 +196,12 @@ export function rankSections(question: string, pages: Page[], activeIndex: numbe
 }
 ```
 
-- [ ] **Step 5: Run to verify pass**
+- [x] **Step 5: Run to verify pass**
 
 Run: `npx vitest run src/extension/ai/chatContext.test.ts && npx tsc --noEmit`
 Expected: PASS, 6 tests; compiler clean.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/extension/ai/types.ts src/extension/ai/chatContext.ts src/extension/ai/chatContext.test.ts
@@ -220,7 +220,7 @@ git commit -m "feat: rank document sections for a question without an index"
 - Consumes: `rankSections` (Task 1); `estimateTokens` from `./costEstimate`; `MAX_CHAT_SECTIONS` from `./types`.
 - Produces: `ChatTurn`, `ChatPlan`, `planChatTurn(question, history, pages, activeIndex, ctx, budget)`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Append to `src/extension/ai/chatContext.test.ts`, adding `planChatTurn` to the import:
 
@@ -292,12 +292,12 @@ describe('planChatTurn', () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify failure**
+- [x] **Step 2: Run to verify failure**
 
 Run: `npx vitest run src/extension/ai/chatContext.test.ts`
 Expected: FAIL — `planChatTurn` is not exported.
 
-- [ ] **Step 3: Implement `planChatTurn`**
+- [x] **Step 3: Implement `planChatTurn`**
 
 Append to `src/extension/ai/chatContext.ts`, and extend the imports at the top of the file:
 
@@ -374,12 +374,12 @@ export function planChatTurn(
 }
 ```
 
-- [ ] **Step 4: Run to verify pass**
+- [x] **Step 4: Run to verify pass**
 
 Run: `npx vitest run src/extension/ai/chatContext.test.ts && npx tsc --noEmit`
 Expected: PASS, 13 tests; compiler clean.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/extension/ai/chatContext.ts src/extension/ai/chatContext.test.ts
@@ -397,7 +397,7 @@ git commit -m "feat: plan a chat turn within a section-first token budget"
 **Interfaces:**
 - Produces: webview→host `aiChat`; host→webview `aiSources`; `aiConfirmNeeded.summary.scope` widened to `AiScope | 'chat'`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Add to the `it('accepts the generic AI action message', …)` block in `src/shared/messages.test.ts`:
 
@@ -411,12 +411,12 @@ Add to the `it('accepts new AI host->webview messages', …)` block:
     expect(isHostToWebview({ type: 'aiSources', sections: [{ title: 'Retries', pageIndex: 1 }], droppedTurns: 0 })).toBe(true);
 ```
 
-- [ ] **Step 2: Run to verify failure**
+- [x] **Step 2: Run to verify failure**
 
 Run: `npx vitest run src/shared/messages.test.ts`
 Expected: FAIL — two `expected false to be true`.
 
-- [ ] **Step 3: Extend the contract**
+- [x] **Step 3: Extend the contract**
 
 In `src/shared/messages.ts`, add to `WebviewToHost`, after the `aiAction` member:
 
@@ -439,12 +439,12 @@ added to `AiScope`; the dialog simply describes more kinds of send than actions 
 
 Add `'aiChat'` to `WEBVIEW_TYPES` and `'aiSources'` to `HOST_TYPES`.
 
-- [ ] **Step 4: Run to verify pass**
+- [x] **Step 4: Run to verify pass**
 
 Run: `npx vitest run src/shared/messages.test.ts`
 Expected: PASS. `npx tsc --noEmit` still reports `AiController.ts`, which Task 4 fixes.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/shared/messages.ts src/shared/messages.test.ts
@@ -464,7 +464,7 @@ git commit -m "feat: contract carries a chat turn and the sections it was answer
 - Consumes: `planChatTurn` (Task 2), the `aiChat` message (Task 3), the existing `pump`.
 - Produces: `CHAT_SYSTEM` in `prompts.ts`. `pendingGrantsConsent: boolean` is replaced by `pendingConsent: { key: string; auto: boolean } | undefined`.
 
-- [ ] **Step 1: Add the chat system prompt**
+- [x] **Step 1: Add the chat system prompt**
 
 Append to `src/extension/ai/prompts.ts`:
 
@@ -475,7 +475,7 @@ Append to `src/extension/ai/prompts.ts`:
 export const CHAT_SYSTEM = `You answer questions about a Markdown document, using only the sections supplied with the question. When the supplied sections do not contain the answer, say so plainly instead of guessing. Refer to sections by the §NN labels they carry. ${GROUNDING}`;
 ```
 
-- [ ] **Step 2: Write the failing tests**
+- [x] **Step 2: Write the failing tests**
 
 Append to `src/extension/ai/AiController.test.ts`:
 
@@ -600,12 +600,12 @@ describe('chat', () => {
 });
 ```
 
-- [ ] **Step 3: Run to verify failure**
+- [x] **Step 3: Run to verify failure**
 
 Run: `npx vitest run src/extension/ai/AiController.test.ts`
 Expected: FAIL — nothing handles `aiChat`.
 
-- [ ] **Step 4: Teach the controller which section is active**
+- [x] **Step 4: Teach the controller which section is active**
 
 In `src/extension/ai/AiController.ts`, extend the imports:
 
@@ -734,7 +734,7 @@ Replace `onConfirm` so it honours the descriptor:
   }
 ```
 
-- [ ] **Step 5: Add the chat branch**
+- [x] **Step 5: Add the chat branch**
 
 `planChatTurn` needs the active index, and the controller does not have one. Add a constructor
 parameter, mirroring `getPages` and `getFileName`:
@@ -753,12 +753,12 @@ parameter, mirroring `getPages` and `getFileName`:
 `startChat`, added in the next step, calls `this.getActiveIndex()`. The default keeps
 every existing construction site compiling; `ReaderPanel` supplies the real one in Task 6.
 
-- [ ] **Step 6: Run to verify pass**
+- [x] **Step 6: Run to verify pass**
 
 Run: `npx vitest run src/extension/ai/AiController.test.ts && npx tsc --noEmit`
 Expected: PASS; compiler clean.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/extension/ai/prompts.ts src/extension/ai/AiController.ts src/extension/ai/AiController.test.ts
@@ -777,7 +777,7 @@ git commit -m "feat: controller answers questions from ranked sections behind it
 - Produces: `AiMessage` as a discriminated union; `pending` likewise; `aiSources(sections, droppedTurns)`.
 - Every existing `aiStreamStart` call site must pass `kind: 'action'` — Task 6 updates them.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Append to `src/webview/store.test.ts`:
 
@@ -838,12 +838,12 @@ describe('chat entries', () => {
 Every existing test that calls `aiStreamStart` needs `kind: 'action'` added to its object. There
 are seven such calls in this file; add the field to each rather than changing anything else.
 
-- [ ] **Step 2: Run to verify failure**
+- [x] **Step 2: Run to verify failure**
 
 Run: `npx vitest run src/webview/store.test.ts`
 Expected: FAIL — `store.aiSources is not a function`.
 
-- [ ] **Step 3: Rewrite the message types**
+- [x] **Step 3: Rewrite the message types**
 
 In `src/webview/store.ts`, replace `AiMessage` and the `pending` field:
 
@@ -875,7 +875,7 @@ and the initial value:
   pending: { kind: 'action', action: 'summarize', scope: 'section', sectionTitle: '', pageIndex: -1 },
 ```
 
-- [ ] **Step 4: Widen the mutators**
+- [x] **Step 4: Widen the mutators**
 
 Replace `aiStreamStart`, and add `aiSources` immediately after it:
 
@@ -895,12 +895,12 @@ Replace `aiStreamStart`, and add `aiSources` immediately after it:
     },
 ```
 
-- [ ] **Step 5: Run to verify pass**
+- [x] **Step 5: Run to verify pass**
 
 Run: `npx vitest run src/webview/store.test.ts`
 Expected: PASS. `npx tsc --noEmit` reports `App.tsx` and `AiPanel.tsx`, which Task 6 fixes.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/webview/store.ts src/webview/store.test.ts
@@ -924,7 +924,7 @@ git commit -m "feat: one timeline holding both action answers and chat turns"
 
 This task is webview UI and is smoke-verified; its logic lives in the tested modules.
 
-- [ ] **Step 1: Render both kinds of entry**
+- [x] **Step 1: Render both kinds of entry**
 
 In `src/webview/panels/AiPanel.tsx`, add `onAsk` to `Props`:
 
@@ -982,7 +982,7 @@ Replace the whole `{ai.messages.map(...)}` block:
       ))}
 ```
 
-- [ ] **Step 2: Add the question field**
+- [x] **Step 2: Add the question field**
 
 Still in `AiPanel.tsx`, add state next to `more`:
 
@@ -1021,7 +1021,7 @@ and render the field as the last child of the panel, after the messages map:
       </form>
 ```
 
-- [ ] **Step 3: Say "chat" in the confirmation dialog**
+- [x] **Step 3: Say "chat" in the confirmation dialog**
 
 In `src/webview/panels/AiConfirm.tsx`, add after `isDocument`:
 
@@ -1057,7 +1057,7 @@ The "Don't ask again" checkbox must not render for chat either — pressing Send
         {!isDocument && !isChat && (
 ```
 
-- [ ] **Step 4: Wire the webview**
+- [x] **Step 4: Wire the webview**
 
 In `src/webview/App.tsx`, add to the message router after `aiProgress`:
 
@@ -1083,7 +1083,7 @@ Add the `onAsk` prop to `<AiPanel>`:
             }}
 ```
 
-- [ ] **Step 5: Give the controller the active section**
+- [x] **Step 5: Give the controller the active section**
 
 In `src/extension/ReaderPanel.ts`, find where `new AiController(...)` is constructed and pass the
 active index as the sixth argument, using whatever field the panel already keeps for it (the same
@@ -1096,7 +1096,7 @@ value it sends in `activeSectionChanged`):
 If the panel does not keep one, add `private activeIndex = 0;` and set it in the
 `activeSectionChanged` handler — that handler already receives the index.
 
-- [ ] **Step 6: Add the styles**
+- [x] **Step 6: Add the styles**
 
 Append to `src/webview/styles/theme.css`:
 
@@ -1106,12 +1106,12 @@ Append to `src/webview/styles/theme.css`:
 .md-ask-input { flex: 1; resize: vertical; padding: 6px 8px; font-family: inherit; font-size: 12px; background: var(--vscode-input-background); color: var(--vscode-input-foreground); border: 1px solid var(--vscode-input-border); border-radius: 5px; }
 ```
 
-- [ ] **Step 7: Build, typecheck, test**
+- [x] **Step 7: Build, typecheck, test**
 
 Run: `npm run build && npx tsc --noEmit && npm test`
 Expected: green, compiler clean everywhere.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add src/webview/panels/AiPanel.tsx src/webview/panels/AiConfirm.tsx src/webview/App.tsx src/extension/ReaderPanel.ts src/webview/styles/theme.css
@@ -1133,7 +1133,7 @@ git commit -m "feat: ask a question from the panel and cite the sections it was 
 **Interfaces:**
 - Produces: host→webview `focusChat`; command `mdeepen.focusChat`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Add to the host→webview block in `src/shared/messages.test.ts`:
 
@@ -1141,12 +1141,12 @@ Add to the host→webview block in `src/shared/messages.test.ts`:
     expect(isHostToWebview({ type: 'focusChat' })).toBe(true);
 ```
 
-- [ ] **Step 2: Run to verify failure**
+- [x] **Step 2: Run to verify failure**
 
 Run: `npx vitest run src/shared/messages.test.ts`
 Expected: FAIL — `expected false to be true`.
 
-- [ ] **Step 3: Extend the contract**
+- [x] **Step 3: Extend the contract**
 
 In `src/shared/messages.ts`, add to `HostToWebview` after `focusOutline`:
 
@@ -1156,7 +1156,7 @@ In `src/shared/messages.ts`, add to `HostToWebview` after `focusOutline`:
 
 and add `'focusChat'` to `HOST_TYPES`.
 
-- [ ] **Step 4: Contribute the keybinding**
+- [x] **Step 4: Contribute the keybinding**
 
 In `package.json`, add to `contributes.keybindings`:
 
@@ -1164,7 +1164,7 @@ In `package.json`, add to `contributes.keybindings`:
       { "command": "mdeepen.focusChat", "key": "ctrl+alt+a", "when": "activeWebviewPanelId == 'mdeepenReader'" }
 ```
 
-- [ ] **Step 5: Route the command**
+- [x] **Step 5: Route the command**
 
 In `src/extension/ReaderPanel.ts`, next to `focusOutlineOnActive`:
 
@@ -1181,7 +1181,7 @@ In `src/extension/extension.ts`, register it and add it to the existing
   const chatCmd = vscode.commands.registerCommand('mdeepen.focusChat', () => ReaderPanel.focusChatOnActive());
 ```
 
-- [ ] **Step 6: Handle it in the webview**
+- [x] **Step 6: Handle it in the webview**
 
 In `src/webview/App.tsx`, add to the router next to `focusOutline`:
 
@@ -1192,12 +1192,12 @@ In `src/webview/App.tsx`, add to the router next to `focusOutline`:
       }
 ```
 
-- [ ] **Step 7: Build, typecheck, test**
+- [x] **Step 7: Build, typecheck, test**
 
 Run: `npm run build && npx tsc --noEmit && npm test`
 Expected: green.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add package.json src/shared/messages.ts src/shared/messages.test.ts src/extension/ReaderPanel.ts src/extension/extension.ts src/webview/App.tsx
@@ -1213,11 +1213,11 @@ git commit -m "feat: Ctrl+Alt+A focuses the question field"
 - Modify: `README.md`
 - Modify: `CHANGELOG.md`
 
-- [ ] **Step 1: Bump the version**
+- [x] **Step 1: Bump the version**
 
 `package.json` → `"version": "0.5.0"`.
 
-- [ ] **Step 2: Update the README**
+- [x] **Step 2: Update the README**
 
 In the AI section, after the document-summary bullet, add:
 
@@ -1230,7 +1230,7 @@ In the AI section, after the document-summary bullet, add:
 
 In the Reading section, nothing changes.
 
-- [ ] **Step 3: Add the changelog entry**
+- [x] **Step 3: Add the changelog entry**
 
 Insert above `## [0.4.0]`:
 
@@ -1264,19 +1264,33 @@ At the bottom of the file, replace the first two link lines with:
 [0.4.0]: https://github.com/AdSoares/MDeepen/releases/tag/v0.4.0
 ```
 
-- [ ] **Step 4: Build, test, package**
+- [x] **Step 4: Build, test, package**
 
 Run: `npm run build && npx tsc --noEmit && npm test && npm run package`
 Expected: suite green; `mdeepen-0.5.0.vsix` produced.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add package.json README.md CHANGELOG.md
 git commit -m "chore: release 0.5.0 with chat"
 ```
 
-- [ ] **Step 6: Human smoke — this step belongs to the user, not the implementer**
+- [x] **Step 6: Human smoke — this step belongs to the user, not the implementer** — **DONE 2026-08-21.**
+
+> **Result: all 16 checks pass**, as reported by the user.
+>
+> Walked against the Slice 2.2 smoke document, whose term distribution was measured first so the
+> checks could name expected outcomes rather than describe them: `chrony` occurs in exactly one
+> section (§20), while `acquirer` and `settlement` occur in 16 of 24 — the pair that makes the
+> IDF check meaningful, since a naive keyword match would return the document in order.
+>
+> **One defect found while writing the smoke guide, before it was run.** Disconnect revoked only
+> `firstSendConfirmed`, leaving `chatConfirmed` standing, so a newly configured key would have
+> inherited permission to send chat context that was never granted to it. Fixed with a regression
+> test asserting both flags clear and that the next question asks again. It was found by writing
+> down the expected behaviour and checking whether the code agreed — not by a test or a review.
+
 
 Reload the Extension Development Host first: `package.json` changed, so `Ctrl+Alt+A` is not
 registered until the window reloads. Use a document with a dozen or more sections, and one section

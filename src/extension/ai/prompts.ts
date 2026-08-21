@@ -89,3 +89,8 @@ export function buildMapRequest(step: { titles: string[]; content: string }, max
     maxTokens,
   };
 }
+
+/** Chat answers from supplied sections only. Same grounding clause as every action, plus an
+ *  instruction to say so when the sections do not contain the answer — a chat that guesses is
+ *  worse than one that admits the document is silent. */
+export const CHAT_SYSTEM = `You answer questions about a Markdown document, using only the sections supplied with the question. When the supplied sections do not contain the answer, say so plainly instead of guessing. Refer to sections by the §NN labels they carry. ${GROUNDING}`;
