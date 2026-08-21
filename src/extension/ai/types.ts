@@ -46,3 +46,9 @@ export const AI_ACTIONS: readonly AiActionKind[] = [...SECTION_ACTIONS, ...DOCUM
 export const MAP_STEP_BUDGET_TOKENS = 4_000;
 export const MAP_SUMMARY_TARGET_WORDS = 200;
 export const MAX_MAP_STEPS = 40;
+
+/** Sections claim the budget before history: the document is the source of truth and the
+ *  conversation is secondary context. */
+export const CHAT_SECTION_BUDGET_TOKENS = 6_000;
+export const CHAT_HISTORY_BUDGET_TOKENS = 2_000;
+export const MAX_CHAT_SECTIONS = 8;
