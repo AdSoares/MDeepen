@@ -27,7 +27,8 @@ export function activate(context: vscode.ExtensionContext): void {
   const prevCmd = vscode.commands.registerCommand('mdeepen.previousSection', () => ReaderPanel.navigateActive(-1));
   const summarizeCmd = vscode.commands.registerCommand('mdeepen.summarizeSection', () => ReaderPanel.quickActionOnActive('summarize'));
   const outlineCmd = vscode.commands.registerCommand('mdeepen.focusOutline', () => ReaderPanel.focusOutlineOnActive());
-  context.subscriptions.push(cmd, configureCmd, nextCmd, prevCmd, summarizeCmd, outlineCmd);
+  const chatCmd = vscode.commands.registerCommand('mdeepen.focusChat', () => ReaderPanel.focusChatOnActive());
+  context.subscriptions.push(cmd, configureCmd, nextCmd, prevCmd, summarizeCmd, outlineCmd, chatCmd);
 }
 
 export function deactivate(): void {}

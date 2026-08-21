@@ -60,6 +60,7 @@ describe('message type guards', () => {
     expect(isHostToWebview({ type: 'aiSources', sections: [{ title: 'Retries', pageIndex: 1 }], droppedTurns: 0 })).toBe(true);
     expect(isHostToWebview({ type: 'quickAction', action: 'summarize' })).toBe(true);
     expect(isHostToWebview({ type: 'focusOutline' })).toBe(true);
+    expect(isHostToWebview({ type: 'focusChat' })).toBe(true);
   });
   it('accepts section navigation driven by a real VS Code keybinding', () => {
     // Arrow navigation cannot live in a webview keydown listener: VS Code resolves

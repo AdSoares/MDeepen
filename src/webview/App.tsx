@@ -59,6 +59,10 @@ export function App() {
         store.setPanels({ outlineVisible: true });
         window.setTimeout(() => document.querySelector<HTMLInputElement>('.md-outline-filter')?.focus(), 0);
       }
+      else if (m.type === 'focusChat') {
+        store.setPanels({ aiVisible: true });
+        window.setTimeout(() => document.querySelector<HTMLTextAreaElement>('.md-ask-input')?.focus(), 0);
+      }
       else if (m.type === 'aiConfirmNeeded') {
         // The host is holding the request until the user answers, so stop showing a live stream.
         store.aiStopped();
