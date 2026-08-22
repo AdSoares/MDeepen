@@ -83,6 +83,43 @@ and the failure surfaces as a runtime error rather than a compile error.
 `max_completion_tokens`. Newer OpenAI models require the latter. The wrong choice is a 400 on the
 first request, invisible until then; the implementer must confirm it alongside the ids.
 
+### 2.1a The table goes stale — three failures, three answers
+
+A hardcoded table ages, and this is not new: `AI_MODELS` and `INPUT_PRICE_PER_M` have been
+hardcoded since Slice 2.0. What this slice does is double the maintenance. Three things age, and
+they fail differently:
+
+| What | How it fails | When you notice |
+| --- | --- | --- |
+| Model ids | A retired id is a 404 on send; a new one is simply absent | Immediately — it is loud |
+| Prices | The cost estimate lies | **Never**, unless someone reads the invoice |
+| `max_completion_tokens` | A 400 on send | Immediately |
+
+The middle one is the dangerous one, because the other two shout.
+
+Three answers, all of them in scope:
+
+- **A custom model id field**, beside the curated picker. A model released today is usable today,
+  with no release of this extension. This turns "out of date" from a blocker into an inconvenience.
+- **A refreshable model list**, fetched from the provider — §2.3.
+- **A dated price table.** The estimate renders as `≈ $0.0042 · table of 2026-08`, and when the
+  model's price is unknown it says so: `price estimated at the provider's default rate`. This does
+  not fix a stale price; it stops a stale price from passing as a fact.
+
+### 2.3 Fetching the model list
+
+A **Refresh models** button sits beside the picker, disabled until that provider holds a key. The
+fetch happens in the host, like every other network call, over two messages: `aiListModels` and
+`aiModelList { provider, models, error? }`.
+
+**The returned list is shown whole, sorted, with the curated ids pinned at the top. There is no
+prefix filter.** Filtering OpenAI's catalogue down to "the chat ones" with a `gpt-*` rule would be
+the same guess as the hardcoded list, ageing the same way, only hidden inside an `if`. A long
+truthful list beats a short invented one, especially with a free-text id field beside it.
+
+A fetched model has no price in the table. Its estimate falls back to the provider's default rate
+and says so, which is what makes the fallback honest rather than silent.
+
 ### 2.2 `baseUrl`, and the local provider
 
 `OpenAiProvider` accepts an optional `baseUrl`. That single field is why the deferred local
@@ -179,6 +216,13 @@ Two messages widen:
 | { type: 'aiConfirmNeeded'; summary: { …; provider: string; … }; secrets: { … } }
 ```
 
+```ts
+// webview → host
+| { type: 'aiListModels' }
+// host → webview
+| { type: 'aiModelList'; provider: string; models: string[]; error?: string }
+```
+
 `aiSaveConfig` keeps its shape — `AiConfig` widening is enough, since the provider travels inside
 it.
 
@@ -234,4 +278,7 @@ measures and everybody complains about later.
 7. Switching to a provider with no key turns AI off until one is supplied.
 8. Everything from 0.6.0 behaves unchanged while Anthropic is selected.
 9. Reading, pagination and navigation still work with no key configured.
-10. The suite is green and `tsc --noEmit` is clean.
+10. A model id can be typed by hand and used, whether or not it is in the curated list.
+11. Refresh models lists what the provider actually offers, and is unavailable without a key.
+12. A cost estimate names the date of its price table, and says when a model's price is unknown.
+13. The suite is green and `tsc --noEmit` is clean.
