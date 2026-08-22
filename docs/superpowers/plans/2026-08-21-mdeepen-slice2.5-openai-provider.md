@@ -20,8 +20,13 @@ first send:
 3. **Whether those ids take `max_tokens` or `max_completion_tokens`.** Newer OpenAI models require
    the latter, and the wrong one is a 400 on the first request — invisible until it happens.
 
-Ask before Task 1. The consistency test in Task 1 Step 3 then proves whatever was supplied is
+Ask before Task 1. The consistency test in Task 1 Step 2 then proves whatever was supplied is
 internally coherent, which is the part a plan can guarantee.
+
+**The curated list is no longer the only way in.** Task 7 adds a free-text model id and a
+Refresh models button that asks the provider what it offers, so a missing or retired id is a
+recoverable inconvenience rather than a blocker. Supply the best ids you have; being wrong is
+survivable now.
 
 ## Global Constraints
 
@@ -210,6 +215,16 @@ describe('estimateCost', () => {
     const model = PROVIDERS.anthropic.defaultModel;
     expect(estimateCost(2_000_000, 'anthropic', model)).toBeCloseTo(estimateCost(1_000_000, 'anthropic', model) * 2, 6);
   });
+
+  it('says whether a model has a price of its own', () => {
+    expect(isPricedModel('anthropic', PROVIDERS.anthropic.defaultModel)).toBe(true);
+    expect(isPricedModel('anthropic', 'a-model-someone-typed')).toBe(false);
+  });
+
+  it('dates the table, so an estimate can admit how old it is', () => {
+    expect(PRICE_TABLE_DATE).toHaveLength(7);
+    expect(PRICE_TABLE_DATE[4]).toBe('-');
+  });
 });
 ```
 
@@ -228,6 +243,16 @@ import { PROVIDERS } from './types';
 
 export function estimateTokens(text: string): number {
   return Math.ceil(text.length / 4);
+}
+
+/** When the price table was last checked. Shown beside every estimate, because a hardcoded price
+ *  ages silently — unlike a stale model id, nothing fails when it drifts. */
+export const PRICE_TABLE_DATE = '2026-08';
+
+/** Whether this model has a price of its own, as opposed to borrowing the provider's default. */
+export function isPricedModel(provider: ProviderId, model: string): boolean {
+  const meta = PROVIDERS[provider] ?? PROVIDERS.anthropic;
+  return typeof meta.inputPricePerM[model] === 'number';
 }
 
 /** An unknown model falls back to its own provider's default price. Falling back across providers
@@ -499,6 +524,25 @@ export function toOpenAiRequest(request: AiRequest, model: string): OpenAiChatRe
 }
 ```
 
+- [ ] **Step 4b: Widen the provider interface**
+
+In `src/extension/ai/types.ts`, add to `AiProvider`:
+
+```ts
+  /** What this provider currently offers. The list is shown whole rather than filtered: a
+   *  `gpt-*` rule would be the same guess as a hardcoded list, ageing the same way, hidden. */
+  listModels(): Promise<string[]>;
+```
+
+In `src/extension/ai/AnthropicProvider.ts`, implement it — both SDKs paginate the same way:
+
+```ts
+  async listModels(): Promise<string[]> {
+    const page = await this.client.models.list();
+    return page.data.map((m) => m.id);
+  }
+```
+
 - [ ] **Step 5: The provider**
 
 Create `src/extension/ai/OpenAiProvider.ts`:
@@ -536,6 +580,11 @@ export class OpenAiProvider implements AiProvider {
       if (signal.aborted) return; // Stop requested — partial already streamed.
       yield { type: 'error', kind: classifyError(err), message: err instanceof Error ? err.message : 'AI request failed' };
     }
+  }
+
+  async listModels(): Promise<string[]> {
+    const page = await this.client.models.list();
+    return page.data.map((m) => m.id);
   }
 
   async testConnection(): Promise<ConnectionResult> {
@@ -804,6 +853,149 @@ git commit -m "feat: consent follows the destination provider"
 
 ---
 
+---
+
+### Task 6b: Fetching the model list
+
+**Files:**
+- Modify: `src/shared/messages.ts`
+- Modify: `src/shared/messages.test.ts`
+- Modify: `src/extension/ai/AiController.ts`
+- Test: `src/extension/ai/AiController.test.ts`
+
+**Interfaces:**
+- Produces: webview→host `aiListModels`; host→webview `aiModelList`.
+- Consumes: `listModels()` on `AiProvider` (Task 4).
+
+- [ ] **Step 1: Extend the contract**
+
+In `src/shared/messages.ts`, add to `WebviewToHost`:
+
+```ts
+  | { type: 'aiListModels' }
+```
+
+and to `HostToWebview`:
+
+```ts
+  | { type: 'aiModelList'; provider: string; models: string[]; error?: string }
+```
+
+Add `'aiListModels'` to `WEBVIEW_TYPES` and `'aiModelList'` to `HOST_TYPES`, and add the two
+assertions to `src/shared/messages.test.ts` alongside the existing ones.
+
+- [ ] **Step 2: Write the failing tests**
+
+Append to `src/extension/ai/AiController.test.ts`:
+
+```ts
+describe('listing models', () => {
+  it('returns what the provider offers', async () => {
+    rec.models.push('model-a', 'model-b');
+    const { c, posted } = makeController();
+
+    await c.handle({ type: 'aiListModels' });
+
+    const list = posted.find((m) => m.type === 'aiModelList') as Extract<HostToWebview, { type: 'aiModelList' }>;
+    expect(list.models).toEqual(['model-a', 'model-b']);
+    expect(list.error).toBeUndefined();
+  });
+
+  it('reports a failure instead of an empty list, so the card can tell them apart', async () => {
+    rec.modelsError.value = 'nope';
+    const { c, posted } = makeController();
+
+    await c.handle({ type: 'aiListModels' });
+
+    const list = posted.find((m) => m.type === 'aiModelList') as Extract<HostToWebview, { type: 'aiModelList' }>;
+    expect(list.error).toBe('nope');
+  });
+
+  it('refuses without a key rather than calling the provider', async () => {
+    const store = new AiConfigStore(fakeSecrets(), fakeMemento());
+    const posted: HostToWebview[] = [];
+    const c = new AiController(store, fakeMemento(), (m) => posted.push(m), () => [PAGE], () => 'doc.md');
+
+    await c.handle({ type: 'aiListModels' });
+
+    const list = posted.find((m) => m.type === 'aiModelList') as Extract<HostToWebview, { type: 'aiModelList' }>;
+    expect(list.error).toBeTruthy();
+    expect(list.models).toEqual([]);
+  });
+});
+```
+
+Extend the hoisted `rec` object at the top of the file so the fake provider can answer:
+
+```ts
+const rec = vi.hoisted(() => ({
+  calls: [] as { key: string; text: string; signal: AbortSignal }[],
+  chunks: [] as unknown[],
+  hold: { value: false },
+  models: [] as string[],
+  modelsError: { value: '' },
+}));
+```
+
+and add `listModels` to the mocked provider, next to `testConnection`:
+
+```ts
+    async listModels() {
+      if (rec.modelsError.value) throw new Error(rec.modelsError.value);
+      return rec.models;
+    },
+```
+
+Reset both in `beforeEach`:
+
+```ts
+  rec.models.length = 0;
+  rec.modelsError.value = '';
+```
+
+- [ ] **Step 3: Run to verify failure**
+
+Run: `npx vitest run src/extension/ai/AiController.test.ts`
+Expected: FAIL — nothing handles `aiListModels`.
+
+- [ ] **Step 4: Handle it**
+
+In `src/extension/ai/AiController.ts`, add the case after `aiTestConnection`:
+
+```ts
+      case 'aiListModels': {
+        const cfg = this.store.getConfig();
+        const key = await this.store.getKey();
+        if (!key) {
+          // Listing needs a key. Saying so beats an empty list, which reads as "none available".
+          this.post({ type: 'aiModelList', provider: cfg.provider, models: [], error: 'Add an API key for this provider first.' });
+          break;
+        }
+        try {
+          const models = await createProvider(cfg, key).listModels();
+          this.post({ type: 'aiModelList', provider: cfg.provider, models });
+        } catch (err) {
+          this.post({
+            type: 'aiModelList', provider: cfg.provider, models: [],
+            error: err instanceof Error ? err.message : 'Could not list models',
+          });
+        }
+        break;
+      }
+```
+
+- [ ] **Step 5: Run to verify pass**
+
+Run: `npx vitest run src/extension/ai/ src/shared/`
+Expected: PASS.
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add src/shared/messages.ts src/shared/messages.test.ts src/extension/ai/AiController.ts src/extension/ai/AiController.test.ts
+git commit -m "feat: ask the provider which models it offers"
+```
+
 ### Task 7: Interface — the provider picker
 
 **Files:**
@@ -895,6 +1087,59 @@ Send the provider when saving, and tell the user what the key field is doing:
 > The `·` after a provider name means a key is stored for it. The placeholder is the fuller
 > explanation; the marker exists so switching does not look like the key vanished.
 
+- [ ] **Step 2b: A custom model id, and a refreshable list**
+
+Still in `src/webview/panels/AiConfig.tsx`. The picker's options are the curated models for this
+provider plus anything fetched, deduplicated:
+
+```tsx
+  const options = [...new Set([...PROVIDERS[provider].models, ...ai.fetchedModels])];
+```
+
+```tsx
+          {options.map((m) => <option key={m} value={m}>{m}</option>)}
+```
+
+Add the refresh control beside the model select, disabled without a key — listing needs one:
+
+```tsx
+        <button class="md-btn" disabled={!ai.configuredProviders.includes(provider)}
+          title={ai.configuredProviders.includes(provider) ? 'Ask the provider which models it offers' : 'Add a key for this provider first'}
+          onClick={() => post({ type: 'aiListModels' })}>Refresh models</button>
+```
+
+and the free-text id below it, which is what makes a model released today usable today:
+
+```tsx
+      <div class="md-config-row">
+        <label class="md-config-label" for="ai-custom-model">Or type an id</label>
+        <input id="ai-custom-model" type="text" spellcheck={false} placeholder="model id"
+          value={custom} style={{ width: '220px' }}
+          onInput={(e) => setCustom((e.target as HTMLInputElement).value)}
+          onBlur={() => { const v = custom.trim(); if (v) { setModel(v); setSaved(false); } }} />
+      </div>
+```
+
+with `const [custom, setCustom] = useState('');` beside the other state, and
+`{ai.modelListError && <p class="md-config-result" data-ok="false">{ai.modelListError}</p>}`
+under the model row.
+
+In `src/webview/store.ts`, add `fetchedModels: string[]` and `modelListError?: string` to
+`AiState`, initialise them to `[]` and `undefined`, and add the mutator next to `aiConfigState`:
+
+```ts
+    aiModelList(models: string[], error?: string) {
+      state = { ...state, ai: { ...state.ai, fetchedModels: models, modelListError: error } };
+      emit();
+    },
+```
+
+Route it in `App.tsx`:
+
+```tsx
+      else if (m.type === 'aiModelList') store.aiModelList(m.models, m.error);
+```
+
 - [ ] **Step 3: Name the destination in the dialog**
 
 In `src/webview/panels/AiConfirm.tsx`, replace the hardcoded provider in the title and lede:
@@ -920,6 +1165,32 @@ and the section branch:
 
 ```tsx
               : `This section leaves your machine and is sent to ${confirm.summary.provider}.`
+```
+
+- [ ] **Step 3b: An estimate that admits its age**
+
+In `src/webview/panels/AiConfirm.tsx`, import the two new helpers and render them beside the cost:
+
+```tsx
+import { formatCost, isPricedModel, PRICE_TABLE_DATE } from '../../extension/ai/costEstimate';
+```
+
+```tsx
+          <dt>Estimated cost</dt>
+          <dd>
+            {formatCost(confirm.summary.estCost)}
+            <span class="md-config-hint">
+              {' · table of '}{PRICE_TABLE_DATE}
+              {confirm.summary.pricedModel ? '' : ', at this provider default rate'}
+            </span>
+          </dd>
+```
+
+This needs one more fact in the summary. In `src/shared/messages.ts` add `pricedModel: boolean` to
+the `aiConfirmNeeded` summary, and in `AiController.postConfirm` set it:
+
+```ts
+        pricedModel: isPricedModel(cfg.provider, cfg.model),
 ```
 
 - [ ] **Step 4: The panel badge**
@@ -1036,7 +1307,11 @@ Needs a real key for **both** providers. Reload the Extension Development Host f
 | 12 | Click Disconnect | Both keys are gone: switching to either provider shows AI off |
 | 13 | Reconfigure Anthropic and run a document summary and a diagram | Both behave as in 0.6.0 |
 | 14 | Compare the cost estimate between providers for the same section | The figures differ, following each provider's price table |
-| 15 | With no key at all, read and navigate | Everything still works |
+| 15 | Type a model id by hand that is not in the list, then send | It is used as typed; the estimate says it is at the provider default rate |
+| 16 | Click Refresh models with a key set | The list grows with what the provider actually offers; curated ids are still there |
+| 17 | Click Refresh models with no key for that provider | The button is disabled, and its tooltip says a key is needed |
+| 18 | Read the cost line in any confirmation | It names the price table date, and flags a default rate when the model has no price |
+| 19 | With no key at all, read and navigate | Everything still works |
 
 ---
 
@@ -1045,6 +1320,7 @@ Needs a real key for **both** providers. Reload the Extension Development Host f
 - **Spec coverage:** §1.1 what generalises → Tasks 3 and 5; §2 the table → Task 1; §2.1 model ids → Task 1 Step 1, an explicit user input; §2.2 `baseUrl` → Task 4 Steps 5-6; §3 the store → Task 3; §4 the provider → Task 4; §5 consent → Task 6; §6 interface and §6.1 contract → Tasks 6 and 7; §7 testing → Tasks 1, 2, 3, 4, 5, 6; §8 out of scope → nothing built. Completion criteria 1→T3, 2→T1/T7, 3→T2/T4, 4→T5, 5→T6/T7, 6→T3/T6, 7→T3, 8→regression, 9→unchanged, 10→every task.
 - **Type consistency:** `ProviderId` and `PROVIDERS` defined in Task 1 and consumed in every later task. `estimateCost` changes arity once, in Task 2, and its only call site is updated in Task 6 Step 4. `clearKey` becomes `clearAllKeys` in Task 3 and its only caller is updated in Task 6.
 - **Deliberate compiler breaks:** Task 1 removes `AI_MODELS`, which `costEstimate.ts` and `AiConfig.tsx` still reference; Tasks 2 and 7 fix them. Task 6 widens two messages before Task 7 renders them. Both are stated in the tasks that cause them.
+- **Staleness coverage:** spec §2.1a → the custom id in Task 7 Step 2b, the fetch in Task 6b, the dated table in Task 2 and Task 7 Step 3b. Criteria 10→T7, 11→T6b/T7, 12→T2/T7.
 - **The blocking input:** Task 1 cannot be completed from this plan alone. That is deliberate — the alternative was inventing model ids, which fails at runtime rather than at review.
 - **Task 5 has no production code**, and that is the point: the slice rests on both SDKs sharing error class names, and until now nothing proved it.
 - **Integration caution:** `AiController.ts`, `store.ts` and `AiConfig.tsx` have grown across seven slices. Tasks give targeted replacements of named blocks, not rewrites.
