@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { estimateTokens, estimateCost, formatCost } from './costEstimate';
+import { estimateTokens, estimateCost, formatCost, isPricedModel, PRICE_TABLE_DATE } from './costEstimate';
+import { PROVIDERS } from './types';
 
 describe('estimateTokens', () => {
   it('approximates chars/4 rounded up', () => {
@@ -10,14 +11,37 @@ describe('estimateTokens', () => {
 });
 
 describe('estimateCost', () => {
-  it('prices opus input at $5 / 1M tokens', () => {
-    expect(estimateCost(1_000_000, 'claude-opus-4-8')).toBeCloseTo(5, 5);
+  it('prices a model from its own provider table', () => {
+    const model = PROVIDERS.anthropic.defaultModel;
+    const price = PROVIDERS.anthropic.inputPricePerM[model];
+    expect(estimateCost(1_000_000, 'anthropic', model)).toBeCloseTo(price, 6);
   });
+
   it('prices haiku cheaper than opus', () => {
-    expect(estimateCost(1_000_000, 'claude-haiku-4-5')).toBeLessThan(estimateCost(1_000_000, 'claude-opus-4-8'));
+    expect(estimateCost(1_000_000, 'anthropic', 'claude-haiku-4-5')!)
+      .toBeLessThan(estimateCost(1_000_000, 'anthropic', 'claude-opus-4-8')!);
   });
-  it('falls back to opus price for an unknown model', () => {
-    expect(estimateCost(1_000_000, 'mystery')).toBeCloseTo(5, 5);
+
+  it('reports an unknown model as unknown rather than inventing a price', () => {
+    // A fetched or hand-typed id has no entry. A wrong number is worse than no number, because
+    // only one of the two is believed.
+    expect(estimateCost(1_000_000, 'anthropic', 'mystery')).toBeUndefined();
+    expect(estimateCost(1_000_000, 'openai', PROVIDERS.openai.defaultModel)).toBeUndefined();
+  });
+
+  it('scales linearly with tokens', () => {
+    const model = PROVIDERS.anthropic.defaultModel;
+    expect(estimateCost(2_000_000, 'anthropic', model)!).toBeCloseTo(estimateCost(1_000_000, 'anthropic', model)! * 2, 6);
+  });
+
+  it('says whether a model has a price of its own', () => {
+    expect(isPricedModel('anthropic', PROVIDERS.anthropic.defaultModel)).toBe(true);
+    expect(isPricedModel('anthropic', 'a-model-someone-typed')).toBe(false);
+  });
+
+  it('dates the table, so an estimate can admit how old it is', () => {
+    expect(PRICE_TABLE_DATE).toHaveLength(7);
+    expect(PRICE_TABLE_DATE[4]).toBe('-');
   });
 });
 
