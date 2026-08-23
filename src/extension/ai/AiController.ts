@@ -84,6 +84,25 @@ export class AiController {
         this.post({ type: 'aiConnectionResult', ...result });
         break;
       }
+      case 'aiListModels': {
+        const cfg = this.store.getConfig();
+        const key = await this.store.getKey();
+        if (!key) {
+          // Listing needs a key. Saying so beats an empty list, which reads as 'none available'.
+          this.post({ type: 'aiModelList', provider: cfg.provider, models: [], error: 'Add an API key for this provider first.' });
+          break;
+        }
+        try {
+          const models = await createProvider(cfg, key).listModels();
+          this.post({ type: 'aiModelList', provider: cfg.provider, models });
+        } catch (err) {
+          this.post({
+            type: 'aiModelList', provider: cfg.provider, models: [],
+            error: err instanceof Error ? err.message : 'Could not list models',
+          });
+        }
+        break;
+      }
       case 'aiAction': await this.startAction(msg); break;
       case 'aiChat': await this.startChat(msg); break;
       case 'aiStop': this.abort?.abort(); break;

@@ -6,6 +6,8 @@ const rec = vi.hoisted(() => ({
   calls: [] as { key: string; text: string; signal: AbortSignal }[],
   chunks: [] as unknown[],
   hold: { value: false },
+  models: [] as string[],
+  modelsError: { value: '' },
 }));
 
 vi.mock('./providerRegistry', () => ({
@@ -14,6 +16,10 @@ vi.mock('./providerRegistry', () => ({
       rec.calls.push({ key, text: req.messages[0].content, signal });
       for (const c of rec.chunks) yield c;
       if (rec.hold.value) await new Promise<void>((r) => signal.addEventListener('abort', () => r()));
+    },
+    async listModels() {
+      if (rec.modelsError.value) throw new Error(rec.modelsError.value);
+      return rec.models;
     },
     async testConnection() {
       return { ok: true, ms: 1 };
@@ -58,6 +64,8 @@ beforeEach(() => {
   rec.calls.length = 0;
   rec.chunks.length = 0;
   rec.hold.value = false;
+  rec.models.length = 0;
+  rec.modelsError.value = '';
 });
 
 describe('AiController first-send gate', () => {
@@ -512,5 +520,41 @@ describe('providers', () => {
     expect(confirm.summary.provider).toBe('OpenAI');
     expect(confirm.summary.pricedModel).toBe(false);
     expect(confirm.summary.estCost).toBeUndefined();
+  });
+});
+
+describe('listing models', () => {
+  it('returns what the provider offers', async () => {
+    rec.models.push('model-a', 'model-b');
+    const { c, posted } = makeController();
+
+    await c.handle({ type: 'aiListModels' });
+
+    const list = posted.find((m) => m.type === 'aiModelList') as Extract<HostToWebview, { type: 'aiModelList' }>;
+    expect(list.models).toEqual(['model-a', 'model-b']);
+    expect(list.error).toBeUndefined();
+  });
+
+  it('reports a failure instead of an empty list, so the card can tell them apart', async () => {
+    rec.modelsError.value = 'nope';
+    const { c, posted } = makeController();
+
+    await c.handle({ type: 'aiListModels' });
+
+    const list = posted.find((m) => m.type === 'aiModelList') as Extract<HostToWebview, { type: 'aiModelList' }>;
+    expect(list.error).toBe('nope');
+  });
+
+  it('refuses without a key rather than calling the provider', async () => {
+    const store = new AiConfigStore(fakeSecrets(), fakeMemento());
+    const posted: HostToWebview[] = [];
+    const c = new AiController(store, fakeMemento(), (m) => posted.push(m), () => [PAGE], () => 'doc.md');
+
+    await c.handle({ type: 'aiListModels' });
+
+    const list = posted.find((m) => m.type === 'aiModelList') as Extract<HostToWebview, { type: 'aiModelList' }>;
+    expect(list.error).toBeTruthy();
+    expect(list.models).toEqual([]);
+    expect(rec.calls).toHaveLength(0);
   });
 });

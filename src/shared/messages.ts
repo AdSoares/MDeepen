@@ -11,6 +11,7 @@ export type HostToWebview =
   | { type: 'aiConfirmNeeded'; summary: { fileName: string; provider: string; pricedModel: boolean; sectionTitle: string; scope: AiScope | 'chat'; sectionCount: number; truncated: string[]; model: string; estTokens: number; estCost?: number }; secrets: { label: string; count: number } }
   | { type: 'aiConfigState'; configured: boolean; provider: string; model: string; configuredProviders: string[] }
   | { type: 'aiConnectionResult'; ok: boolean; ms: number; error?: string }
+  | { type: 'aiModelList'; provider: string; models: string[]; error?: string }
   | { type: 'aiShowConfig' }
   | { type: 'navigateSection'; delta: number }
   | { type: 'quickAction'; action: AiActionKind }
@@ -37,13 +38,14 @@ export type WebviewToHost =
   | { type: 'aiConfirmSend'; dontAskAgain: boolean; masked: boolean }
   | { type: 'aiCancelSend' }
   | { type: 'aiTestConnection' }
+  | { type: 'aiListModels' }
   | { type: 'aiSaveConfig'; config: AiConfig }
   | { type: 'aiSaveKey'; key: string }
   | { type: 'aiClearKey' }
   | { type: 'aiConfigRequest' };
 
-const HOST_TYPES = new Set(['init', 'sectionsUpdated', 'configChanged', 'aiChunk', 'aiDone', 'aiError', 'aiConfirmNeeded', 'aiConfigState', 'aiConnectionResult', 'aiShowConfig', 'navigateSection', 'quickAction', 'focusOutline', 'focusChat', 'aiProgress', 'aiSources', 'diagramInserted']);
-const WEBVIEW_TYPES = new Set(['ready', 'activeSectionChanged', 'sectionRead', 'uiStateChanged', 'openLink', 'refresh', 'setPaginationLevel', 'aiAction', 'aiChat', 'insertDiagram', 'aiStop', 'aiConfirmSend', 'aiCancelSend', 'aiTestConnection', 'aiSaveConfig', 'aiSaveKey', 'aiClearKey', 'aiConfigRequest']);
+const HOST_TYPES = new Set(['init', 'sectionsUpdated', 'configChanged', 'aiChunk', 'aiDone', 'aiError', 'aiConfirmNeeded', 'aiConfigState', 'aiConnectionResult', 'aiModelList', 'aiShowConfig', 'navigateSection', 'quickAction', 'focusOutline', 'focusChat', 'aiProgress', 'aiSources', 'diagramInserted']);
+const WEBVIEW_TYPES = new Set(['ready', 'activeSectionChanged', 'sectionRead', 'uiStateChanged', 'openLink', 'refresh', 'setPaginationLevel', 'aiAction', 'aiChat', 'insertDiagram', 'aiStop', 'aiConfirmSend', 'aiCancelSend', 'aiTestConnection', 'aiListModels', 'aiSaveConfig', 'aiSaveKey', 'aiClearKey', 'aiConfigRequest']);
 
 export function isHostToWebview(m: unknown): m is HostToWebview {
   return typeof m === 'object' && m !== null && HOST_TYPES.has((m as { type?: unknown }).type as string);
