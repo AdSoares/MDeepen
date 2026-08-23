@@ -84,10 +84,13 @@ describe('PROVIDERS', () => {
     for (const id of ids) expect(PROVIDERS[id].models).toContain(PROVIDERS[id].defaultModel);
   });
 
-  it('prices every model it offers', () => {
+  it('never carries a price that is not a number', () => {
+    // A model may have no price — a fetched or hand-typed id never will, and the estimate says so
+    // rather than inventing one. What must never happen is a malformed entry.
     for (const id of ids) {
-      for (const model of PROVIDERS[id].models) {
-        expect(typeof PROVIDERS[id].inputPricePerM[model]).toBe('number');
+      for (const price of Object.values(PROVIDERS[id].inputPricePerM)) {
+        expect(typeof price).toBe('number');
+        expect(price).toBeGreaterThan(0);
       }
     }
   });
@@ -257,9 +260,10 @@ export function isPricedModel(provider: ProviderId, model: string): boolean {
 
 /** An unknown model falls back to its own provider's default price. Falling back across providers
  *  would quote Anthropic rates for an OpenAI send, which is worse than a rough number. */
-export function estimateCost(inputTokens: number, provider: ProviderId, model: string): number {
+export function estimateCost(inputTokens: number, provider: ProviderId, model: string): number | undefined {
   const meta = PROVIDERS[provider] ?? PROVIDERS.anthropic;
-  const price = meta.inputPricePerM[model] ?? meta.inputPricePerM[meta.defaultModel];
+  const price = meta.inputPricePerM[model];
+  if (typeof price !== 'number') return undefined;
   return (inputTokens / 1_000_000) * price;
 }
 ```
