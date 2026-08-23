@@ -20,6 +20,9 @@ export type AiMessage = AiPending & { text: string };
 export interface AiState {
   configured: boolean;
   provider: string;
+  configuredProviders: string[];
+  fetchedModels: string[];
+  modelListError?: string;
   model: string;
   streaming: boolean;
   streamText: string;
@@ -46,7 +49,7 @@ export interface ReaderState {
 }
 
 const initialAi: AiState = {
-  configured: false, provider: 'anthropic', model: '',
+  configured: false, provider: 'anthropic', model: '', configuredProviders: [], fetchedModels: [],
   streaming: false, streamText: '',
   pending: { kind: 'action', action: 'summarize', scope: 'section', sectionTitle: '', pageIndex: -1 },
   messages: [],
@@ -107,10 +110,14 @@ export function createReaderState() {
       };
       emit();
     },
-    aiConfigState(configured: boolean, provider: string, model: string) {
+    aiConfigState(configured: boolean, provider: string, model: string, configuredProviders: string[]) {
       // Losing the key invalidates any connection result still on screen.
       const connection = configured ? state.ai.connection : undefined;
-      state = { ...state, ai: { ...state.ai, configured, provider, model, connection } };
+      state = { ...state, ai: { ...state.ai, configured, provider, model, configuredProviders, connection } };
+      emit();
+    },
+    aiModelList(models: string[], error?: string) {
+      state = { ...state, ai: { ...state.ai, fetchedModels: models, modelListError: error } };
       emit();
     },
     aiStreamStart(meta: AiPending) {

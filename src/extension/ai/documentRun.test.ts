@@ -25,6 +25,7 @@ function fakeProvider(script: AiChunk[][]): { provider: AiProvider; seen: AiRequ
       for (const chunk of script[call] ?? []) yield chunk;
       call++;
     },
+    async listModels() { return []; },
     async testConnection() { return { ok: true, ms: 1 }; },
   };
   return { provider, seen };

@@ -38,7 +38,8 @@ export function App() {
       if (m.type === 'init') store.applyInit(m);
       else if (m.type === 'sectionsUpdated') store.applyUpdate(m);
       else if (m.type === 'configChanged') store.setConfig(m.config);
-      else if (m.type === 'aiConfigState') store.aiConfigState(m.configured, m.provider, m.model);
+      else if (m.type === 'aiConfigState') store.aiConfigState(m.configured, m.provider, m.model, m.configuredProviders);
+      else if (m.type === 'aiModelList') store.aiModelList(m.models, m.error);
       else if (m.type === 'aiChunk') store.aiChunk(m.text);
       else if (m.type === 'aiProgress') store.aiProgress(m.done, m.total);
       else if (m.type === 'aiSources') store.aiSources(m.sections, m.droppedTurns);

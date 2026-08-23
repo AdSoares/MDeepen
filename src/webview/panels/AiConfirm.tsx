@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import type { AiState } from '../store';
-import { formatCost } from '../../extension/ai/costEstimate';
+import { formatCost, PRICE_TABLE_DATE } from '../../extension/ai/costEstimate';
 
 interface Props {
   confirm: NonNullable<AiState['confirm']>;
@@ -50,13 +50,13 @@ export function AiConfirm({ confirm, onSend, onCancel }: Props) {
   return (
     <div class="md-modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) onCancel(); }}>
       <div class="md-modal-card" ref={cardRef} role="dialog" aria-modal="true" aria-labelledby="ai-confirm-title">
-        <h2 id="ai-confirm-title" class="md-modal-title">Send content to Anthropic?</h2>
+        <h2 id="ai-confirm-title" class="md-modal-title">Send content to {confirm.summary.provider}?</h2>
         <p class="md-modal-lede">
           {isChat
-            ? 'Answering a question sends the sections MDeepen picks as relevant, and it will do this for every question from now on.'
+            ? `Answering a question sends the sections MDeepen picks as relevant to ${confirm.summary.provider}, and it will do this for every question from now on.`
             : isDocument
-              ? 'The whole document leaves your machine, one part at a time, and is sent to the Anthropic API.'
-              : 'This section leaves your machine and is sent to the Anthropic API.'}
+              ? `The whole document leaves your machine, one part at a time, and is sent to ${confirm.summary.provider}.`
+              : `This section leaves your machine and is sent to ${confirm.summary.provider}.`}
         </p>
 
         <dl class="md-modal-facts">
@@ -73,7 +73,14 @@ export function AiConfirm({ confirm, onSend, onCancel }: Props) {
           <dt>Estimated tokens</dt>
           <dd>~{confirm.summary.estTokens.toLocaleString()}{isDocument ? ' (input, projected)' : ''}</dd>
           <dt>Estimated cost</dt>
-          <dd>{formatCost(confirm.summary.estCost)}</dd>
+          <dd>
+            {typeof confirm.summary.estCost === 'number'
+              ? formatCost(confirm.summary.estCost)
+              : 'not known for this model'}
+            <span class="md-config-hint">
+              {typeof confirm.summary.estCost === 'number' ? ` · table of ${PRICE_TABLE_DATE}` : ''}
+            </span>
+          </dd>
         </dl>
 
         {confirm.summary.truncated.length > 0 && (
