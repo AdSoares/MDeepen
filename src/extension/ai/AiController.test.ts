@@ -23,6 +23,7 @@ vi.mock('./providerRegistry', () => ({
 
 import { AiController } from './AiController';
 import { AiConfigStore } from './AiConfigStore';
+import { PROVIDERS } from './types';
 
 const SECRET = 'sk-abcdef0123456789abcdef';
 const PAGE: Page = {
@@ -455,4 +456,61 @@ describe('chat', () => {
     expect(posted.some((m) => m.type === 'aiConfirmNeeded')).toBe(true);
     expect(rec.calls).toHaveLength(0);
   });
+});
+
+describe('providers', () => {
+  it('revokes both consents when the provider changes', async () => {
+    const ws = fakeMemento();
+    await ws.update('mdeepen.ai.firstSendConfirmed', true);
+    await ws.update('mdeepen.ai.chatConfirmed', true);
+    const { c } = makeController(ws);
+
+    await c.handle({ type: 'aiSaveConfig', config: { provider: 'openai', model: PROVIDERS.openai.defaultModel, maxTokens: 4096 } });
+
+    expect(ws.get('mdeepen.ai.firstSendConfirmed', false)).toBe(false);
+    expect(ws.get('mdeepen.ai.chatConfirmed', false)).toBe(false);
+  });
+
+  it('keeps consent when only the model or the token cap changes', async () => {
+    const ws = fakeMemento();
+    await ws.update('mdeepen.ai.firstSendConfirmed', true);
+    const { c } = makeController(ws);
+
+    await c.handle({ type: 'aiSaveConfig', config: { provider: 'anthropic', model: PROVIDERS.anthropic.defaultModel, maxTokens: 8192 } });
+
+    expect(ws.get('mdeepen.ai.firstSendConfirmed', false)).toBe(true);
+  });
+
+  it('reports which providers hold a key', async () => {
+    const { c, posted } = makeController();
+    await c.handle({ type: 'aiConfigRequest' });
+
+    const state = posted.find((m) => m.type === 'aiConfigState') as Extract<HostToWebview, { type: 'aiConfigState' }>;
+    expect(state.configuredProviders).toContain('anthropic');
+  });
+
+  it('names the destination provider in the confirmation', async () => {
+    const { c, posted } = makeController();
+    rec.chunks.push({ type: 'done', usage: { inputTokens: 1, outputTokens: 1 } });
+
+    await c.handle({ type: 'aiAction', action: 'summarize', scope: 'section', id: 'p1' });
+
+    const confirm = posted.find((m) => m.type === 'aiConfirmNeeded') as Extract<HostToWebview, { type: 'aiConfirmNeeded' }>;
+    expect(confirm.summary.provider).toBe('Anthropic');
+    expect(confirm.summary.pricedModel).toBe(true);
+    expect(typeof confirm.summary.estCost).toBe('number');
+  });
+
+  it('omits the cost when the model has no price, rather than inventing one', async () => {
+    const ws = fakeMemento();
+    const { c, posted } = makeController(ws);
+    // OpenAI ships with no prices looked up, so its models are the unpriced case.
+    await c.handle({ type: 'aiSaveConfig', config: { provider: 'openai', model: PROVIDERS.openai.defaultModel, maxTokens: 4096 } });
+    await c.handle({ type: 'aiAction', action: 'summarize', scope: 'section', id: 'p1' });
+
+    const confirm = posted.find((m) => m.type === 'aiConfirmNeeded') as Extract<HostToWebview, { type: 'aiConfirmNeeded' }>;
+    expect(confirm.summary.provider).toBe('OpenAI');
+    expect(confirm.summary.pricedModel).toBe(false);
+    expect(confirm.summary.estCost).toBeUndefined();
+  });
 });
