@@ -53,7 +53,7 @@ export class AiController {
         // revoke every consent, so a future key has to be confirmed again for each kind of
         // send. Leaving one standing would let a new key inherit permission it never had.
         this.dispose();
-        await this.store.clearKey();
+        await this.store.clearAllKeys();
         await this.workspaceState.update(FIRST_SEND_KEY, false);
         await this.workspaceState.update(CHAT_KEY, false);
         await this.postConfigState();
