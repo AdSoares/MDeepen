@@ -20,6 +20,9 @@ export interface ConnectionResult {
 
 export interface AiProvider {
   generate(request: AiRequest, signal: AbortSignal): AsyncIterable<AiChunk>;
+  /** What this provider currently offers. The list is shown whole rather than filtered: a
+   *  `gpt-*` rule would be the same guess as a hardcoded list, ageing the same way, hidden. */
+  listModels(): Promise<string[]>;
   testConnection(): Promise<ConnectionResult>;
 }
 

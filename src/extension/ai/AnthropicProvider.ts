@@ -36,6 +36,11 @@ export class AnthropicProvider implements AiProvider {
     }
   }
 
+  async listModels(): Promise<string[]> {
+    const page = await this.client.models.list();
+    return page.data.map((m) => m.id);
+  }
+
   async testConnection(): Promise<ConnectionResult> {
     const start = Date.now();
     try {
