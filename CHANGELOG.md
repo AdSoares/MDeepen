@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-08-23
+
+### Added
+
+- A second provider: OpenAI, behind the same interface. Each provider stores its own key, so
+  switching between them never means pasting a key again.
+- The configuration card has a provider picker, marks which providers already hold a key, can
+  refresh the model list from the provider itself, and accepts a model id typed by hand — so a
+  model released today is usable today, without a release of this extension.
+
+### Changed
+
+- Switching provider revokes the send consents, and the confirmation dialogs name the destination
+  instead of always saying Anthropic. Consent to send to one company is not consent to send to
+  another. Changing only the model or the token cap leaves consent alone.
+- Disconnect now clears every stored key, for every provider, along with every consent.
+- A cost estimate is shown only when the model's price is actually known, and it names the date of
+  the price table. An unknown price reads as unknown rather than as a number: a wrong figure is
+  worse than none, because only one of the two is believed.
+
+### Note
+
+- MVP completion criterion 10 asks for a local provider, and this slice does not add one. The
+  OpenAI provider accepts a base URL, which is what an OpenAI-compatible local runtime needs, but
+  no interface exposes it yet.
+- OpenAI prices are not in the table: none were looked up, so those estimates read as unknown.
+
 ## [0.6.0] - 2026-08-21
 
 ### Added
@@ -175,7 +202,8 @@ First AI slice. The reader itself is unchanged and still works with no API key.
 - Reading and focus modes, adjustable font size, column width, line spacing, and
   theme.
 
-[Unreleased]: https://github.com/AdSoares/MDeepen/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/AdSoares/MDeepen/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/AdSoares/MDeepen/releases/tag/v0.7.0
 [0.6.0]: https://github.com/AdSoares/MDeepen/releases/tag/v0.6.0
 [0.5.0]: https://github.com/AdSoares/MDeepen/releases/tag/v0.5.0
 [0.4.0]: https://github.com/AdSoares/MDeepen/releases/tag/v0.4.0

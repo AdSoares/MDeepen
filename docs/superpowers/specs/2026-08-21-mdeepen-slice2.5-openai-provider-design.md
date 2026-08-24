@@ -102,9 +102,11 @@ Three answers, all of them in scope:
 - **A custom model id field**, beside the curated picker. A model released today is usable today,
   with no release of this extension. This turns "out of date" from a blocker into an inconvenience.
 - **A refreshable model list**, fetched from the provider — §2.3.
-- **A dated price table.** The estimate renders as `≈ $0.0042 · table of 2026-08`, and when the
-  model's price is unknown it says so: `price estimated at the provider's default rate`. This does
-  not fix a stale price; it stops a stale price from passing as a fact.
+- **A dated price table, and no invented numbers.** The estimate renders as
+  `≈ $0.0042 · table of 2026-08`. When a model has no price in the table — a fetched id, a
+  hand-typed one, or one nobody has looked up yet — the estimate is **not shown at all**:
+  `estimateCost` returns `undefined` and the dialog says the cost is not known for this model.
+  A wrong number is worse than no number, because only one of the two is believed.
 
 ### 2.3 Fetching the model list
 

@@ -50,6 +50,7 @@ describe('message type guards', () => {
     expect(isWebviewToHost({ type: 'aiAction', action: 'summarize', scope: 'section', id: 'p1' })).toBe(true);
     expect(isWebviewToHost({ type: 'aiAction', action: 'summarizeShort', scope: 'document' })).toBe(true);
     expect(isWebviewToHost({ type: 'aiChat', question: 'why?', history: [] })).toBe(true);
+    expect(isWebviewToHost({ type: 'aiListModels' })).toBe(true);
     expect(isWebviewToHost({ type: 'insertDiagram', entryIndex: 0, sectionId: 'page-5', sectionTitle: 'Retries', sectionLevel: 2, code: 'flowchart TD' })).toBe(true);
   });
   it('accepts new AI host->webview messages', () => {
@@ -57,6 +58,7 @@ describe('message type guards', () => {
     expect(isHostToWebview({ type: 'aiDone', usage: { inputTokens: 1, outputTokens: 2 } })).toBe(true);
     expect(isHostToWebview({ type: 'aiError', kind: 'auth', message: 'x' })).toBe(true);
     expect(isHostToWebview({ type: 'aiShowConfig' })).toBe(true);
+    expect(isHostToWebview({ type: 'aiModelList', provider: 'openai', models: ['a'] })).toBe(true);
     expect(isHostToWebview({ type: 'aiProgress', done: 1, total: 4 })).toBe(true);
     expect(isHostToWebview({ type: 'aiSources', sections: [{ title: 'Retries', pageIndex: 1 }], droppedTurns: 0 })).toBe(true);
     expect(isHostToWebview({ type: 'diagramInserted', entryIndex: 0, ok: true, line: 21 })).toBe(true);

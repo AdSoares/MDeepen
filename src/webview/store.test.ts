@@ -69,7 +69,7 @@ describe('reader store', () => {
 
   it('accumulates streaming ai text and finalizes', () => {
     const s = createReaderState();
-    s.aiConfigState(true, 'anthropic', 'claude-opus-4-8');
+    s.aiConfigState(true, 'anthropic', 'claude-opus-4-8', []);
     expect(s.get().ai.configured).toBe(true);
     s.aiStreamStart({ kind: 'action', action: 'summarize', scope: 'section', sectionTitle: '', pageIndex: -1 });
     s.aiChunk('Hel'); s.aiChunk('lo');
@@ -82,9 +82,9 @@ describe('reader store', () => {
 
   it('disconnecting drops a stale connection result', () => {
     const s = createReaderState();
-    s.aiConfigState(true, 'anthropic', 'claude-opus-4-8');
+    s.aiConfigState(true, 'anthropic', 'claude-opus-4-8', []);
     s.aiConnection({ ok: true, ms: 120 });
-    s.aiConfigState(false, 'anthropic', 'claude-opus-4-8');
+    s.aiConfigState(false, 'anthropic', 'claude-opus-4-8', []);
     expect(s.get().ai.connection).toBeUndefined();
   });
 
@@ -119,7 +119,7 @@ describe('reader store', () => {
 
   it('holds and clears the confirm payload', () => {
     const s = createReaderState();
-    s.aiConfirm({ summary: { fileName: 'a.md', sectionTitle: 'Retries', scope: 'section', sectionCount: 1, truncated: [], model: 'claude-opus-4-8', estTokens: 10, estCost: 0.00005 }, secrets: { label: '1 possible secret detected', count: 1 } });
+    s.aiConfirm({ summary: { fileName: 'a.md', provider: 'Anthropic', pricedModel: true, sectionTitle: 'Retries', scope: 'section', sectionCount: 1, truncated: [], model: 'claude-opus-4-8', estTokens: 10, estCost: 0.00005 }, secrets: { label: '1 possible secret detected', count: 1 } });
     expect(s.get().ai.confirm?.secrets.count).toBe(1);
     s.aiConfirm(undefined);
     expect(s.get().ai.confirm).toBeUndefined();

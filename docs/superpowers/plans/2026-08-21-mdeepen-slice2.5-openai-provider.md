@@ -55,12 +55,12 @@ survivable now.
 - Produces: `ProviderId`, `ProviderMeta`, `PROVIDERS`, and `AiConfig` carrying `provider: ProviderId` and `baseUrl?: string`.
 - Removes: `AI_MODELS` (moves into the table).
 
-- [ ] **Step 1: Get the OpenAI model ids and prices from the user**
+- [x] **Step 1: Get the OpenAI model ids and prices from the user**
 
 See the note above. Do not proceed on invented values; the rest of this task is shaped so that
 whatever is supplied is validated.
 
-- [ ] **Step 2: Write the failing consistency test**
+- [x] **Step 2: Write the failing consistency test**
 
 Create `src/extension/ai/providers.test.ts`. This test does not care which models exist — it cares
 that the table is coherent, which is the mistake this slice is most likely to make:
@@ -84,10 +84,13 @@ describe('PROVIDERS', () => {
     for (const id of ids) expect(PROVIDERS[id].models).toContain(PROVIDERS[id].defaultModel);
   });
 
-  it('prices every model it offers', () => {
+  it('never carries a price that is not a number', () => {
+    // A model may have no price — a fetched or hand-typed id never will, and the estimate says so
+    // rather than inventing one. What must never happen is a malformed entry.
     for (const id of ids) {
-      for (const model of PROVIDERS[id].models) {
-        expect(typeof PROVIDERS[id].inputPricePerM[model]).toBe('number');
+      for (const price of Object.values(PROVIDERS[id].inputPricePerM)) {
+        expect(typeof price).toBe('number');
+        expect(price).toBeGreaterThan(0);
       }
     }
   });
@@ -105,12 +108,12 @@ describe('PROVIDERS', () => {
 });
 ```
 
-- [ ] **Step 3: Run to verify failure**
+- [x] **Step 3: Run to verify failure**
 
 Run: `npx vitest run src/extension/ai/providers.test.ts`
 Expected: FAIL — `PROVIDERS` is not exported.
 
-- [ ] **Step 4: Build the table**
+- [x] **Step 4: Build the table**
 
 In `src/extension/ai/types.ts`, replace `AiConfig`, `DEFAULT_AI_CONFIG` and `AI_MODELS` with:
 
@@ -161,13 +164,13 @@ export const DEFAULT_AI_CONFIG: AiConfig = {
 };
 ```
 
-- [ ] **Step 5: Run to verify pass**
+- [x] **Step 5: Run to verify pass**
 
 Run: `npx vitest run src/extension/ai/providers.test.ts`
 Expected: PASS, 6 tests. `npx tsc --noEmit` then reports exactly one file: `AiConfig.tsx`, the
 only consumer of `AI_MODELS`. Task 7 fixes it.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/extension/ai/types.ts src/extension/ai/providers.test.ts
@@ -185,7 +188,7 @@ git commit -m "feat: providers, models and prices live in one table"
 **Interfaces:**
 - Produces: `estimateCost(inputTokens, provider, model)`. The old two-argument form is replaced, and every call site is updated in Task 6.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Replace the `estimateCost` describe block in `src/extension/ai/costEstimate.test.ts`:
 
@@ -228,12 +231,12 @@ describe('estimateCost', () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify failure**
+- [x] **Step 2: Run to verify failure**
 
 Run: `npx vitest run src/extension/ai/costEstimate.test.ts`
 Expected: FAIL — `estimateCost` takes two arguments.
 
-- [ ] **Step 3: Rewrite the estimate**
+- [x] **Step 3: Rewrite the estimate**
 
 Replace the top of `src/extension/ai/costEstimate.ts`:
 
@@ -257,22 +260,23 @@ export function isPricedModel(provider: ProviderId, model: string): boolean {
 
 /** An unknown model falls back to its own provider's default price. Falling back across providers
  *  would quote Anthropic rates for an OpenAI send, which is worse than a rough number. */
-export function estimateCost(inputTokens: number, provider: ProviderId, model: string): number {
+export function estimateCost(inputTokens: number, provider: ProviderId, model: string): number | undefined {
   const meta = PROVIDERS[provider] ?? PROVIDERS.anthropic;
-  const price = meta.inputPricePerM[model] ?? meta.inputPricePerM[meta.defaultModel];
+  const price = meta.inputPricePerM[model];
+  if (typeof price !== 'number') return undefined;
   return (inputTokens / 1_000_000) * price;
 }
 ```
 
 `formatCost` stays exactly as it is.
 
-- [ ] **Step 4: Run to verify pass**
+- [x] **Step 4: Run to verify pass**
 
 Run: `npx vitest run src/extension/ai/costEstimate.test.ts`
 Expected: PASS. `tsc` now also reports `AiController.ts:246`, the single call site of the old
 two-argument form; Task 6 Step 4 updates it.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/extension/ai/costEstimate.ts src/extension/ai/costEstimate.test.ts
@@ -291,7 +295,7 @@ git commit -m "feat: cost estimates read the active provider's price table"
 - Produces: provider-aware `getKey`/`setKey`/`isConfigured`, plus `clearAllKeys()` and `configuredProviders()`.
 - `clearKey()` is replaced by `clearAllKeys()`; the controller is updated in Task 6.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Append to `src/extension/ai/AiConfigStore.test.ts`:
 
@@ -349,12 +353,12 @@ describe('two providers', () => {
 
 Add `import { PROVIDERS } from './types';` to the file's imports.
 
-- [ ] **Step 2: Run to verify failure**
+- [x] **Step 2: Run to verify failure**
 
 Run: `npx vitest run src/extension/ai/AiConfigStore.test.ts`
 Expected: FAIL — `store.configuredProviders is not a function`.
 
-- [ ] **Step 3: Make the store provider-aware**
+- [x] **Step 3: Make the store provider-aware**
 
 Replace the body of `src/extension/ai/AiConfigStore.ts` below the interfaces:
 
@@ -407,12 +411,12 @@ export class AiConfigStore {
 }
 ```
 
-- [ ] **Step 4: Run to verify pass**
+- [x] **Step 4: Run to verify pass**
 
 Run: `npx vitest run src/extension/ai/AiConfigStore.test.ts`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/extension/ai/AiConfigStore.ts src/extension/ai/AiConfigStore.test.ts
@@ -434,13 +438,13 @@ git commit -m "feat: one key per provider, and a disconnect that clears them all
 - Produces: `toOpenAiRequest(request, model)`, `OpenAiProvider`.
 - Consumes: `AiRequest`, `AiChunk`, `classifyError` — all unchanged.
 
-- [ ] **Step 1: Add the dependency**
+- [x] **Step 1: Add the dependency**
 
 Run: `npm install openai`
 This adds a runtime dependency that ships in the bundle. Expect the `.vsix` to grow from 2.39 MB
 to roughly 2.6–2.9 MB.
 
-- [ ] **Step 2: Write the failing tests**
+- [x] **Step 2: Write the failing tests**
 
 Create `src/extension/ai/openAiRequest.test.ts`:
 
@@ -488,12 +492,12 @@ describe('toOpenAiRequest', () => {
 > `max_completion_tokens`, change the field in this test and in Step 4 together — they are the
 > same decision in two places.
 
-- [ ] **Step 3: Run to verify failure**
+- [x] **Step 3: Run to verify failure**
 
 Run: `npx vitest run src/extension/ai/openAiRequest.test.ts`
 Expected: FAIL — cannot find module `./openAiRequest`.
 
-- [ ] **Step 4: The pure translation**
+- [x] **Step 4: The pure translation**
 
 Create `src/extension/ai/openAiRequest.ts`:
 
@@ -524,7 +528,7 @@ export function toOpenAiRequest(request: AiRequest, model: string): OpenAiChatRe
 }
 ```
 
-- [ ] **Step 4b: Widen the provider interface**
+- [x] **Step 4b: Widen the provider interface**
 
 In `src/extension/ai/types.ts`, add to `AiProvider`:
 
@@ -543,7 +547,7 @@ In `src/extension/ai/AnthropicProvider.ts`, implement it — both SDKs paginate 
   }
 ```
 
-- [ ] **Step 5: The provider**
+- [x] **Step 5: The provider**
 
 Create `src/extension/ai/OpenAiProvider.ts`:
 
@@ -603,7 +607,7 @@ export class OpenAiProvider implements AiProvider {
 }
 ```
 
-- [ ] **Step 6: Register it**
+- [x] **Step 6: Register it**
 
 Replace `src/extension/ai/providerRegistry.ts`:
 
@@ -625,12 +629,12 @@ export function createProvider(config: AiConfig, apiKey: string): AiProvider {
 }
 ```
 
-- [ ] **Step 7: Run to verify pass**
+- [x] **Step 7: Run to verify pass**
 
 Run: `npx vitest run src/extension/ai/openAiRequest.test.ts && npm run build`
 Expected: PASS; the bundle builds with the new dependency.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add package.json package-lock.json src/extension/ai/openAiRequest.ts src/extension/ai/openAiRequest.test.ts src/extension/ai/OpenAiProvider.ts src/extension/ai/providerRegistry.ts
@@ -647,7 +651,7 @@ git commit -m "feat: an OpenAI provider behind the same interface"
 **Interfaces:**
 - No production change. This task exists because the whole slice rests on an assumption that is currently untested: that both SDKs raise errors with the same class names and status codes.
 
-- [ ] **Step 1: Write the tests**
+- [x] **Step 1: Write the tests**
 
 Append to `src/extension/ai/errorMap.test.ts`:
 
@@ -682,13 +686,13 @@ describe('OpenAI-shaped errors', () => {
 });
 ```
 
-- [ ] **Step 2: Run**
+- [x] **Step 2: Run**
 
 Run: `npx vitest run src/extension/ai/errorMap.test.ts`
 Expected: PASS with no production change. If any fail, the assumption in the spec's §1.1 is wrong
 and `errorMap.ts` needs provider-aware branching — stop and say so rather than patching the test.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/extension/ai/errorMap.test.ts
@@ -709,7 +713,7 @@ git commit -m "test: pin the error classification both SDKs share"
 - Produces: `aiConfigState` carrying `configuredProviders`; `aiConfirmNeeded.summary` carrying `provider`.
 - Consumes: `clearAllKeys`, `configuredProviders` (Task 3); `estimateCost(tokens, provider, model)` (Task 2).
 
-- [ ] **Step 1: Extend the contract**
+- [x] **Step 1: Extend the contract**
 
 In `src/shared/messages.ts`, widen the two messages:
 
@@ -722,7 +726,7 @@ and add `provider: string;` to the `aiConfirmNeeded` summary, after `fileName`.
 In `src/shared/messages.test.ts`, update the `aiConfigState` assertion to include
 `configuredProviders: ['anthropic']`.
 
-- [ ] **Step 2: Write the failing tests**
+- [x] **Step 2: Write the failing tests**
 
 Append to `src/extension/ai/AiController.test.ts`:
 
@@ -784,12 +788,12 @@ describe('providers', () => {
 
 Add `import { PROVIDERS } from './types';` to the test file's imports.
 
-- [ ] **Step 3: Run to verify failure**
+- [x] **Step 3: Run to verify failure**
 
 Run: `npx vitest run src/extension/ai/AiController.test.ts`
 Expected: FAIL — consent survives the provider change, and `summary.provider` is undefined.
 
-- [ ] **Step 4: Update the controller**
+- [x] **Step 4: Update the controller**
 
 In `src/extension/ai/AiController.ts`, replace the `aiSaveConfig` case:
 
@@ -838,13 +842,13 @@ In `postConfirm`, add the destination and update the cost call:
 
 and import `PROVIDERS` from `./types`.
 
-- [ ] **Step 5: Run to verify pass**
+- [x] **Step 5: Run to verify pass**
 
 Run: `npx vitest run src/extension/ai/ src/shared/ && npx tsc --noEmit`
 Expected: tests PASS. The compiler still reports `AiConfig.tsx` and `AiConfirm.tsx`, which Task 7
 fixes.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/extension/ai/AiController.ts src/extension/ai/AiController.test.ts src/shared/messages.ts src/shared/messages.test.ts
@@ -867,7 +871,7 @@ git commit -m "feat: consent follows the destination provider"
 - Produces: webview→host `aiListModels`; host→webview `aiModelList`.
 - Consumes: `listModels()` on `AiProvider` (Task 4).
 
-- [ ] **Step 1: Extend the contract**
+- [x] **Step 1: Extend the contract**
 
 In `src/shared/messages.ts`, add to `WebviewToHost`:
 
@@ -884,7 +888,7 @@ and to `HostToWebview`:
 Add `'aiListModels'` to `WEBVIEW_TYPES` and `'aiModelList'` to `HOST_TYPES`, and add the two
 assertions to `src/shared/messages.test.ts` alongside the existing ones.
 
-- [ ] **Step 2: Write the failing tests**
+- [x] **Step 2: Write the failing tests**
 
 Append to `src/extension/ai/AiController.test.ts`:
 
@@ -953,12 +957,12 @@ Reset both in `beforeEach`:
   rec.modelsError.value = '';
 ```
 
-- [ ] **Step 3: Run to verify failure**
+- [x] **Step 3: Run to verify failure**
 
 Run: `npx vitest run src/extension/ai/AiController.test.ts`
 Expected: FAIL — nothing handles `aiListModels`.
 
-- [ ] **Step 4: Handle it**
+- [x] **Step 4: Handle it**
 
 In `src/extension/ai/AiController.ts`, add the case after `aiTestConnection`:
 
@@ -984,12 +988,12 @@ In `src/extension/ai/AiController.ts`, add the case after `aiTestConnection`:
       }
 ```
 
-- [ ] **Step 5: Run to verify pass**
+- [x] **Step 5: Run to verify pass**
 
 Run: `npx vitest run src/extension/ai/ src/shared/`
 Expected: PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/shared/messages.ts src/shared/messages.test.ts src/extension/ai/AiController.ts src/extension/ai/AiController.test.ts
@@ -1010,7 +1014,7 @@ git commit -m "feat: ask the provider which models it offers"
 
 This task is webview UI and is smoke-verified.
 
-- [ ] **Step 1: Carry the provider list in the store**
+- [x] **Step 1: Carry the provider list in the store**
 
 In `src/webview/store.ts`, add to `AiState` next to `provider`:
 
@@ -1034,7 +1038,7 @@ Update its call site in `App.tsx`:
       else if (m.type === 'aiConfigState') store.aiConfigState(m.configured, m.provider, m.model, m.configuredProviders);
 ```
 
-- [ ] **Step 2: The picker replaces the Mode row**
+- [x] **Step 2: The picker replaces the Mode row**
 
 In `src/webview/panels/AiConfig.tsx`, replace the `AI_MODELS` import and the Mode row. The Mode
 row's disabled "Local" button was a placeholder for exactly this:
@@ -1087,7 +1091,7 @@ Send the provider when saving, and tell the user what the key field is doing:
 > The `·` after a provider name means a key is stored for it. The placeholder is the fuller
 > explanation; the marker exists so switching does not look like the key vanished.
 
-- [ ] **Step 2b: A custom model id, and a refreshable list**
+- [x] **Step 2b: A custom model id, and a refreshable list**
 
 Still in `src/webview/panels/AiConfig.tsx`. The picker's options are the curated models for this
 provider plus anything fetched, deduplicated:
@@ -1140,7 +1144,7 @@ Route it in `App.tsx`:
       else if (m.type === 'aiModelList') store.aiModelList(m.models, m.error);
 ```
 
-- [ ] **Step 3: Name the destination in the dialog**
+- [x] **Step 3: Name the destination in the dialog**
 
 In `src/webview/panels/AiConfirm.tsx`, replace the hardcoded provider in the title and lede:
 
@@ -1167,7 +1171,7 @@ and the section branch:
               : `This section leaves your machine and is sent to ${confirm.summary.provider}.`
 ```
 
-- [ ] **Step 3b: An estimate that admits its age**
+- [x] **Step 3b: An estimate that admits its age**
 
 In `src/webview/panels/AiConfirm.tsx`, import the two new helpers and render them beside the cost:
 
@@ -1193,7 +1197,7 @@ the `aiConfirmNeeded` summary, and in `AiController.postConfirm` set it:
         pricedModel: isPricedModel(cfg.provider, cfg.model),
 ```
 
-- [ ] **Step 4: The panel badge**
+- [x] **Step 4: The panel badge**
 
 In `src/webview/panels/AiPanel.tsx`, replace the hardcoded label:
 
@@ -1201,12 +1205,12 @@ In `src/webview/panels/AiPanel.tsx`, replace the hardcoded label:
         <span class="md-ai-badge">{ai.provider} &middot; {ai.model}</span>
 ```
 
-- [ ] **Step 5: Build, typecheck, test**
+- [x] **Step 5: Build, typecheck, test**
 
 Run: `npm run build && npx tsc --noEmit && npm test`
 Expected: green, compiler clean everywhere.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/webview/panels/AiConfig.tsx src/webview/panels/AiConfirm.tsx src/webview/panels/AiPanel.tsx src/webview/store.ts src/webview/App.tsx
@@ -1222,11 +1226,11 @@ git commit -m "feat: pick a provider, and let the dialogs name the destination"
 - Modify: `README.md`
 - Modify: `CHANGELOG.md`
 
-- [ ] **Step 1: Bump the version**
+- [x] **Step 1: Bump the version**
 
 `package.json` → `"version": "0.7.0"`.
 
-- [ ] **Step 2: Update the README**
+- [x] **Step 2: Update the README**
 
 In the AI section, replace the "Bring your own key" bullet's first sentence so it names both
 providers:
@@ -1238,7 +1242,7 @@ providers:
   never in your Markdown.
 ```
 
-- [ ] **Step 3: Add the changelog entry**
+- [x] **Step 3: Add the changelog entry**
 
 Insert above `## [0.6.0]`:
 
@@ -1275,19 +1279,35 @@ At the bottom of the file, replace the first two link lines with:
 [0.6.0]: https://github.com/AdSoares/MDeepen/releases/tag/v0.6.0
 ```
 
-- [ ] **Step 4: Build, test, package**
+- [x] **Step 4: Build, test, package**
 
 Run: `npm run build && npx tsc --noEmit && npm test && npm run package`
 Expected: suite green; `mdeepen-0.7.0.vsix` produced, larger than 0.6.0 by roughly 200–500 KB.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add package.json README.md CHANGELOG.md
 git commit -m "chore: release 0.7.0 with a second provider"
 ```
 
-- [ ] **Step 6: Human smoke — this step belongs to the user, not the implementer**
+- [ ] **Step 6: Human smoke — this step belongs to the user, not the implementer** — **DEFERRED 2026-08-24.**
+
+> **Not run**, at the user's direction, as in Slice 2.4. The checkbox stays open. Two consecutive
+> slices now ship with their integration behaviour unverified.
+>
+> **What ships unverified here: no OpenAI request has ever been made.** `toOpenAiRequest` is unit
+> tested, but everything downstream of it is an assumption about the SDK — that a streamed chunk
+> carries text at `choices[0].delta.content`, that `usage` arrives on the final chunk when
+> `include_usage` is set, and that `models.list()` returns `{ data: [{ id }] }`. The same is true
+> of the `listModels()` just added to `AnthropicProvider`.
+>
+> **One thing here is not an assumption:** `max_completion_tokens` was confirmed empirically on
+> 2026-08-23 — `max_tokens` returns 400 against this account's models.
+>
+> The checks that would close the gap are 3, 4, 9, 16 and 17 of the table above. Checks 1, 2, 5,
+> 6, 7, 8 and 12 cover behaviour that unit tests already pin, and matter less.
+
 
 Needs a real key for **both** providers. Reload the Extension Development Host first.
 

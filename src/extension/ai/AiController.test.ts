@@ -6,6 +6,8 @@ const rec = vi.hoisted(() => ({
   calls: [] as { key: string; text: string; signal: AbortSignal }[],
   chunks: [] as unknown[],
   hold: { value: false },
+  models: [] as string[],
+  modelsError: { value: '' },
 }));
 
 vi.mock('./providerRegistry', () => ({
@@ -15,6 +17,10 @@ vi.mock('./providerRegistry', () => ({
       for (const c of rec.chunks) yield c;
       if (rec.hold.value) await new Promise<void>((r) => signal.addEventListener('abort', () => r()));
     },
+    async listModels() {
+      if (rec.modelsError.value) throw new Error(rec.modelsError.value);
+      return rec.models;
+    },
     async testConnection() {
       return { ok: true, ms: 1 };
     },
@@ -23,6 +29,7 @@ vi.mock('./providerRegistry', () => ({
 
 import { AiController } from './AiController';
 import { AiConfigStore } from './AiConfigStore';
+import { PROVIDERS } from './types';
 
 const SECRET = 'sk-abcdef0123456789abcdef';
 const PAGE: Page = {
@@ -57,6 +64,8 @@ beforeEach(() => {
   rec.calls.length = 0;
   rec.chunks.length = 0;
   rec.hold.value = false;
+  rec.models.length = 0;
+  rec.modelsError.value = '';
 });
 
 describe('AiController first-send gate', () => {
@@ -455,4 +464,97 @@ describe('chat', () => {
     expect(posted.some((m) => m.type === 'aiConfirmNeeded')).toBe(true);
     expect(rec.calls).toHaveLength(0);
   });
+});
+
+describe('providers', () => {
+  it('revokes both consents when the provider changes', async () => {
+    const ws = fakeMemento();
+    await ws.update('mdeepen.ai.firstSendConfirmed', true);
+    await ws.update('mdeepen.ai.chatConfirmed', true);
+    const { c } = makeController(ws);
+
+    await c.handle({ type: 'aiSaveConfig', config: { provider: 'openai', model: PROVIDERS.openai.defaultModel, maxTokens: 4096 } });
+
+    expect(ws.get('mdeepen.ai.firstSendConfirmed', false)).toBe(false);
+    expect(ws.get('mdeepen.ai.chatConfirmed', false)).toBe(false);
+  });
+
+  it('keeps consent when only the model or the token cap changes', async () => {
+    const ws = fakeMemento();
+    await ws.update('mdeepen.ai.firstSendConfirmed', true);
+    const { c } = makeController(ws);
+
+    await c.handle({ type: 'aiSaveConfig', config: { provider: 'anthropic', model: PROVIDERS.anthropic.defaultModel, maxTokens: 8192 } });
+
+    expect(ws.get('mdeepen.ai.firstSendConfirmed', false)).toBe(true);
+  });
+
+  it('reports which providers hold a key', async () => {
+    const { c, posted } = makeController();
+    await c.handle({ type: 'aiConfigRequest' });
+
+    const state = posted.find((m) => m.type === 'aiConfigState') as Extract<HostToWebview, { type: 'aiConfigState' }>;
+    expect(state.configuredProviders).toContain('anthropic');
+  });
+
+  it('names the destination provider in the confirmation', async () => {
+    const { c, posted } = makeController();
+    rec.chunks.push({ type: 'done', usage: { inputTokens: 1, outputTokens: 1 } });
+
+    await c.handle({ type: 'aiAction', action: 'summarize', scope: 'section', id: 'p1' });
+
+    const confirm = posted.find((m) => m.type === 'aiConfirmNeeded') as Extract<HostToWebview, { type: 'aiConfirmNeeded' }>;
+    expect(confirm.summary.provider).toBe('Anthropic');
+    expect(confirm.summary.pricedModel).toBe(true);
+    expect(typeof confirm.summary.estCost).toBe('number');
+  });
+
+  it('omits the cost when the model has no price, rather than inventing one', async () => {
+    const ws = fakeMemento();
+    const { c, posted } = makeController(ws);
+    // OpenAI ships with no prices looked up, so its models are the unpriced case.
+    await c.handle({ type: 'aiSaveConfig', config: { provider: 'openai', model: PROVIDERS.openai.defaultModel, maxTokens: 4096 } });
+    await c.handle({ type: 'aiAction', action: 'summarize', scope: 'section', id: 'p1' });
+
+    const confirm = posted.find((m) => m.type === 'aiConfirmNeeded') as Extract<HostToWebview, { type: 'aiConfirmNeeded' }>;
+    expect(confirm.summary.provider).toBe('OpenAI');
+    expect(confirm.summary.pricedModel).toBe(false);
+    expect(confirm.summary.estCost).toBeUndefined();
+  });
+});
+
+describe('listing models', () => {
+  it('returns what the provider offers', async () => {
+    rec.models.push('model-a', 'model-b');
+    const { c, posted } = makeController();
+
+    await c.handle({ type: 'aiListModels' });
+
+    const list = posted.find((m) => m.type === 'aiModelList') as Extract<HostToWebview, { type: 'aiModelList' }>;
+    expect(list.models).toEqual(['model-a', 'model-b']);
+    expect(list.error).toBeUndefined();
+  });
+
+  it('reports a failure instead of an empty list, so the card can tell them apart', async () => {
+    rec.modelsError.value = 'nope';
+    const { c, posted } = makeController();
+
+    await c.handle({ type: 'aiListModels' });
+
+    const list = posted.find((m) => m.type === 'aiModelList') as Extract<HostToWebview, { type: 'aiModelList' }>;
+    expect(list.error).toBe('nope');
+  });
+
+  it('refuses without a key rather than calling the provider', async () => {
+    const store = new AiConfigStore(fakeSecrets(), fakeMemento());
+    const posted: HostToWebview[] = [];
+    const c = new AiController(store, fakeMemento(), (m) => posted.push(m), () => [PAGE], () => 'doc.md');
+
+    await c.handle({ type: 'aiListModels' });
+
+    const list = posted.find((m) => m.type === 'aiModelList') as Extract<HostToWebview, { type: 'aiModelList' }>;
+    expect(list.error).toBeTruthy();
+    expect(list.models).toEqual([]);
+    expect(rec.calls).toHaveLength(0);
+  });
 });

@@ -50,7 +50,7 @@ export function AiPanel({ ai, activePageId, onConfigure, onCite, onAction, onAsk
   return (
     <div class="md-ai-panel">
       <div class="md-ai-head">
-        <span class="md-ai-badge">Anthropic &middot; {ai.model}</span>
+        <span class="md-ai-badge">{ai.provider} &middot; {ai.model}</span>
         <span style={{ flex: 1 }} />
         {ai.messages.length > 0 && (
           <button class="md-btn" onClick={onClear} aria-label="Clear all answers">Clear all</button>

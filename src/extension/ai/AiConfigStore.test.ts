@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { AiConfigStore } from './AiConfigStore';
+import { PROVIDERS } from './types';
 
 function fakeSecrets() {
   const s: Record<string, string> = {};
@@ -31,7 +32,7 @@ describe('AiConfigStore', () => {
   it('clearing the key removes it from secrets and reports not configured', async () => {
     const store = new AiConfigStore(fakeSecrets(), fakeMemento());
     await store.setKey('sk-test');
-    await store.clearKey();
+    await store.clearAllKeys();
     expect(await store.getKey()).toBeUndefined();
     expect(await store.isConfigured()).toBe(false);
   });
@@ -42,5 +43,54 @@ describe('AiConfigStore', () => {
     await store.setKey('sk-test');
     expect(await store.getKey()).toBe('sk-test');
     expect(await store.isConfigured()).toBe(true);
+  });
+});
+
+describe('two providers', () => {
+  const cfg = (provider: 'anthropic' | 'openai') =>
+    ({ provider, model: PROVIDERS[provider].defaultModel, maxTokens: 4096 }) as const;
+
+  it('keeps a key per provider, and switching does not disturb the other', async () => {
+    const store = new AiConfigStore(fakeSecrets(), fakeMemento());
+
+    await store.setConfig(cfg('anthropic'));
+    await store.setKey('sk-ant-one');
+
+    await store.setConfig(cfg('openai'));
+    await store.setKey('sk-openai-two');
+    expect(await store.getKey()).toBe('sk-openai-two');
+
+    await store.setConfig(cfg('anthropic'));
+    expect(await store.getKey()).toBe('sk-ant-one');
+  });
+
+  it('reports configured against the active provider only', async () => {
+    const store = new AiConfigStore(fakeSecrets(), fakeMemento());
+    await store.setConfig(cfg('anthropic'));
+    await store.setKey('sk-ant-one');
+    expect(await store.isConfigured()).toBe(true);
+
+    await store.setConfig(cfg('openai'));
+    expect(await store.isConfigured()).toBe(false);
+  });
+
+  it('lists which providers hold a key', async () => {
+    const store = new AiConfigStore(fakeSecrets(), fakeMemento());
+    await store.setConfig(cfg('openai'));
+    await store.setKey('sk-openai-two');
+    expect(await store.configuredProviders()).toEqual(['openai']);
+  });
+
+  it('clearAllKeys removes every key, not just the active one', async () => {
+    const store = new AiConfigStore(fakeSecrets(), fakeMemento());
+    await store.setConfig(cfg('anthropic'));
+    await store.setKey('sk-ant-one');
+    await store.setConfig(cfg('openai'));
+    await store.setKey('sk-openai-two');
+
+    await store.clearAllKeys();
+
+    expect(await store.configuredProviders()).toEqual([]);
+    expect(await store.getKey()).toBeUndefined();
   });
 });

@@ -7,10 +7,10 @@ import { buildActionRequest, isActionKind, CHAT_SYSTEM } from './prompts';
 import { planChatTurn, type ChatTurn } from './chatContext';
 import { planDocumentSummary, type DocumentPlan } from './documentPlan';
 import { runDocumentSummary } from './documentRun';
-import { CHAT_HISTORY_BUDGET_TOKENS, CHAT_SECTION_BUDGET_TOKENS, MAP_STEP_BUDGET_TOKENS, MAX_MAP_STEPS } from './types';
+import { CHAT_HISTORY_BUDGET_TOKENS, CHAT_SECTION_BUDGET_TOKENS, MAP_STEP_BUDGET_TOKENS, MAX_MAP_STEPS, PROVIDERS } from './types';
 import type { AiActionKind, AiChunk, AiConfig } from './types';
 import { detectSecrets, maskSecrets } from './secretDetection';
-import { estimateTokens, estimateCost } from './costEstimate';
+import { estimateTokens, estimateCost, isPricedModel } from './costEstimate';
 
 const FIRST_SEND_KEY = 'mdeepen.ai.firstSendConfirmed';
 const CHAT_KEY = 'mdeepen.ai.chatConfirmed';
@@ -38,22 +38,36 @@ export class AiController {
 
   async postConfigState(): Promise<void> {
     const cfg = this.store.getConfig();
-    this.post({ type: 'aiConfigState', configured: await this.store.isConfigured(), provider: cfg.provider, model: cfg.model });
+    this.post({
+      type: 'aiConfigState',
+      configured: await this.store.isConfigured(),
+      provider: cfg.provider,
+      model: cfg.model,
+      configuredProviders: await this.store.configuredProviders(),
+    });
   }
 
   async handle(msg: WebviewToHost): Promise<void> {
     switch (msg.type) {
       case 'aiConfigRequest': await this.postConfigState(); break;
-      case 'aiSaveConfig':
+      case 'aiSaveConfig': {
+        // Consent is about where content goes. Changing provider revokes it; changing the model
+        // or the token cap does not, because that would be friction with no privacy meaning.
+        const previous = this.store.getConfig().provider;
         await this.store.setConfig(msg.config);
+        if (msg.config.provider !== previous) {
+          await this.workspaceState.update(FIRST_SEND_KEY, false);
+          await this.workspaceState.update(CHAT_KEY, false);
+        }
         await this.postConfigState();
         break;
+      }
       case 'aiClearKey':
         // Disconnecting is a privacy action: drop anything in flight, forget the key, and
         // revoke every consent, so a future key has to be confirmed again for each kind of
         // send. Leaving one standing would let a new key inherit permission it never had.
         this.dispose();
-        await this.store.clearKey();
+        await this.store.clearAllKeys();
         await this.workspaceState.update(FIRST_SEND_KEY, false);
         await this.workspaceState.update(CHAT_KEY, false);
         await this.postConfigState();
@@ -68,6 +82,25 @@ export class AiController {
         if (!key) { this.post({ type: 'aiConnectionResult', ok: false, ms: 0, error: 'No API key set' }); break; }
         const result = await createProvider(this.store.getConfig(), key).testConnection();
         this.post({ type: 'aiConnectionResult', ...result });
+        break;
+      }
+      case 'aiListModels': {
+        const cfg = this.store.getConfig();
+        const key = await this.store.getKey();
+        if (!key) {
+          // Listing needs a key. Saying so beats an empty list, which reads as 'none available'.
+          this.post({ type: 'aiModelList', provider: cfg.provider, models: [], error: 'Add an API key for this provider first.' });
+          break;
+        }
+        try {
+          const models = await createProvider(cfg, key).listModels();
+          this.post({ type: 'aiModelList', provider: cfg.provider, models });
+        } catch (err) {
+          this.post({
+            type: 'aiModelList', provider: cfg.provider, models: [],
+            error: err instanceof Error ? err.message : 'Could not list models',
+          });
+        }
         break;
       }
       case 'aiAction': await this.startAction(msg); break;
@@ -237,13 +270,15 @@ export class AiController {
       type: 'aiConfirmNeeded',
       summary: {
         fileName: this.getFileName(),
+        provider: (PROVIDERS[cfg.provider] ?? PROVIDERS.anthropic).label,
+        pricedModel: isPricedModel(cfg.provider, cfg.model),
         sectionTitle: facts.sectionTitle,
         scope: facts.scope,
         sectionCount: facts.sectionCount,
         truncated: facts.truncated,
         model: cfg.model,
         estTokens: facts.estTokens,
-        estCost: estimateCost(facts.estTokens, cfg.model),
+        estCost: estimateCost(facts.estTokens, cfg.provider, cfg.model),
       },
       secrets: { label: count ? `${count} possible secret${count > 1 ? 's' : ''} detected` : '', count },
     });

@@ -20,17 +20,57 @@ export interface ConnectionResult {
 
 export interface AiProvider {
   generate(request: AiRequest, signal: AbortSignal): AsyncIterable<AiChunk>;
+  /** What this provider currently offers. The list is shown whole rather than filtered: a
+   *  `gpt-*` rule would be the same guess as a hardcoded list, ageing the same way, hidden. */
+  listModels(): Promise<string[]>;
   testConnection(): Promise<ConnectionResult>;
 }
 
-export interface AiConfig {
-  provider: 'anthropic';
-  model: string;
-  maxTokens: number;
+export type ProviderId = 'anthropic' | 'openai';
+
+export interface ProviderMeta {
+  label: string;
+  secretKey: string;
+  models: readonly string[];
+  defaultModel: string;
+  /** USD per 1M input tokens. A model may be absent: the estimate then reports the cost as
+   *  unknown rather than inventing a number. */
+  inputPricePerM: Record<string, number>;
+  /** Undefined means the SDK's own default. Set it to reach an OpenAI-compatible runtime. */
+  defaultBaseUrl?: string;
 }
 
-export const DEFAULT_AI_CONFIG: AiConfig = { provider: 'anthropic', model: 'claude-opus-4-8', maxTokens: 4096 };
-export const AI_MODELS = ['claude-opus-4-8', 'claude-sonnet-5', 'claude-haiku-4-5'] as const;
+export interface AiConfig {
+  provider: ProviderId;
+  model: string;
+  maxTokens: number;
+  baseUrl?: string;
+}
+
+export const PROVIDERS: Record<ProviderId, ProviderMeta> = {
+  anthropic: {
+    label: 'Anthropic',
+    secretKey: 'mdeepen.anthropic.apiKey',
+    models: ['claude-opus-4-8', 'claude-sonnet-5', 'claude-haiku-4-5'],
+    defaultModel: 'claude-opus-4-8',
+    inputPricePerM: { 'claude-opus-4-8': 5, 'claude-sonnet-5': 3, 'claude-haiku-4-5': 1 },
+  },
+  openai: {
+    label: 'OpenAI',
+    secretKey: 'mdeepen.openai.apiKey',
+    // Curated from the account's own /v1/models listing on 2026-08-23. Prices are not filled in:
+    // none were looked up, and an invented figure would be shown to the user as a cost.
+    models: ['gpt-5.5', 'gpt-5.4-mini', 'gpt-5.4-nano', 'gpt-5.3-chat-latest', 'gpt-4o-mini'],
+    defaultModel: 'gpt-5.5',
+    inputPricePerM: {},
+  },
+};
+
+export const DEFAULT_AI_CONFIG: AiConfig = {
+  provider: 'anthropic',
+  model: PROVIDERS.anthropic.defaultModel,
+  maxTokens: 4096,
+};
 
 export type AiActionKind =
   | 'summarize' | 'explain' | 'explainSimply' | 'keyTerms' | 'example'

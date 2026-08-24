@@ -46,10 +46,11 @@ Open any `.md` file and run **MDeepen: Open in Markdown Intelligence Reader**
 Optional, off until you configure it, and designed so that you always know what
 leaves your machine.
 
-- **Bring your own key.** Configure a remote Anthropic provider from the AI panel
-  or the `MDeepen: Configure AI…` command. The key is stored in the VS Code secret
-  store — never in `settings.json`, never in a workspace file, never in your
-  Markdown.
+- **Bring your own key.** Choose Anthropic or OpenAI and configure it from the AI panel or the
+  `MDeepen: Configure AI…` command. Each provider keeps its own key in the VS Code secret
+  store, so switching back and forth costs nothing — never in `settings.json`, never in a
+  workspace file, never in your Markdown. The model list can be refreshed from the provider,
+  and any model id can be typed by hand.
 - **Nothing is sent without your say-so.** The first remote send in a workspace
   opens a confirmation dialog showing the file and section, the model, and a token
   and cost estimate computed locally — producing it makes no network call.

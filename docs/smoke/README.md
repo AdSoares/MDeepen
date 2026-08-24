@@ -14,6 +14,8 @@ regenerating the material is both wasteful and a way to quietly change what is b
 `smoke-2.4.md` is meant to be copied before use, or discarded afterwards and restored with
 `git checkout`. Every other file here is read-only in practice.
 
-**Slice 2.4's smoke has not been run.** See the plan at
-`docs/superpowers/plans/2026-08-21-mdeepen-slice2.4-diagrams.md`, Task 8 Step 6, for what
-that leaves unverified.
+**Neither Slice 2.4's nor Slice 2.5's smoke has been run.** See the plan at
+`docs/superpowers/plans/2026-08-21-mdeepen-slice2.4-diagrams.md` and
+`docs/superpowers/plans/2026-08-21-mdeepen-slice2.5-openai-provider.md`, Task 8 Step 6 in each,
+for what that leaves unverified. The 2.5 checklist lives in its plan; it needs a key for both
+providers and has no separate document.
