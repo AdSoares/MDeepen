@@ -1291,7 +1291,23 @@ git add package.json README.md CHANGELOG.md
 git commit -m "chore: release 0.7.0 with a second provider"
 ```
 
-- [ ] **Step 6: Human smoke — this step belongs to the user, not the implementer**
+- [ ] **Step 6: Human smoke — this step belongs to the user, not the implementer** — **DEFERRED 2026-08-24.**
+
+> **Not run**, at the user's direction, as in Slice 2.4. The checkbox stays open. Two consecutive
+> slices now ship with their integration behaviour unverified.
+>
+> **What ships unverified here: no OpenAI request has ever been made.** `toOpenAiRequest` is unit
+> tested, but everything downstream of it is an assumption about the SDK — that a streamed chunk
+> carries text at `choices[0].delta.content`, that `usage` arrives on the final chunk when
+> `include_usage` is set, and that `models.list()` returns `{ data: [{ id }] }`. The same is true
+> of the `listModels()` just added to `AnthropicProvider`.
+>
+> **One thing here is not an assumption:** `max_completion_tokens` was confirmed empirically on
+> 2026-08-23 — `max_tokens` returns 400 against this account's models.
+>
+> The checks that would close the gap are 3, 4, 9, 16 and 17 of the table above. Checks 1, 2, 5,
+> 6, 7, 8 and 12 cover behaviour that unit tests already pin, and matter less.
+
 
 Needs a real key for **both** providers. Reload the Extension Development Host first.
 
