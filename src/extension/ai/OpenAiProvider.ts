@@ -2,14 +2,17 @@ import OpenAI from 'openai';
 import type { AiChunk, AiProvider, AiRequest, ConnectionResult } from './types';
 import { classifyError } from './errorMap';
 import { toOpenAiRequest } from './openAiRequest';
+import type { OpenAiClientLike } from './sdkShapes';
 
 export class OpenAiProvider implements AiProvider {
-  private readonly client: OpenAI;
+  private readonly client: OpenAiClientLike;
 
-  constructor(apiKey: string, private readonly model: string, baseURL?: string) {
+  /** `client` exists so tests can supply a fake shaped like the slice of the SDK we use. In
+   *  production it is always the real one. */
+  constructor(apiKey: string, private readonly model: string, baseURL?: string, client?: OpenAiClientLike) {
     // baseURL is what makes an OpenAI-compatible local runtime reachable later without a new
     // provider. Undefined means the SDK's own default.
-    this.client = new OpenAI({ apiKey, ...(baseURL ? { baseURL } : {}) });
+    this.client = client ?? (new OpenAI({ apiKey, ...(baseURL ? { baseURL } : {}) }) as unknown as OpenAiClientLike);
   }
 
   async *generate(request: AiRequest, signal: AbortSignal): AsyncIterable<AiChunk> {
@@ -18,7 +21,8 @@ export class OpenAiProvider implements AiProvider {
       let inputTokens = 0;
       let outputTokens = 0;
       for await (const chunk of stream) {
-        const text = chunk.choices[0]?.delta?.content;
+        // A usage-only chunk carries no choices at all; indexing it directly would throw.
+        const text = chunk.choices?.[0]?.delta?.content;
         if (text) yield { type: 'text', text };
         if (chunk.usage) {
           inputTokens = chunk.usage.prompt_tokens;

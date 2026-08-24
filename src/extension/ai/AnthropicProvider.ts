@@ -1,12 +1,15 @@
 import Anthropic from '@anthropic-ai/sdk';
 import type { AiChunk, AiProvider, AiRequest, ConnectionResult } from './types';
 import { classifyError } from './errorMap';
+import type { AnthropicClientLike } from './sdkShapes';
 
 export class AnthropicProvider implements AiProvider {
-  private readonly client: Anthropic;
+  private readonly client: AnthropicClientLike;
 
-  constructor(apiKey: string, private readonly model: string) {
-    this.client = new Anthropic({ apiKey });
+  /** `client` exists so tests can supply a fake shaped like the slice of the SDK we use. In
+   *  production it is always the real one. */
+  constructor(apiKey: string, private readonly model: string, client?: AnthropicClientLike) {
+    this.client = client ?? (new Anthropic({ apiKey }) as unknown as AnthropicClientLike);
   }
 
   async *generate(request: AiRequest, signal: AbortSignal): AsyncIterable<AiChunk> {
@@ -21,7 +24,7 @@ export class AnthropicProvider implements AiProvider {
         { signal },
       );
       for await (const event of stream) {
-        if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
+        if (event.type === 'content_block_delta' && event.delta?.type === 'text_delta' && event.delta.text) {
           yield { type: 'text', text: event.delta.text };
         }
       }
