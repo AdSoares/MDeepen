@@ -4,7 +4,7 @@ import { sectionize } from './parser/sectionize';
 import { classifyLink, reconcileIndex } from './linkAndReconcile';
 import { DocStateStore, UiStateStore } from './state/positionStore';
 import { remapReadIds } from './readState';
-import { buildDiagramBlock, locateSection } from './diagramInsert';
+import { planDiagramInsert } from './diagramInsert';
 import { AiController } from './ai/AiController';
 import type { AiConfigStore } from './ai/AiConfigStore';
 import type { AiActionKind } from './ai/types';
@@ -127,40 +127,22 @@ export class ReaderPanel {
 
 
   /**
-   * Writes a diagram into the document. The section is relocated by title and level against the
-   * live text, never by the stored id — that id is a line number, and the file may have changed
-   * since the reader last parsed it. A diagram landing in the wrong section of a file someone
-   * maintains is worse than a refusal.
+   * Writes a diagram into the document. Every judgement — relocating the section by title and
+   * level, validating the source, choosing the line — lives in planDiagramInsert, which is pure
+   * and tested. What is left here is the effect: read, apply one edit, reply.
    */
   private async insertDiagram(msg: Extract<WebviewToHost, { type: 'insertDiagram' }>): Promise<void> {
     const reply = (ok: boolean, extra: { line?: number; error?: string } = {}) =>
       this.post({ type: 'diagramInserted', entryIndex: msg.entryIndex, ok, ...extra });
 
-    const code = typeof msg.code === 'string' ? msg.code.trim() : '';
-    if (!code || code.length > 20_000) return reply(false, { error: 'The diagram source is empty or too large.' });
-    if (!Number.isInteger(msg.sectionLevel) || msg.sectionLevel < 0 || msg.sectionLevel > 6) {
-      // Never return without replying: the entry is waiting on this result to stop showing a
-      // pending insert.
-      return reply(false, { error: 'That section could not be identified.' });
-    }
-
     const doc = await vscode.workspace.openTextDocument(this.uri);
-    const { pages } = sectionize(doc.getText(), this.level);
-    const found = locateSection(pages, msg.sectionTitle, msg.sectionLevel);
+    const plan = planDiagramInsert(doc.getText(), this.level, msg);
+    if (!plan.ok) return reply(false, { error: plan.error });
 
-    if ('error' in found) {
-      return reply(false, {
-        error: found.error === 'missing'
-          ? `The section “${msg.sectionTitle}” is no longer in this document. Refresh the reader and try again.`
-          : `More than one section is called “${msg.sectionTitle}”. Refresh the reader and insert from a unique section.`,
-      });
-    }
-
-    const line = Math.min(found.endLine + 1, doc.lineCount);
     const edit = new vscode.WorkspaceEdit();
-    edit.insert(this.uri, new vscode.Position(line, 0), buildDiagramBlock(code));
+    edit.insert(this.uri, new vscode.Position(plan.insertAt, 0), plan.block);
     const ok = await vscode.workspace.applyEdit(edit);
-    reply(ok, ok ? { line: line + 1 } : { error: 'The edit could not be applied.' });
+    reply(ok, ok ? { line: plan.displayLine } : { error: 'The edit could not be applied.' });
   }
 
   private async onMessage(msg: WebviewToHost): Promise<void> {
