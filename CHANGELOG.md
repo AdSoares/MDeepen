@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.1] - 2026-08-25
+
+### Fixed
+
+- The OpenAI provider failed on the last chunk of every successful request. The chunk that
+  carries token usage has no `choices` array at all, and the code indexed it directly, so a
+  request that had streamed perfectly ended as a `TypeError`. This broke the provider the 0.7.0
+  release had just introduced.
+- The Anthropic provider read `event.delta.type` without guarding a delta that may be absent. No
+  failure was observed, but the same class of defect was there.
+
+### Changed
+
+- Both providers now depend on a narrow declaration of the part of each SDK this extension uses,
+  and accept a fake of it in tests. That declaration is what found the defect above: writing down
+  honestly that `choices` is optional turned a runtime error into a compile error.
+- The diagram insertion decision moved into a pure function, so relocating a section, refusing an
+  ambiguous one and choosing the line are covered by tests rather than by inspection.
+
 ## [0.7.0] - 2026-08-23
 
 ### Added
@@ -202,7 +221,8 @@ First AI slice. The reader itself is unchanged and still works with no API key.
 - Reading and focus modes, adjustable font size, column width, line spacing, and
   theme.
 
-[Unreleased]: https://github.com/AdSoares/MDeepen/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/AdSoares/MDeepen/compare/v0.7.1...HEAD
+[0.7.1]: https://github.com/AdSoares/MDeepen/releases/tag/v0.7.1
 [0.7.0]: https://github.com/AdSoares/MDeepen/releases/tag/v0.7.0
 [0.6.0]: https://github.com/AdSoares/MDeepen/releases/tag/v0.6.0
 [0.5.0]: https://github.com/AdSoares/MDeepen/releases/tag/v0.5.0
