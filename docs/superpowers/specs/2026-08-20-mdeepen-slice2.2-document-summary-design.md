@@ -259,7 +259,7 @@ in 2.1. The 150-test baseline stays green throughout.
 | Chat, turn history, follow-ups (FR-MVP-020…023) | Slice 2.3 |
 | Retry and backoff | Designed once in 2.3, with two consumers |
 | Mermaid generation (FR-MVP-024…027) | Slice 2.4 |
-| Local provider (FR-MVP-033) | Slice 2.5 |
+| Local provider (FR-MVP-033) | Deferred indefinitely on 2026-08-25 — see `docs/BACKLOG.md`. Slice 2.5 became a second remote provider instead |
 | Caching map outputs between runs | Two runs of different styles over an unchanged document would benefit; no evidence yet that anyone does that twice |
 | Persisted history | Explicitly out of the MVP per FR-MVP-035 |
 
