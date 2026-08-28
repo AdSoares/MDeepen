@@ -11,6 +11,7 @@ import { AiConfirm } from './panels/AiConfirm';
 import { ViewControls } from './panels/ViewControls';
 import { Resizer } from './panels/Resizer';
 import { findBySlug } from './anchors';
+import { breadcrumbFor } from './breadcrumb';
 import { SelectionToolbar } from './panels/SelectionToolbar';
 import { isUsableSelectionText, selectionText, placeToolbar, type Placement } from './selection';
 import type { AiActionKind } from '../extension/ai/types';
@@ -200,6 +201,8 @@ export function App() {
           onPrev={() => setIndex(s.activeIndex - 1)}
           onNext={() => setIndex(s.activeIndex + 1)}
           onAnchor={(fragment: string) => { const t = findBySlug(store.get().outline, fragment); if (t) setIndex(t.pageIndex); }}
+          crumbs={breadcrumbFor(s.outline, s.activeIndex)}
+          onCrumb={(pageIndex) => setIndex(pageIndex)}
         />
         {s.panels.aiVisible && !s.panels.focus && (
           <Resizer kind="ai" currentWidth={s.panels.aiWidth} onResize={(w) => { store.setPanels({ aiWidth: w }); schedulePersist(); }} />
