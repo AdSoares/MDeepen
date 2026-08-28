@@ -30,7 +30,7 @@ export type WebviewToHost =
   | { type: 'refresh' }
   | { type: 'setPaginationLevel'; level: number }
   | { type: 'aiAction'; action: AiActionKind; scope: AiScope; id?: string; text?: string }
-  | { type: 'aiChat'; question: string; history: { role: 'user' | 'assistant'; text: string }[] }
+  | { type: 'aiChat'; question: string; history: { role: 'user' | 'assistant'; text: string }[]; selection?: string }
   // Deliberately not prefixed with 'ai': ReaderPanel forwards every ai* message to AiController,
   // and this one must reach the panel, which owns the document.
   | { type: 'insertDiagram'; entryIndex: number; sectionId: string; sectionTitle: string; sectionLevel: number; code: string }

@@ -234,9 +234,11 @@ export function App() {
                 m.kind === 'chat'
                   ? [{ role: 'user' as const, text: m.question }, { role: 'assistant' as const, text: m.text }]
                   : []);
-              store.aiStreamStart({ kind: 'chat', question: q, sources: [], droppedTurns: 0 });
+              const excerpt = st.ai.askAbout;
+              store.aiAskAbout(undefined);
+              store.aiStreamStart({ kind: 'chat', question: q, sources: [], droppedTurns: 0, excerpt });
               store.setPanels({ aiVisible: true });
-              post({ type: 'aiChat', question: q, history });
+              post({ type: 'aiChat', question: q, history, selection: excerpt });
             }}
             onDiagramType={(action) => {
               const st = store.get();
@@ -249,6 +251,7 @@ export function App() {
               });
               post({ type: 'aiAction', action, scope: 'selection', id: draft.sectionId, text: draft.text });
             }}
+            onClearAskAbout={() => store.aiAskAbout(undefined)}
             onDiagramCancel={() => store.aiDiagramDraft(undefined)}
             onEditDiagram={(index, source) => store.aiEditDiagram(index, source)}
             onInsertDiagram={(index) => {
@@ -267,6 +270,12 @@ export function App() {
         <SelectionToolbar
           placement={selection.placement}
           onDismiss={() => setSelection(null)}
+          onAsk={() => {
+            store.aiAskAbout(selection.text);
+            store.setPanels({ aiVisible: true });
+            setSelection(null);
+            window.setTimeout(() => document.querySelector<HTMLTextAreaElement>('.md-ask-input')?.focus(), 0);
+          }}
           onDiagram={() => {
             const st = store.get();
             const target = st.pages[st.activeIndex];

@@ -12,6 +12,7 @@ interface Props {
   onCite: (pageIndex: number) => void;
   onAction: (action: AiActionKind, scope: 'section' | 'document') => void;
   onAsk: (question: string) => void;
+  onClearAskAbout: () => void;
   onDiagramType: (action: AiActionKind) => void;
   onDiagramCancel: () => void;
   onEditDiagram: (index: number, source: string) => void;
@@ -23,7 +24,7 @@ interface Props {
 
 const GATED = ['Summaries', 'Chat with the document', 'Generated diagrams'];
 
-export function AiPanel({ ai, activePageId, onConfigure, onCite, onAction, onAsk, onDiagramType, onDiagramCancel, onEditDiagram, onInsertDiagram, onStop, onDelete, onClear }: Props) {
+export function AiPanel({ ai, activePageId, onConfigure, onCite, onAction, onAsk, onClearAskAbout, onDiagramType, onDiagramCancel, onEditDiagram, onInsertDiagram, onStop, onDelete, onClear }: Props) {
   const [more, setMore] = useState(false);
   const [question, setQuestion] = useState('');
 
@@ -143,6 +144,7 @@ export function AiPanel({ ai, activePageId, onConfigure, onCite, onAction, onAsk
           ) : m.kind === 'chat' ? (
             <>
               <div class="md-ai-question">{m.question}</div>
+              {m.excerpt && <blockquote class="md-ai-excerpt">{m.excerpt}</blockquote>}
               <div class="md-ai-msg-text">{m.text}</div>
               {m.droppedTurns > 0 && (
                 <p class="md-ai-truncated">Earlier turns trimmed to fit ({m.droppedTurns})</p>
@@ -184,6 +186,13 @@ export function AiPanel({ ai, activePageId, onConfigure, onCite, onAction, onAsk
         </div>
       ))}
 
+      {ai.askAbout && (
+        <div class="md-ask-excerpt">
+          <blockquote class="md-ai-excerpt">{ai.askAbout}</blockquote>
+          <button class="md-btn" aria-label="Drop the selected excerpt" onClick={onClearAskAbout}>&times;</button>
+        </div>
+      )}
+
       <form class="md-ask" onSubmit={(e) => {
         e.preventDefault();
         const q = question.trim();
@@ -196,7 +205,7 @@ export function AiPanel({ ai, activePageId, onConfigure, onCite, onAction, onAsk
           value={question}
           maxLength={4000}
           rows={2}
-          placeholder="Ask about this document"
+          placeholder={ai.askAbout ? "Ask about the selected text" : "Ask about this document"}
           aria-label="Ask about this document"
           disabled={ai.streaming}
           onInput={(e) => setQuestion((e.target as HTMLTextAreaElement).value)}

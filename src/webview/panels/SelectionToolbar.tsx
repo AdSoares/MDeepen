@@ -10,10 +10,11 @@ interface Props {
   placement: Placement;
   onAction: (action: AiActionKind) => void;
   onDiagram: () => void;
+  onAsk: () => void;
   onDismiss: () => void;
 }
 
-export function SelectionToolbar({ placement, onAction, onDiagram, onDismiss }: Props) {
+export function SelectionToolbar({ placement, onAction, onDiagram, onAsk, onDismiss }: Props) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -44,6 +45,7 @@ export function SelectionToolbar({ placement, onAction, onDiagram, onDismiss }: 
             </button>
           ))}
           <button class="md-btn" role="menuitem" onClick={onDiagram}>Diagram</button>
+          <button class="md-btn" role="menuitem" onClick={onAsk}>Ask about this</button>
         </div>
       )}
     </div>

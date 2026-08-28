@@ -220,6 +220,9 @@ export class AiController {
     if (history.length > MAX_HISTORY_TURNS) return;
     if (history.some((t) => typeof t.text !== 'string' || t.text.length > MAX_HISTORY_TURN_CHARS)) return;
 
+    const selection = typeof msg.selection === 'string' ? msg.selection : undefined;
+    if (selection !== undefined && selection.length > MAX_TEXT_CHARS) return;
+
     const pages = this.getPages();
     if (pages.length === 0) return;
 
@@ -227,6 +230,7 @@ export class AiController {
     const plan = planChatTurn(
       question, history, pages, this.getActiveIndex(), { fileName: this.getFileName() },
       { sectionTokens: CHAT_SECTION_BUDGET_TOKENS, historyTokens: CHAT_HISTORY_BUDGET_TOKENS },
+      selection,
     );
 
     // What is scanned and masked is what is sent: the chosen sections and the history alike.

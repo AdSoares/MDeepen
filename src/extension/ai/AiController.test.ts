@@ -558,3 +558,41 @@ describe('listing models', () => {
     expect(rec.calls).toHaveLength(0);
   });
 });
+
+describe('asking about a selection', () => {
+  const BACKOFF = { id: 'p2', title: 'Backoff', level: 2, startLine: 3, endLine: 5, content: '## Backoff', wordCount: 2 };
+
+  it('sends the selected excerpt alongside the question', async () => {
+    const ws = fakeMemento();
+    await ws.update('mdeepen.ai.chatConfirmed', true);
+    const { c } = makeController(ws, [BACKOFF]);
+    rec.chunks.push({ type: 'done', usage: { inputTokens: 1, outputTokens: 1 } });
+
+    await c.handle({ type: 'aiChat', question: 'why?', history: [], selection: 'capped at eight seconds' });
+
+    expect(rec.calls).toHaveLength(1);
+    expect(rec.calls[0].text).toContain('capped at eight seconds');
+    expect(rec.calls[0].text).toContain('Selected excerpt');
+  });
+
+  it('behaves exactly as before when no excerpt is sent', async () => {
+    const ws = fakeMemento();
+    await ws.update('mdeepen.ai.chatConfirmed', true);
+    const { c } = makeController(ws, [BACKOFF]);
+    rec.chunks.push({ type: 'done', usage: { inputTokens: 1, outputTokens: 1 } });
+
+    await c.handle({ type: 'aiChat', question: 'why?', history: [] });
+
+    expect(rec.calls[0].text).not.toContain('Selected excerpt');
+  });
+
+  it('ignores an excerpt above the payload cap', async () => {
+    const ws = fakeMemento();
+    await ws.update('mdeepen.ai.chatConfirmed', true);
+    const { c } = makeController(ws, [BACKOFF]);
+
+    await c.handle({ type: 'aiChat', question: 'why?', history: [], selection: 'x'.repeat(200_001) });
+
+    expect(rec.calls).toHaveLength(0);
+  });
+});
