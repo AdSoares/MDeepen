@@ -360,3 +360,25 @@ describe('diagram entries', () => {
     expect(s.get().ai.draft).toBeUndefined();
   });
 });
+
+describe('asking about a selection', () => {
+  it('holds a captured excerpt and lets it be dropped', () => {
+    const s = createReaderState();
+    s.aiAskAbout('we retry three times');
+    expect(s.get().ai.askAbout).toBe('we retry three times');
+    s.aiAskAbout(undefined);
+    expect(s.get().ai.askAbout).toBeUndefined();
+  });
+
+  it('keeps the excerpt on the finished chat turn', () => {
+    const s = createReaderState();
+    s.aiStreamStart({ kind: 'chat', question: 'why?', sources: [], droppedTurns: 0, excerpt: 'we retry three times' });
+    s.aiChunk('because of transient failures');
+    s.aiDone();
+
+    const [m] = s.get().ai.messages;
+    if (m.kind !== 'chat') throw new Error('expected a chat message');
+    expect(m.excerpt).toBe('we retry three times');
+    expect(m.question).toBe('why?');
+  });
+});

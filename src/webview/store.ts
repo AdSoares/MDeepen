@@ -10,7 +10,7 @@ export interface AiSource {
 
 export type AiPending =
   | { kind: 'action'; action: AiActionKind; scope: AiScope; sectionTitle: string; pageIndex: number; excerpt?: string; truncated?: string[] }
-  | { kind: 'chat'; question: string; sources: AiSource[]; droppedTurns: number }
+  | { kind: 'chat'; question: string; sources: AiSource[]; droppedTurns: number; excerpt?: string }
   | { kind: 'diagram'; diagramType: DiagramKind; sectionId: string; sectionTitle: string; sectionLevel: number; pageIndex: number; inserted?: { line: number } | { error: string } };
 
 /** An entry is a pending run plus the text that arrived, which is exactly how finalizeStream
@@ -28,6 +28,8 @@ export interface AiState {
   streamText: string;
   pending: AiPending;
   progress?: { done: number; total: number };
+  /** A selection captured by the toolbar, waiting for a question to be typed about it. */
+  askAbout?: string;
   /** A selection captured by the toolbar, waiting for the user to pick a diagram type. */
   draft?: { text: string; sectionId: string; sectionTitle: string; sectionLevel: number; pageIndex: number };
   messages: AiMessage[];
@@ -131,6 +133,10 @@ export function createReaderState() {
     aiSources(sources: AiSource[], droppedTurns: number) {
       if (state.ai.pending.kind !== 'chat') return;
       state = { ...state, ai: { ...state.ai, pending: { ...state.ai.pending, sources, droppedTurns } } };
+      emit();
+    },
+    aiAskAbout(text: string | undefined) {
+      state = { ...state, ai: { ...state.ai, askAbout: text } };
       emit();
     },
     aiDiagramDraft(draft: AiState['draft']) {

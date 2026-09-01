@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-09-01
+
+### Added
+
+- **Ask about this** in the selection toolbar: the excerpt is captured, shown above the question
+  field, and answered as a chat turn that keeps the quote. The excerpt claims its share of the
+  context before the ranking spends any, because you pointed at it on purpose.
+- A breadcrumb of the headings a section sits under, above the reading pane. Every level is
+  clickable, and it disappears for a top-level section rather than showing an empty trail.
+
+### Changed
+
+- Focus mode is now a contributed keybinding rather than a listener inside the reader. Every
+  shortcut the extension offers can therefore be remapped from Keyboard Shortcuts, and none of
+  them can be outranked by the workbench.
+
+### Note
+
+- This closes every functional requirement of the MVP except completion criterion 10, the local
+  provider, which was deferred by decision — see `docs/BACKLOG.md`.
+
 ## [0.7.1] - 2026-08-25
 
 ### Fixed
@@ -221,7 +242,8 @@ First AI slice. The reader itself is unchanged and still works with no API key.
 - Reading and focus modes, adjustable font size, column width, line spacing, and
   theme.
 
-[Unreleased]: https://github.com/AdSoares/MDeepen/compare/v0.7.1...HEAD
+[Unreleased]: https://github.com/AdSoares/MDeepen/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/AdSoares/MDeepen/releases/tag/v0.8.0
 [0.7.1]: https://github.com/AdSoares/MDeepen/releases/tag/v0.7.1
 [0.7.0]: https://github.com/AdSoares/MDeepen/releases/tag/v0.7.0
 [0.6.0]: https://github.com/AdSoares/MDeepen/releases/tag/v0.6.0

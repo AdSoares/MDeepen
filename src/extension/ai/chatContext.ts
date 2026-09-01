@@ -92,7 +92,18 @@ export function planChatTurn(
   activeIndex: number,
   ctx: { fileName: string },
   budget: { sectionTokens: number; historyTokens: number },
+  selection?: string,
 ): ChatPlan {
+  // The reader pointed at this text explicitly, so it claims its share before the heuristic
+  // spends any. Too large to fit is truncated, never dropped: dropping it would answer a
+  // different question from the one asked.
+  const excerpt = selection?.trim()
+    ? selection.trim().slice(0, budget.sectionTokens * 4)
+    : undefined;
+  const sectionBudget = excerpt
+    ? Math.max(0, budget.sectionTokens - estimateTokens(excerpt))
+    : budget.sectionTokens;
+
   const chosen: ScoredSection[] = [];
   let spent = 0;
   for (const section of rankSections(question, pages, activeIndex)) {
@@ -100,14 +111,14 @@ export function planChatTurn(
     if (chosen.length >= MAX_CHAT_SECTIONS) break;
     const tokens = estimateTokens(pages[section.pageIndex].content);
     // The pinned section is always included; it is truncated below if it alone overruns.
-    if (!section.pinned && spent + tokens > budget.sectionTokens) break;
+    if (!section.pinned && spent + tokens > sectionBudget) break;
     chosen.push(section);
     spent += tokens;
   }
   chosen.sort((a, b) => a.pageIndex - b.pageIndex);
 
   const blocks = chosen.map((s) => {
-    const content = pages[s.pageIndex].content.slice(0, budget.sectionTokens * 4);
+    const content = pages[s.pageIndex].content.slice(0, Math.max(1, sectionBudget) * 4);
     return `## ${label(s.pageIndex)} ${s.title}\n\n${content}`;
   });
 
@@ -125,7 +136,7 @@ export function planChatTurn(
       ...kept.map((t) => ({ role: t.role, content: t.text })),
       {
         role: 'user' as const,
-        content: `Sections from "${ctx.fileName}":\n\n${blocks.join('\n\n')}\n\nQuestion: ${question}`,
+        content: `${excerpt ? `Selected excerpt:\n\n${excerpt}\n\n` : ''}Sections from "${ctx.fileName}":\n\n${blocks.join('\n\n')}\n\nQuestion: ${question}`,
       },
     ],
     usedSections: chosen.map((s) => ({ title: s.title, pageIndex: s.pageIndex })),

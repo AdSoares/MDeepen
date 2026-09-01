@@ -4,6 +4,7 @@ import { renderMarkdown } from '../render/markdown';
 import { post } from '../vscodeApi';
 import { classifyLink } from '../../extension/linkAndReconcile';
 import { renderMermaidIn } from '../render/mermaid';
+import type { Crumb } from '../breadcrumb';
 
 interface Props {
   page?: Page;
@@ -14,9 +15,11 @@ interface Props {
   onPrev: () => void;
   onNext: () => void;
   onAnchor: (fragment: string) => void;
+  crumbs: Crumb[];
+  onCrumb: (pageIndex: number) => void;
 }
 
-export function Content({ page, fileName, index, total, focus, onPrev, onNext, onAnchor }: Props) {
+export function Content({ page, fileName, index, total, focus, onPrev, onNext, onAnchor, crumbs, onCrumb }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const prevPageId = useRef<string | undefined>(undefined);
 
@@ -58,7 +61,15 @@ export function Content({ page, fileName, index, total, focus, onPrev, onNext, o
     <div class="mdeepen-content">
       {!focus && (
         <div style={{ height: '34px', display: 'flex', alignItems: 'center', padding: '0 24px', fontSize: '12px', color: 'var(--vscode-descriptionForeground)', borderBottom: '1px solid var(--vscode-panel-border)' }}>
-          {fileName} {page ? `› ${page.title}` : ''}
+          <span>{fileName}</span>
+          {crumbs.map((c) => (
+            <span key={`${c.pageIndex}-${c.title}`}>
+              {' › '}
+              <button class="md-crumb" onClick={() => onCrumb(c.pageIndex)}
+                aria-label={`Go to section ${c.pageIndex + 1}: ${c.title}`}>{c.title}</button>
+            </span>
+          ))}
+          {page ? ` › ${page.title}` : ''}
         </div>
       )}
       <div class="mdeepen-reading" ref={ref} />

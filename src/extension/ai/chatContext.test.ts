@@ -122,3 +122,51 @@ describe('planChatTurn', () => {
     expect(plan.usedSections.length).toBeLessThan(6);
   });
 });
+
+describe('planChatTurn with a selected excerpt', () => {
+  const PAGES = [
+    page('Overview', 'the system handles payments end to end'),
+    page('Retries', 'the system retries a failed call three times with exponential backoff'),
+    page('Storage', 'the system stores records in postgres for seven years'),
+  ];
+  const CTX = { fileName: 'handbook.md' };
+  const BUDGET = { sectionTokens: 6000, historyTokens: 2000 };
+
+  it('puts the excerpt before the sections, since the reader pointed at it', () => {
+    const plan = planChatTurn('why?', [], PAGES, 0, CTX, BUDGET, 'we retry three times');
+    const block = plan.messages[plan.messages.length - 1].content;
+    expect(block.indexOf('we retry three times')).toBeLessThan(block.indexOf('Overview'));
+  });
+
+  it('labels it as a selected excerpt, not as a section', () => {
+    const plan = planChatTurn('why?', [], PAGES, 0, CTX, BUDGET, 'we retry three times');
+    const block = plan.messages[plan.messages.length - 1].content;
+    expect(block).toContain('Selected excerpt');
+  });
+
+  it('still answers when there is no excerpt, exactly as before', () => {
+    const withOut = planChatTurn('retries', [], PAGES, 0, CTX, BUDGET);
+    expect(withOut.messages[withOut.messages.length - 1].content).not.toContain('Selected excerpt');
+    expect(withOut.usedSections.length).toBeGreaterThan(0);
+  });
+
+  it('truncates an excerpt too large for the budget rather than dropping it', () => {
+    const huge = 'x'.repeat(40_000);
+    const plan = planChatTurn('why?', [], PAGES, 0, CTX, { sectionTokens: 1000, historyTokens: 2000 }, huge);
+    const block = plan.messages[plan.messages.length - 1].content;
+    expect(block).toContain('Selected excerpt');
+    expect(block.length).toBeLessThan(huge.length);
+  });
+
+  it('leaves less room for sections once the excerpt has claimed its share', () => {
+    const big = 'y'.repeat(20_000);
+    const withExcerpt = planChatTurn('retries storage', [], PAGES, 0, CTX, { sectionTokens: 5020, historyTokens: 2000 }, big);
+    const without = planChatTurn('retries storage', [], PAGES, 0, CTX, { sectionTokens: 5020, historyTokens: 2000 });
+    expect(withExcerpt.usedSections.length).toBeLessThan(without.usedSections.length);
+  });
+
+  it('keeps the active section pinned even with an excerpt present', () => {
+    const plan = planChatTurn('kubernetes', [], PAGES, 2, CTX, BUDGET, 'some quoted text');
+    expect(plan.usedSections.map((sec) => sec.title)).toContain('Storage');
+  });
+});

@@ -2,7 +2,7 @@
   "name": "mdeepen",
   "displayName": "MDeepen — Markdown Intelligence Reader",
   "description": "Read Markdown, deeper. Paginated, section-based Markdown reader for VS Code.",
-  "version": "0.7.1",
+  "version": "0.8.0",
   "publisher": "codartia",
   "private": true,
   "license": "Apache-2.0",
@@ -77,6 +77,11 @@
       {
         "command": "mdeepen.focusChat",
         "key": "ctrl+alt+a",
+        "when": "activeWebviewPanelId == 'mdeepenReader'"
+      },
+      {
+        "command": "mdeepen.toggleFocusMode",
+        "key": "ctrl+shift+f11",
         "when": "activeWebviewPanelId == 'mdeepenReader'"
       }
     ]

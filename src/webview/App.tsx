@@ -11,6 +11,7 @@ import { AiConfirm } from './panels/AiConfirm';
 import { ViewControls } from './panels/ViewControls';
 import { Resizer } from './panels/Resizer';
 import { findBySlug } from './anchors';
+import { breadcrumbFor } from './breadcrumb';
 import { SelectionToolbar } from './panels/SelectionToolbar';
 import { isUsableSelectionText, selectionText, placeToolbar, type Placement } from './selection';
 import type { AiActionKind } from '../extension/ai/types';
@@ -62,6 +63,7 @@ export function App() {
         store.setPanels({ outlineVisible: true });
         window.setTimeout(() => document.querySelector<HTMLInputElement>('.md-outline-filter')?.focus(), 0);
       }
+      else if (m.type === 'toggleFocus') { store.setPanels({ focus: !store.get().panels.focus }); schedulePersist(); }
       else if (m.type === 'focusChat') {
         store.setPanels({ aiVisible: true });
         window.setTimeout(() => document.querySelector<HTMLTextAreaElement>('.md-ask-input')?.focus(), 0);
@@ -77,11 +79,9 @@ export function App() {
     // Alt+Arrow section navigation is NOT handled here: VS Code resolves those keys as
     // navigateBack / navigateForward before the webview can consume them. They are contributed
     // keybindings in package.json that arrive as 'navigateSection' messages instead.
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'F11' && e.shiftKey && e.ctrlKey) { e.preventDefault(); store.setPanels({ focus: !store.get().panels.focus }); schedulePersist(); }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => { unsub(); window.removeEventListener('keydown', onKey); };
+    // No keydown listener here: every shortcut is a contributed keybinding, so the workbench
+    // cannot outrank it and the user can remap it from Keyboard Shortcuts.
+    return () => { unsub(); };
   }, []);
 
   const s = store.get();
@@ -200,6 +200,8 @@ export function App() {
           onPrev={() => setIndex(s.activeIndex - 1)}
           onNext={() => setIndex(s.activeIndex + 1)}
           onAnchor={(fragment: string) => { const t = findBySlug(store.get().outline, fragment); if (t) setIndex(t.pageIndex); }}
+          crumbs={breadcrumbFor(s.outline, s.activeIndex)}
+          onCrumb={(pageIndex) => setIndex(pageIndex)}
         />
         {s.panels.aiVisible && !s.panels.focus && (
           <Resizer kind="ai" currentWidth={s.panels.aiWidth} onResize={(w) => { store.setPanels({ aiWidth: w }); schedulePersist(); }} />
@@ -231,9 +233,11 @@ export function App() {
                 m.kind === 'chat'
                   ? [{ role: 'user' as const, text: m.question }, { role: 'assistant' as const, text: m.text }]
                   : []);
-              store.aiStreamStart({ kind: 'chat', question: q, sources: [], droppedTurns: 0 });
+              const excerpt = st.ai.askAbout;
+              store.aiAskAbout(undefined);
+              store.aiStreamStart({ kind: 'chat', question: q, sources: [], droppedTurns: 0, excerpt });
               store.setPanels({ aiVisible: true });
-              post({ type: 'aiChat', question: q, history });
+              post({ type: 'aiChat', question: q, history, selection: excerpt });
             }}
             onDiagramType={(action) => {
               const st = store.get();
@@ -246,6 +250,7 @@ export function App() {
               });
               post({ type: 'aiAction', action, scope: 'selection', id: draft.sectionId, text: draft.text });
             }}
+            onClearAskAbout={() => store.aiAskAbout(undefined)}
             onDiagramCancel={() => store.aiDiagramDraft(undefined)}
             onEditDiagram={(index, source) => store.aiEditDiagram(index, source)}
             onInsertDiagram={(index) => {
@@ -264,6 +269,12 @@ export function App() {
         <SelectionToolbar
           placement={selection.placement}
           onDismiss={() => setSelection(null)}
+          onAsk={() => {
+            store.aiAskAbout(selection.text);
+            store.setPanels({ aiVisible: true });
+            setSelection(null);
+            window.setTimeout(() => document.querySelector<HTMLTextAreaElement>('.md-ask-input')?.focus(), 0);
+          }}
           onDiagram={() => {
             const st = store.get();
             const target = st.pages[st.activeIndex];
