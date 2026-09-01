@@ -63,6 +63,7 @@ export function App() {
         store.setPanels({ outlineVisible: true });
         window.setTimeout(() => document.querySelector<HTMLInputElement>('.md-outline-filter')?.focus(), 0);
       }
+      else if (m.type === 'toggleFocus') { store.setPanels({ focus: !store.get().panels.focus }); schedulePersist(); }
       else if (m.type === 'focusChat') {
         store.setPanels({ aiVisible: true });
         window.setTimeout(() => document.querySelector<HTMLTextAreaElement>('.md-ask-input')?.focus(), 0);
@@ -78,11 +79,9 @@ export function App() {
     // Alt+Arrow section navigation is NOT handled here: VS Code resolves those keys as
     // navigateBack / navigateForward before the webview can consume them. They are contributed
     // keybindings in package.json that arrive as 'navigateSection' messages instead.
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'F11' && e.shiftKey && e.ctrlKey) { e.preventDefault(); store.setPanels({ focus: !store.get().panels.focus }); schedulePersist(); }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => { unsub(); window.removeEventListener('keydown', onKey); };
+    // No keydown listener here: every shortcut is a contributed keybinding, so the workbench
+    // cannot outrank it and the user can remap it from Keyboard Shortcuts.
+    return () => { unsub(); };
   }, []);
 
   const s = store.get();

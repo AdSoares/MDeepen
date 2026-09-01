@@ -17,6 +17,7 @@ export type HostToWebview =
   | { type: 'quickAction'; action: AiActionKind }
   | { type: 'focusOutline' }
   | { type: 'focusChat' }
+  | { type: 'toggleFocus' }
   | { type: 'aiProgress'; done: number; total: number }
   | { type: 'aiSources'; sections: { title: string; pageIndex: number }[]; droppedTurns: number }
   | { type: 'diagramInserted'; entryIndex: number; ok: boolean; line?: number; error?: string };
@@ -44,7 +45,7 @@ export type WebviewToHost =
   | { type: 'aiClearKey' }
   | { type: 'aiConfigRequest' };
 
-const HOST_TYPES = new Set(['init', 'sectionsUpdated', 'configChanged', 'aiChunk', 'aiDone', 'aiError', 'aiConfirmNeeded', 'aiConfigState', 'aiConnectionResult', 'aiModelList', 'aiShowConfig', 'navigateSection', 'quickAction', 'focusOutline', 'focusChat', 'aiProgress', 'aiSources', 'diagramInserted']);
+const HOST_TYPES = new Set(['init', 'sectionsUpdated', 'configChanged', 'aiChunk', 'aiDone', 'aiError', 'aiConfirmNeeded', 'aiConfigState', 'aiConnectionResult', 'aiModelList', 'aiShowConfig', 'navigateSection', 'quickAction', 'focusOutline', 'focusChat', 'toggleFocus', 'aiProgress', 'aiSources', 'diagramInserted']);
 const WEBVIEW_TYPES = new Set(['ready', 'activeSectionChanged', 'sectionRead', 'uiStateChanged', 'openLink', 'refresh', 'setPaginationLevel', 'aiAction', 'aiChat', 'insertDiagram', 'aiStop', 'aiConfirmSend', 'aiCancelSend', 'aiTestConnection', 'aiListModels', 'aiSaveConfig', 'aiSaveKey', 'aiClearKey', 'aiConfigRequest']);
 
 export function isHostToWebview(m: unknown): m is HostToWebview {
