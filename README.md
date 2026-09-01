@@ -31,6 +31,8 @@ Open any `.md` file and run **MDeepen: Open in Markdown Intelligence Reader**
   <kbd>Alt</kbd>+<kbd>←</kbd>/<kbd>→</kbd>. A picker sets the heading level (H1–H6).
 - Outline tree with filter, read marks, and section navigation.
   <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>O</kbd> focuses the filter.
+- A breadcrumb above the reading pane showing the headings the section sits under, each one a
+  link back to that part of the document.
 - Reading progress and estimated time; last position remembered per file.
 - Read marks are dwell-based (5s) and persisted per file. Skipping ahead does not
   mark what you skipped, and going back does not unmark.
@@ -72,7 +74,8 @@ leaves your machine.
 - **Ask about the document.** Type a question and MDeepen answers from the file in front of you,
   choosing the relevant sections itself and naming them under the answer, each one a link back to
   that section. The ranking is local: no embeddings, no index, nothing to rebuild when you edit.
-  <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>A</kbd> jumps to the question field.
+  <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>A</kbd> jumps to the question field. Select text and choose
+  **Ask about this** to put that excerpt in front of the question.
 - **Diagrams from a selection.** Select text, choose Diagram, and pick a flowchart, sequence
   diagram, mind map or state diagram. It renders in the panel, the Mermaid source is editable
   and re-renders as you type, and one click inserts it at the end of the section it came from —
