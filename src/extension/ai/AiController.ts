@@ -182,6 +182,8 @@ export class AiController {
     const run = async (masked: boolean) => {
       const key = await this.store.getCredential(cfg);
       if (key === undefined) { this.post({ type: 'aiError', kind: 'auth', message: 'No API key set' }); return; }
+      // The webview only offers sends once configured, but the host does not take its word for it.
+      if (!(await this.store.isConfigured(cfg))) { this.post({ type: 'aiError', kind: 'unknown', message: 'Choose a model first.' }); return; }
       // A second request must not interleave its chunks with a running one.
       this.abort?.abort();
       const abort = new AbortController();
@@ -226,6 +228,8 @@ export class AiController {
     this.pendingRun = async (masked: boolean) => {
       const key = await this.store.getCredential(cfg);
       if (key === undefined) { this.post({ type: 'aiError', kind: 'auth', message: 'No API key set' }); return; }
+      // The webview only offers sends once configured, but the host does not take its word for it.
+      if (!(await this.store.isConfigured(cfg))) { this.post({ type: 'aiError', kind: 'unknown', message: 'Choose a model first.' }); return; }
       this.abort?.abort();
       const abort = new AbortController();
       this.abort = abort;
@@ -273,6 +277,8 @@ export class AiController {
     const run = async (masked: boolean) => {
       const key = await this.store.getCredential(cfg);
       if (key === undefined) { this.post({ type: 'aiError', kind: 'auth', message: 'No API key set' }); return; }
+      // The webview only offers sends once configured, but the host does not take its word for it.
+      if (!(await this.store.isConfigured(cfg))) { this.post({ type: 'aiError', kind: 'unknown', message: 'Choose a model first.' }); return; }
       this.abort?.abort();
       const abort = new AbortController();
       this.abort = abort;

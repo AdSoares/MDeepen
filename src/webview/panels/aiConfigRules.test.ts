@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { canRefreshModels, destinationLine, keyStoredFor } from './aiConfigRules';
+import { canRefreshModels, destinationLine, keyStoredFor, providerButtonTitle } from './aiConfigRules';
 
 describe('keyStoredFor', () => {
   it('answers for the origin typed, not for the provider', () => {
@@ -45,5 +45,28 @@ describe('destinationLine', () => {
 
   it('explains a URL it refuses', () => {
     expect(destinationLine('ftp://x')).toEqual({ ok: false, text: 'Only http and https URLs are supported' });
+  });
+});
+
+describe('providerButtonTitle', () => {
+  const ai = { provider: 'anthropic', configured: true, configuredProviders: ['anthropic'], keyedOrigins: [] as string[] };
+
+  it('counts the endpoints that hold a key', () => {
+    expect(providerButtonTitle('compatible', { ...ai, keyedOrigins: ['https://openrouter.ai'] })).toBe('Keys stored for 1 endpoint');
+    expect(providerButtonTitle('compatible', { ...ai, keyedOrigins: ['https://a.example', 'https://b.example'] })).toBe('Keys stored for 2 endpoints');
+  });
+
+  it('says a keyless endpoint is configured, not that it holds a key', () => {
+    expect(providerButtonTitle('compatible', { ...ai, provider: 'compatible', configured: true, configuredProviders: ['compatible'] }))
+      .toBe('Configured, no key needed');
+  });
+
+  it('says a compatible endpoint is not configured when it is neither keyed nor active', () => {
+    expect(providerButtonTitle('compatible', ai)).toBe('Not configured yet');
+  });
+
+  it('keeps the key wording for the fixed providers', () => {
+    expect(providerButtonTitle('anthropic', ai)).toBe('A key is stored for this provider');
+    expect(providerButtonTitle('openai', ai)).toBe('No key stored yet');
   });
 });

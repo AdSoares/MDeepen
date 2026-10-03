@@ -31,6 +31,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Disconnect also switches a compatible endpoint off, since without a key it would otherwise keep
   sending.
 - Every open reader updates when the AI configuration changes in one of them.
+- A compatible endpoint receives only the headers a request needs. The organization, project and
+  `OPENAI_CUSTOM_HEADERS` the OpenAI SDK reads from the environment are meant for OpenAI and are
+  no longer sent to other hosts, and a redirect is refused rather than followed to a host the user
+  never chose.
+- The extension host itself refuses to send to a compatible endpoint with no model, instead of
+  trusting the panel to have checked.
+- The compatible provider's button says whether keys are stored, or that none is needed, instead
+  of always claiming a key.
 
 ### Fixed
 

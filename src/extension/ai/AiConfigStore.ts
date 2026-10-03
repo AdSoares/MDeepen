@@ -81,12 +81,11 @@ export class AiConfigStore {
 
   /** A fixed provider is configured when it holds a key. A compatible endpoint needs none, so it
    *  is configured when its URL is valid and a model is chosen. */
-  async isConfigured(): Promise<boolean> {
-    const config = this.getConfig();
+  async isConfigured(config: AiConfig = this.getConfig()): Promise<boolean> {
     if (config.provider === 'compatible') {
       return describeDestination(config.baseUrl ?? '').ok && config.model.trim().length > 0;
     }
-    const k = await this.getKey();
+    const k = await this.getKey(config);
     return typeof k === 'string' && k.length > 0;
   }
 

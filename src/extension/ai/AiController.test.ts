@@ -889,3 +889,37 @@ describe('shared state across panels and windows', () => {
     expect(onConfigChanged).toHaveBeenCalledTimes(3);
   });
 });
+
+describe('the host checks the endpoint is usable', () => {
+  const NO_MODEL = { provider: 'compatible' as const, model: '', maxTokens: 1024, baseUrl: 'http://192.168.0.50:11434/v1' };
+
+  async function controllerWithoutModel() {
+    const ws = fakeMemento();
+    await ws.update('mdeepen.ai.firstSendConfirmed', 'compatible:http://192.168.0.50:11434');
+    await ws.update('mdeepen.ai.chatConfirmed', 'compatible:http://192.168.0.50:11434');
+    const store = new AiConfigStore(fakeSecrets(), fakeMemento());
+    await store.setConfig(NO_MODEL);
+    const posted: HostToWebview[] = [];
+    const clean: Page = { ...PAGE, content: '## Retries\n\nback off and retry' };
+    const c = new AiController(store, ws, (m) => posted.push(m), () => [clean], () => 'doc.md');
+    return { c, posted };
+  }
+
+  it('refuses a section send to an endpoint with no model, instead of calling it', async () => {
+    const { c, posted } = await controllerWithoutModel();
+
+    await c.handle({ type: 'aiAction', action: 'summarize', scope: 'section', id: 'p1' });
+
+    expect(rec.calls).toHaveLength(0);
+    expect(posted.some((m) => m.type === 'aiError')).toBe(true);
+  });
+
+  it('refuses a chat turn to an endpoint with no model', async () => {
+    const { c, posted } = await controllerWithoutModel();
+
+    await c.handle({ type: 'aiChat', question: 'why?', history: [] });
+
+    expect(rec.calls).toHaveLength(0);
+    expect(posted.some((m) => m.type === 'aiError')).toBe(true);
+  });
+});

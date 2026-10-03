@@ -3,7 +3,7 @@ import { post } from '../vscodeApi';
 import type { AiState } from '../store';
 import { DEFAULT_AI_CONFIG, PROVIDERS } from '../../extension/ai/types';
 import type { ProviderId } from '../../extension/ai/types';
-import { canRefreshModels, destinationLine, keyStoredFor } from './aiConfigRules';
+import { canRefreshModels, destinationLine, keyStoredFor, providerButtonTitle } from './aiConfigRules';
 import { destinationKey } from '../../shared/destination';
 
 interface Props {
@@ -66,7 +66,7 @@ export function AiConfig({ ai, onClose }: Props) {
         <span class="md-config-label">Provider</span>
         {(Object.keys(PROVIDERS) as ProviderId[]).map((id) => (
           <button key={id} class={`md-btn${id === provider ? ' primary' : ''}`} aria-pressed={id === provider}
-            title={ai.configuredProviders.includes(id) ? 'A key is stored for this provider' : 'No key stored yet'}
+            title={providerButtonTitle(id, ai)}
             onClick={() => {
               if (id === provider) return;
               // A model from the other provider would be offered and then rejected on send.

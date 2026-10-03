@@ -64,22 +64,6 @@ trust: the AI features, which send content off the machine, and diagram insertio
 the file. That split still has to be designed: which UI says why AI is off, and whether
 `isWorkspaceTrusted` is checked in the host, the webview, or both.
 
-### Four minors from the Slice 2.6 review
-
-The final review of 2.6 found these and graded them minor; none breaks the privacy promise on its
-own, and each was left in writing rather than fixed:
-
-- The OpenAI SDK still reads `OPENAI_ORG_ID`, `OPENAI_PROJECT_ID` and `OPENAI_CUSTOM_HEADERS` from
-  the environment and sends them to any compatible host. The first two can be nulled in the
-  constructor; custom headers need a `fetch` wrapper.
-- HTTP redirects are followed. A loopback server answering 307/308 to a remote URL would resend
-  the request body there (the `Authorization` header is stripped). `fetchOptions: { redirect:
-  'error' }` for `compatible` would close it.
-- The compatible provider button's title says "A key is stored for this provider" whenever any
-  origin holds a key or a keyless endpoint is active.
-- The host never checks `isConfigured` before sending. A forged message could drive a compatible
-  endpoint with an empty model; it fails locally, but the guard belongs in the host.
-
 ## Out of the MVP by design
 
 Not backlog so much as scope, recorded here so nobody re-proposes them as gaps: persisted AI

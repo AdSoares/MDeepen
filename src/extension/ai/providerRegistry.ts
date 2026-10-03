@@ -1,7 +1,10 @@
 import type { AiConfig, AiProvider } from './types';
 import { PROVIDERS } from './types';
 import { AnthropicProvider } from './AnthropicProvider';
+import OpenAI from 'openai';
 import { OpenAiProvider } from './OpenAiProvider';
+import { compatibleFetch } from './compatibleFetch';
+import type { OpenAiClientLike } from './sdkShapes';
 
 /**
  * What a keyless compatible endpoint is constructed with. Never an absent key: the SDK then reads
@@ -16,9 +19,19 @@ export function createProvider(config: AiConfig, apiKey: string): AiProvider {
       return new AnthropicProvider(apiKey, config.model);
     case 'openai':
       return new OpenAiProvider(apiKey, config.model, config.baseUrl ?? PROVIDERS.openai.defaultBaseUrl);
-    case 'compatible':
+    case 'compatible': {
       if (!config.baseUrl) throw new Error('An OpenAI-compatible endpoint needs a base URL');
-      return new OpenAiProvider(apiKey || KEYLESS_PLACEHOLDER, config.model, config.baseUrl, undefined, PROVIDERS.compatible.tokenField);
+      // Built here rather than inside the provider: this client must not carry what the SDK reads
+      // from the environment for api.openai.com, and must not follow redirects.
+      const client = new OpenAI({
+        apiKey: apiKey || KEYLESS_PLACEHOLDER,
+        baseURL: config.baseUrl,
+        organization: null,
+        project: null,
+        fetch: compatibleFetch,
+      }) as unknown as OpenAiClientLike;
+      return new OpenAiProvider(apiKey || KEYLESS_PLACEHOLDER, config.model, config.baseUrl, client, PROVIDERS.compatible.tokenField);
+    }
     default:
       throw new Error(`Unknown provider: ${config.provider}`);
   }
