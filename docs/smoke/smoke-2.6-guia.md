@@ -1,6 +1,6 @@
 # Smoke — Slice 2.6: OpenAI-compatible endpoint and local mode
 
-Fifteen checks against a **real Ollama**. Run them before releasing 0.9.0: the 0.7.1 defect broke
+Seventeen checks against a **real Ollama**. Run them before releasing 0.9.0: the 0.7.1 defect broke
 the OpenAI provider on every successful request and passed spec, plan, review and CI; it was caught
 only by looking at what the SDK actually returned. This slice makes the same kind of bet — that
 Ollama accepts `max_tokens` and tolerates `stream_options` — and only a real runtime settles it.
@@ -35,8 +35,10 @@ Ollama accepts `max_tokens` and tolerates `stream_options` — and only a real r
 | 10 | Card: change the URL to `http://<LAN-IP>:11434/v1` | The line reads **Sends to &lt;LAN-IP&gt;:11434 — no TLS**. Save. The **Local** badge disappears | |
 | 11 | Summarize a section | Dialog titled **Send content to &lt;LAN-IP&gt;:11434?**, with the **No TLS** line | |
 | 12 | Type any key (e.g. `test-key`), Save. Change the URL back to localhost, Save. Change it to the LAN URL again | The key field reads **Saved for this URL - type to replace**. *Keys per origin, and save-then-key ordering in the real host* | |
+| 12b | Type a key in the field without saving, then change the URL to another host | The key field empties: a key typed for one origin is never saved under another. Same when switching provider | |
 | 13 | **Disconnect**, then **Confirm disconnect** | Panel reads "AI features are off"; reopening the card shows **Anthropic** selected | |
 | 14 | Configure Anthropic or OpenAI with a real key; summarize a section | Unchanged behaviour: the dialog names the provider, cost estimate as before | |
+| 14b | Open two documents in the reader, side by side. In one, switch to the localhost endpoint and Save | The other panel's badge also shows **Local** without reopening | |
 | 15 | *Optional* — LM Studio's server on, URL `http://localhost:1234/v1`: repeat 3–6 | Same as 3–6 | |
 
 ## What Ollama returned

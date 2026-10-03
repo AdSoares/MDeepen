@@ -4,6 +4,7 @@ import type { AiState } from '../store';
 import { DEFAULT_AI_CONFIG, PROVIDERS } from '../../extension/ai/types';
 import type { ProviderId } from '../../extension/ai/types';
 import { canRefreshModels, destinationLine, keyStoredFor } from './aiConfigRules';
+import { destinationKey } from '../../shared/destination';
 
 interface Props {
   ai: AiState;
@@ -71,6 +72,8 @@ export function AiConfig({ ai, onClose }: Props) {
               // A model from the other provider would be offered and then rejected on send.
               setProvider(id);
               setModel(PROVIDERS[id].defaultModel);
+              // A key typed for one destination must not be saved under another.
+              setKey('');
               setSaved(false);
             }}>
             {PROVIDERS[id].label}{ai.configuredProviders.includes(id) ? ' ·' : ''}
@@ -84,7 +87,13 @@ export function AiConfig({ ai, onClose }: Props) {
             <label class="md-config-label" for="ai-base-url">Base URL</label>
             <input id="ai-base-url" type="text" spellcheck={false} value={baseUrl} style={{ flex: 1, minWidth: 0 }}
               aria-describedby="ai-base-url-dest ai-base-url-hint"
-              onInput={(e) => { setSaved(false); setBaseUrl((e.target as HTMLInputElement).value); }} />
+              onInput={(e) => {
+                const next = (e.target as HTMLInputElement).value;
+                // A key typed for one origin must not be saved under another.
+                if (destinationKey('compatible', next) !== destinationKey('compatible', baseUrl)) setKey('');
+                setSaved(false);
+                setBaseUrl(next);
+              }} />
           </div>
           <p id="ai-base-url-dest" class="md-config-result" data-ok={String(dest.ok)} role="status">{dest.text}</p>
           <p id="ai-base-url-hint" class="md-config-hint">

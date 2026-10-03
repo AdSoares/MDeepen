@@ -26,7 +26,7 @@ export class AiController {
   /** Which consent a pending confirmation may record, if any. `auto` means pressing Send grants
    *  it — the chat dialog is itself the consent, so it offers no checkbox. A document run carries
    *  no descriptor at all and can never record consent. */
-  private pendingConsent: { key: string; auto: boolean } | undefined;
+  private pendingConsent: { key: string; auto: boolean; destination: string } | undefined;
 
   constructor(
     private readonly store: AiConfigStore,
@@ -35,7 +35,16 @@ export class AiController {
     private readonly getPages: () => Page[],
     private readonly getFileName: () => string,
     private readonly getActiveIndex: () => number = () => 0,
+    /** The config and keys are shared by every panel; the others must hear when they change. */
+    private readonly onConfigChanged: () => void = () => {},
   ) {}
+
+  /** Consent is stored as the destination it was given for, not as a flag. The config is shared
+   *  across windows while consent is per workspace, so a flag given for Anthropic here would
+   *  otherwise cover a LAN host chosen in another window. A legacy `true` matches nothing. */
+  private hasConsent(key: string, cfg: AiConfig): boolean {
+    return this.workspaceState.get<unknown>(key, false) === destinationKey(cfg.provider, cfg.baseUrl);
+  }
 
   async postConfigState(): Promise<void> {
     const cfg = this.store.getConfig();
@@ -67,10 +76,14 @@ export class AiController {
         const previous = this.store.getConfig();
         await this.store.setConfig(msg.config);
         if (destinationKey(msg.config.provider, msg.config.baseUrl) !== destinationKey(previous.provider, previous.baseUrl)) {
+          // A dialog still open was built for the old destination; it must not send anywhere.
+          this.pendingRun = undefined;
+          this.pendingConsent = undefined;
           await this.workspaceState.update(FIRST_SEND_KEY, false);
           await this.workspaceState.update(CHAT_KEY, false);
         }
         await this.postConfigState();
+        this.onConfigChanged();
         break;
       }
       case 'aiClearKey':
@@ -85,11 +98,13 @@ export class AiController {
         await this.workspaceState.update(FIRST_SEND_KEY, false);
         await this.workspaceState.update(CHAT_KEY, false);
         await this.postConfigState();
+        this.onConfigChanged();
         break;
       case 'aiSaveKey':
         // Goes straight to SecretStorage — the key never enters the config object.
         await this.store.setKey(msg.key);
         await this.postConfigState();
+        this.onConfigChanged();
         break;
       case 'aiTestConnection': {
         const key = await this.store.getCredential();
@@ -165,7 +180,7 @@ export class AiController {
     const rawText = req.messages[0].content;
 
     const run = async (masked: boolean) => {
-      const key = await this.store.getCredential();
+      const key = await this.store.getCredential(cfg);
       if (key === undefined) { this.post({ type: 'aiError', kind: 'auth', message: 'No API key set' }); return; }
       // A second request must not interleave its chunks with a running one.
       this.abort?.abort();
@@ -178,12 +193,12 @@ export class AiController {
 
     // FR-MVP-032 asks for confirmation before sending to a remote provider. On loopback nothing
     // leaves the machine, so there is nothing to consent to, and nothing to mask.
-    if (isLocalConfig(cfg.provider, cfg.baseUrl) || this.workspaceState.get<boolean>(FIRST_SEND_KEY, false)) {
+    if (isLocalConfig(cfg.provider, cfg.baseUrl) || this.hasConsent(FIRST_SEND_KEY, cfg)) {
       await run(false);
       return;
     }
     this.pendingRun = run;
-    this.pendingConsent = { key: FIRST_SEND_KEY, auto: false };
+    this.pendingConsent = { key: FIRST_SEND_KEY, auto: false, destination: destinationKey(cfg.provider, cfg.baseUrl) };
     this.postConfirm(rawText, cfg, {
       sectionTitle: page.title, scope: msg.scope, sectionCount: 1, truncated: [], estTokens: estimateTokens(rawText),
     });
@@ -209,7 +224,7 @@ export class AiController {
     const rawText = plan.steps.map((s) => s.content).join('\n\n');
 
     this.pendingRun = async (masked: boolean) => {
-      const key = await this.store.getCredential();
+      const key = await this.store.getCredential(cfg);
       if (key === undefined) { this.post({ type: 'aiError', kind: 'auth', message: 'No API key set' }); return; }
       this.abort?.abort();
       const abort = new AbortController();
@@ -256,7 +271,7 @@ export class AiController {
     const rawText = plan.messages.map((m) => m.content).join('\n\n');
 
     const run = async (masked: boolean) => {
-      const key = await this.store.getCredential();
+      const key = await this.store.getCredential(cfg);
       if (key === undefined) { this.post({ type: 'aiError', kind: 'auth', message: 'No API key set' }); return; }
       this.abort?.abort();
       const abort = new AbortController();
@@ -267,7 +282,7 @@ export class AiController {
       if (this.abort === abort) this.abort = undefined;
     };
 
-    const consented = this.workspaceState.get<boolean>(CHAT_KEY, false);
+    const consented = this.hasConsent(CHAT_KEY, cfg);
     const secrets = detectSecrets(rawText).length;
     if (isLocalConfig(cfg.provider, cfg.baseUrl) || (consented && secrets === 0)) {
       await run(false);
@@ -276,7 +291,7 @@ export class AiController {
 
     this.pendingRun = run;
     // Before the gate, sending grants consent. After it, this dialog is only about masking.
-    this.pendingConsent = consented ? undefined : { key: CHAT_KEY, auto: true };
+    this.pendingConsent = consented ? undefined : { key: CHAT_KEY, auto: true, destination: destinationKey(cfg.provider, cfg.baseUrl) };
     this.postConfirm(rawText, cfg, {
       sectionTitle: '', scope: 'chat', sectionCount: plan.usedSections.length, truncated: [],
       estTokens: estimateTokens(rawText),
@@ -319,7 +334,8 @@ export class AiController {
     const consent = this.pendingConsent;
     // `auto` grants on send (chat); otherwise only the checkbox grants. A document run carries no
     // descriptor, so it can never record consent whatever the message claims.
-    if (consent && (consent.auto || dontAskAgain)) await this.workspaceState.update(consent.key, true);
+    // The destination recorded is the one the dialog showed, even if the config moved since.
+    if (consent && (consent.auto || dontAskAgain)) await this.workspaceState.update(consent.key, consent.destination);
     const run = this.pendingRun;
     this.pendingRun = undefined;
     this.pendingConsent = undefined;

@@ -35,8 +35,8 @@ export class AiConfigStore {
     return d.ok ? `${meta.secretKey}:${d.origin}` : undefined;
   }
 
-  async getKey(): Promise<string | undefined> {
-    const name = this.secretName();
+  async getKey(config: AiConfig = this.getConfig()): Promise<string | undefined> {
+    const name = this.secretName(config);
     return name ? this.secrets.get(name) : undefined;
   }
 
@@ -57,11 +57,13 @@ export class AiConfigStore {
   }
 
   /** What to send with: the stored key, '' for a provider that works without one, undefined when
-   *  a required key is missing or the endpoint cannot be classified. */
-  async getCredential(): Promise<string | undefined> {
-    const config = this.getConfig();
+   *  a required key is missing or the endpoint cannot be classified.
+   *
+   *  A send passes the config it was built from. The stored config is shared by every panel and
+   *  window, so reading it here could pair one destination with another provider's key. */
+  async getCredential(config: AiConfig = this.getConfig()): Promise<string | undefined> {
     if (config.provider === 'compatible' && !describeDestination(config.baseUrl ?? '').ok) return undefined;
-    const key = await this.getKey();
+    const key = await this.getKey(config);
     if (typeof key === 'string' && key.length > 0) return key;
     return (PROVIDERS[config.provider] ?? PROVIDERS.anthropic).requiresKey ? undefined : '';
   }

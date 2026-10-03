@@ -148,7 +148,7 @@ describe('AiController disconnect', () => {
 
   it('disconnecting revokes the first-send consent, so reconnecting asks again', async () => {
     const ws = fakeMemento();
-    await ws.update('mdeepen.ai.firstSendConfirmed', true);
+    await ws.update('mdeepen.ai.firstSendConfirmed', 'anthropic');
     const posted: HostToWebview[] = [];
     const store = new AiConfigStore(fakeSecrets('sk-live-key'), fakeMemento());
     const c = new AiController(store, ws, (m) => posted.push(m), () => [PAGE], () => 'doc.md');
@@ -164,7 +164,7 @@ describe('AiController disconnect', () => {
   it('aborts an in-flight request when the user disconnects', async () => {
     rec.hold.value = true;
     const ws = fakeMemento();
-    await ws.update('mdeepen.ai.firstSendConfirmed', true);
+    await ws.update('mdeepen.ai.firstSendConfirmed', 'anthropic');
     const { c } = makeController(ws);
     const running = c.handle({ type: 'aiAction', action: 'summarize', scope: 'section', id: 'p1' });
     // Wait for the request to actually start, rather than for a fixed number of microtasks.
@@ -179,7 +179,7 @@ describe('AiController streaming', () => {
   it('forwards text chunks and usage to the webview', async () => {
     rec.chunks.push({ type: 'text', text: 'Hel' }, { type: 'text', text: 'lo' }, { type: 'done', usage: { inputTokens: 10, outputTokens: 3 } });
     const ws = fakeMemento();
-    await ws.update('mdeepen.ai.firstSendConfirmed', true);
+    await ws.update('mdeepen.ai.firstSendConfirmed', 'anthropic');
     const { c, posted } = makeController(ws);
     await c.handle({ type: 'aiAction', action: 'summarize', scope: 'section', id: 'p1' });
     expect(posted.filter((m) => m.type === 'aiChunk').map((m) => (m as { text: string }).text)).toEqual(['Hel', 'lo']);
@@ -189,7 +189,7 @@ describe('AiController streaming', () => {
   it('aborts the in-flight request on stop', async () => {
     rec.hold.value = true;
     const ws = fakeMemento();
-    await ws.update('mdeepen.ai.firstSendConfirmed', true);
+    await ws.update('mdeepen.ai.firstSendConfirmed', 'anthropic');
     const { c } = makeController(ws);
     const running = c.handle({ type: 'aiAction', action: 'summarize', scope: 'section', id: 'p1' });
     // Wait for the request to actually start, rather than for a fixed number of microtasks.
@@ -203,7 +203,7 @@ describe('AiController streaming', () => {
 describe('AiController action payloads', () => {
   it('sends the selection, not the section, when the scope is a selection', async () => {
     const ws = fakeMemento();
-    await ws.update('mdeepen.ai.firstSendConfirmed', true);
+    await ws.update('mdeepen.ai.firstSendConfirmed', 'anthropic');
     const { c } = makeController(ws);
     await c.handle({ type: 'aiAction', action: 'explain', scope: 'selection', id: 'p1', text: 'just this line' });
     expect(rec.calls).toHaveLength(1);
@@ -220,7 +220,7 @@ describe('AiController action payloads', () => {
 
   it('ignores an unknown action', async () => {
     const ws = fakeMemento();
-    await ws.update('mdeepen.ai.firstSendConfirmed', true);
+    await ws.update('mdeepen.ai.firstSendConfirmed', 'anthropic');
     const { c } = makeController(ws);
     await c.handle({ type: 'aiAction', action: 'translate', scope: 'section', id: 'p1' } as never);
     expect(rec.calls).toHaveLength(0);
@@ -228,7 +228,7 @@ describe('AiController action payloads', () => {
 
   it('ignores an unknown scope', async () => {
     const ws = fakeMemento();
-    await ws.update('mdeepen.ai.firstSendConfirmed', true);
+    await ws.update('mdeepen.ai.firstSendConfirmed', 'anthropic');
     const { c } = makeController(ws);
     await c.handle({ type: 'aiAction', action: 'explain', scope: 'document', id: 'p1' } as never);
     expect(rec.calls).toHaveLength(0);
@@ -236,7 +236,7 @@ describe('AiController action payloads', () => {
 
   it('ignores a selection action with blank or missing text', async () => {
     const ws = fakeMemento();
-    await ws.update('mdeepen.ai.firstSendConfirmed', true);
+    await ws.update('mdeepen.ai.firstSendConfirmed', 'anthropic');
     const { c } = makeController(ws);
     await c.handle({ type: 'aiAction', action: 'explain', scope: 'selection', id: 'p1', text: '   ' });
     await c.handle({ type: 'aiAction', action: 'explain', scope: 'selection', id: 'p1' });
@@ -245,7 +245,7 @@ describe('AiController action payloads', () => {
 
   it('ignores an aiAction naming a page id that matches no page', async () => {
     const ws = fakeMemento();
-    await ws.update('mdeepen.ai.firstSendConfirmed', true);
+    await ws.update('mdeepen.ai.firstSendConfirmed', 'anthropic');
     const { c, posted } = makeController(ws);
     await c.handle({ type: 'aiAction', action: 'explain', scope: 'section', id: 'no-such-page' });
     expect(rec.calls).toHaveLength(0);
@@ -254,7 +254,7 @@ describe('AiController action payloads', () => {
 
   it('ignores a selection larger than the payload cap', async () => {
     const ws = fakeMemento();
-    await ws.update('mdeepen.ai.firstSendConfirmed', true);
+    await ws.update('mdeepen.ai.firstSendConfirmed', 'anthropic');
     const { c } = makeController(ws);
     await c.handle({ type: 'aiAction', action: 'explain', scope: 'selection', id: 'p1', text: 'x'.repeat(200_001) });
     expect(rec.calls).toHaveLength(0);
@@ -269,7 +269,7 @@ describe('document scope', () => {
 
   it('always confirms, even when the workspace already consented', async () => {
     const ws = fakeMemento();
-    await ws.update('mdeepen.ai.firstSendConfirmed', true);
+    await ws.update('mdeepen.ai.firstSendConfirmed', 'anthropic');
     const { c, posted } = makeController(ws);
     rec.chunks.push({ type: 'text', text: 'x' }, { type: 'done', usage: { inputTokens: 1, outputTokens: 1 } });
 
@@ -360,7 +360,7 @@ describe('chat', () => {
 
   it('does not accept the section consent as chat consent', async () => {
     const ws = fakeMemento();
-    await ws.update('mdeepen.ai.firstSendConfirmed', true);
+    await ws.update('mdeepen.ai.firstSendConfirmed', 'anthropic');
     const { c, posted } = makeController(ws, PAGES);
     rec.chunks.push({ type: 'done', usage: { inputTokens: 1, outputTokens: 1 } });
 
@@ -372,7 +372,7 @@ describe('chat', () => {
 
   it('does not let chat consent silence a section action', async () => {
     const ws = fakeMemento();
-    await ws.update('mdeepen.ai.chatConfirmed', true);
+    await ws.update('mdeepen.ai.chatConfirmed', 'anthropic');
     const { c, posted } = makeController(ws, PAGES);
     rec.chunks.push({ type: 'done', usage: { inputTokens: 1, outputTokens: 1 } });
 
@@ -384,7 +384,7 @@ describe('chat', () => {
 
   it('posts the sections it used before the first chunk', async () => {
     const ws = fakeMemento();
-    await ws.update('mdeepen.ai.chatConfirmed', true);
+    await ws.update('mdeepen.ai.chatConfirmed', 'anthropic');
     const { c, posted } = makeController(ws, PAGES);
     rec.chunks.push({ type: 'text', text: 'eight seconds' }, { type: 'done', usage: { inputTokens: 1, outputTokens: 1 } });
 
@@ -398,7 +398,7 @@ describe('chat', () => {
 
   it('interrupts with the dialog when a turn carries a secret, even after the gate', async () => {
     const ws = fakeMemento();
-    await ws.update('mdeepen.ai.chatConfirmed', true);
+    await ws.update('mdeepen.ai.chatConfirmed', 'anthropic');
     // PAGE is the active section here and contains SECRET, so it is pinned into the payload.
     const { c, posted } = makeController(ws, [PAGE, BACKOFF]);
     rec.chunks.push({ type: 'done', usage: { inputTokens: 1, outputTokens: 1 } });
@@ -414,7 +414,7 @@ describe('chat', () => {
 
   it('scans history for secrets too', async () => {
     const ws = fakeMemento();
-    await ws.update('mdeepen.ai.chatConfirmed', true);
+    await ws.update('mdeepen.ai.chatConfirmed', 'anthropic');
     const { c, posted } = makeController(ws, [BACKOFF]);
     rec.chunks.push({ type: 'done', usage: { inputTokens: 1, outputTokens: 1 } });
 
@@ -429,7 +429,7 @@ describe('chat', () => {
 
   it('ignores an empty question and an oversized one', async () => {
     const ws = fakeMemento();
-    await ws.update('mdeepen.ai.chatConfirmed', true);
+    await ws.update('mdeepen.ai.chatConfirmed', 'anthropic');
     const { c, posted } = makeController(ws, PAGES);
 
     await c.handle({ type: 'aiChat', question: '   ', history: [] });
@@ -441,7 +441,7 @@ describe('chat', () => {
 
   it('ignores a history that is too long', async () => {
     const ws = fakeMemento();
-    await ws.update('mdeepen.ai.chatConfirmed', true);
+    await ws.update('mdeepen.ai.chatConfirmed', 'anthropic');
     const { c } = makeController(ws, PAGES);
     const history = Array.from({ length: 41 }, () => ({ role: 'user' as const, text: 'hi' }));
 
@@ -455,9 +455,9 @@ describe('chat', () => {
 
     const ws = fakeMemento();
 
-    await ws.update('mdeepen.ai.chatConfirmed', true);
+    await ws.update('mdeepen.ai.chatConfirmed', 'anthropic');
 
-    await ws.update('mdeepen.ai.firstSendConfirmed', true);
+    await ws.update('mdeepen.ai.firstSendConfirmed', 'anthropic');
 
     const { c, posted } = makeController(ws, PAGES);
 
@@ -488,8 +488,8 @@ describe('chat', () => {
 describe('providers', () => {
   it('revokes both consents when the provider changes', async () => {
     const ws = fakeMemento();
-    await ws.update('mdeepen.ai.firstSendConfirmed', true);
-    await ws.update('mdeepen.ai.chatConfirmed', true);
+    await ws.update('mdeepen.ai.firstSendConfirmed', 'anthropic');
+    await ws.update('mdeepen.ai.chatConfirmed', 'anthropic');
     const { c } = makeController(ws);
 
     await c.handle({ type: 'aiSaveConfig', config: { provider: 'openai', model: PROVIDERS.openai.defaultModel, maxTokens: 4096 } });
@@ -500,12 +500,12 @@ describe('providers', () => {
 
   it('keeps consent when only the model or the token cap changes', async () => {
     const ws = fakeMemento();
-    await ws.update('mdeepen.ai.firstSendConfirmed', true);
+    await ws.update('mdeepen.ai.firstSendConfirmed', 'anthropic');
     const { c } = makeController(ws);
 
     await c.handle({ type: 'aiSaveConfig', config: { provider: 'anthropic', model: PROVIDERS.anthropic.defaultModel, maxTokens: 8192 } });
 
-    expect(ws.get('mdeepen.ai.firstSendConfirmed', false)).toBe(true);
+    expect(ws.get('mdeepen.ai.firstSendConfirmed', false)).toBe('anthropic');
   });
 
   it('reports which providers hold a key', async () => {
@@ -583,7 +583,7 @@ describe('asking about a selection', () => {
 
   it('sends the selected excerpt alongside the question', async () => {
     const ws = fakeMemento();
-    await ws.update('mdeepen.ai.chatConfirmed', true);
+    await ws.update('mdeepen.ai.chatConfirmed', 'anthropic');
     const { c } = makeController(ws, [BACKOFF]);
     rec.chunks.push({ type: 'done', usage: { inputTokens: 1, outputTokens: 1 } });
 
@@ -596,7 +596,7 @@ describe('asking about a selection', () => {
 
   it('behaves exactly as before when no excerpt is sent', async () => {
     const ws = fakeMemento();
-    await ws.update('mdeepen.ai.chatConfirmed', true);
+    await ws.update('mdeepen.ai.chatConfirmed', 'anthropic');
     const { c } = makeController(ws, [BACKOFF]);
     rec.chunks.push({ type: 'done', usage: { inputTokens: 1, outputTokens: 1 } });
 
@@ -607,7 +607,7 @@ describe('asking about a selection', () => {
 
   it('ignores an excerpt above the payload cap', async () => {
     const ws = fakeMemento();
-    await ws.update('mdeepen.ai.chatConfirmed', true);
+    await ws.update('mdeepen.ai.chatConfirmed', 'anthropic');
     const { c } = makeController(ws, [BACKOFF]);
 
     await c.handle({ type: 'aiChat', question: 'why?', history: [], selection: 'x'.repeat(200_001) });
@@ -635,8 +635,8 @@ describe('a compatible endpoint', () => {
   it('revokes both consents when the origin changes', async () => {
     const ws = fakeMemento();
     const { c } = await makeCompatible('https://openrouter.ai/api/v1', ws);
-    await ws.update('mdeepen.ai.firstSendConfirmed', true);
-    await ws.update('mdeepen.ai.chatConfirmed', true);
+    await ws.update('mdeepen.ai.firstSendConfirmed', 'anthropic');
+    await ws.update('mdeepen.ai.chatConfirmed', 'anthropic');
 
     await c.handle({ type: 'aiSaveConfig', config: compatible(LAN) });
 
@@ -647,11 +647,11 @@ describe('a compatible endpoint', () => {
   it('keeps consent when only the model changes on the same endpoint', async () => {
     const ws = fakeMemento();
     const { c } = await makeCompatible(LAN, ws);
-    await ws.update('mdeepen.ai.firstSendConfirmed', true);
+    await ws.update('mdeepen.ai.firstSendConfirmed', 'compatible:http://192.168.0.50:11434');
 
     await c.handle({ type: 'aiSaveConfig', config: compatible(LAN, 'qwen3') });
 
-    expect(ws.get('mdeepen.ai.firstSendConfirmed', false)).toBe(true);
+    expect(ws.get('mdeepen.ai.firstSendConfirmed', false)).toBe('compatible:http://192.168.0.50:11434');
   });
 
   it('refuses to save an endpoint it cannot classify', async () => {
@@ -692,7 +692,7 @@ describe('a compatible endpoint', () => {
 
   it('sends without a key, never stopping at "No API key set"', async () => {
     const ws = fakeMemento();
-    await ws.update('mdeepen.ai.firstSendConfirmed', true);
+    await ws.update('mdeepen.ai.firstSendConfirmed', 'compatible:http://192.168.0.50:11434');
     const { c, posted } = await makeCompatible(LAN, ws);
     rec.chunks.push({ type: 'done', usage: { inputTokens: 1, outputTokens: 1 } });
 
@@ -800,5 +800,92 @@ describe('loopback', () => {
     expect(confirm.summary.provider).toBe('Anthropic');
     expect(confirm.summary.local).toBe(false);
     expect(confirm.summary.plainHttp).toBe(false);
+  });
+});
+
+describe('shared state across panels and windows', () => {
+  const LAN = { provider: 'compatible' as const, model: 'llama3', maxTokens: 1024, baseUrl: 'http://192.168.0.50:11434/v1' };
+  const done = () => rec.chunks.push({ type: 'done', usage: { inputTokens: 1, outputTokens: 1 } });
+
+  function controllerOn(store: AiConfigStore, ws = fakeMemento(), onConfigChanged?: () => void, pages: Page[] = [PAGE]) {
+    const posted: HostToWebview[] = [];
+    const c = new AiController(store, ws, (m) => posted.push(m), () => pages, () => 'doc.md', () => 0, onConfigChanged);
+    return { c, posted, ws };
+  }
+
+  it('a dialog built for one endpoint never sends a key saved later for another provider', async () => {
+    const store = new AiConfigStore(fakeSecrets(), fakeMemento());
+    await store.setConfig(LAN);
+    const { c } = controllerOn(store);
+    done();
+    await c.handle({ type: 'aiAction', action: 'summarize', scope: 'section', id: 'p1' });
+
+    // Meanwhile another panel switches to OpenAI and saves its key in the shared store.
+    await store.setConfig({ provider: 'openai', model: PROVIDERS.openai.defaultModel, maxTokens: 4096 });
+    await store.setKey('sk-openai-real');
+    await c.handle({ type: 'aiConfirmSend', dontAskAgain: false, masked: false });
+
+    expect(rec.calls).toHaveLength(1);
+    expect(rec.calls[0].key).toBe('');
+  });
+
+  it('section consent given to Anthropic does not cover an endpoint chosen in another window', async () => {
+    const store = new AiConfigStore(fakeSecrets('sk-ant'), fakeMemento());
+    const { c, posted } = controllerOn(store);
+    done();
+    await c.handle({ type: 'aiAction', action: 'summarize', scope: 'section', id: 'p1' });
+    await c.handle({ type: 'aiConfirmSend', dontAskAgain: true, masked: false });
+    expect(rec.calls).toHaveLength(1);
+
+    // Another window points the shared config at a LAN host; this controller never sees the save.
+    await store.setConfig(LAN);
+    posted.length = 0;
+    await c.handle({ type: 'aiAction', action: 'summarize', scope: 'section', id: 'p1' });
+
+    expect(posted.some((m) => m.type === 'aiConfirmNeeded')).toBe(true);
+    expect(rec.calls).toHaveLength(1);
+  });
+
+  it('chat consent given to Anthropic does not cover an endpoint chosen in another window', async () => {
+    const store = new AiConfigStore(fakeSecrets('sk-ant'), fakeMemento());
+    // No secret on this page, so only the consent gate can bring the dialog back.
+    const clean: Page = { ...PAGE, content: '## Retries\n\nback off and retry' };
+    const { c, posted } = controllerOn(store, fakeMemento(), undefined, [clean]);
+    done();
+    await c.handle({ type: 'aiChat', question: 'why?', history: [] });
+    await c.handle({ type: 'aiConfirmSend', dontAskAgain: false, masked: false });
+    expect(rec.calls).toHaveLength(1);
+
+    await store.setConfig(LAN);
+    posted.length = 0;
+    await c.handle({ type: 'aiChat', question: 'and then?', history: [] });
+
+    expect(posted.some((m) => m.type === 'aiConfirmNeeded')).toBe(true);
+    expect(rec.calls).toHaveLength(1);
+  });
+
+  it('a stale dialog records consent for the destination it showed, not the current one', async () => {
+    const store = new AiConfigStore(fakeSecrets('sk-ant'), fakeMemento());
+    const { c, posted } = controllerOn(store);
+    done();
+    await c.handle({ type: 'aiAction', action: 'summarize', scope: 'section', id: 'p1' });
+    await store.setConfig(LAN);
+    await c.handle({ type: 'aiConfirmSend', dontAskAgain: true, masked: false });
+
+    posted.length = 0;
+    await c.handle({ type: 'aiAction', action: 'summarize', scope: 'section', id: 'p1' });
+    expect(posted.some((m) => m.type === 'aiConfirmNeeded')).toBe(true);
+  });
+
+  it('tells the other panels when the config or the keys change', async () => {
+    const store = new AiConfigStore(fakeSecrets(), fakeMemento());
+    const onConfigChanged = vi.fn();
+    const { c } = controllerOn(store, fakeMemento(), onConfigChanged);
+
+    await c.handle({ type: 'aiSaveConfig', config: LAN });
+    await c.handle({ type: 'aiSaveKey', key: 'k' });
+    await c.handle({ type: 'aiClearKey' });
+
+    expect(onConfigChanged).toHaveBeenCalledTimes(3);
   });
 });
