@@ -7,10 +7,11 @@ import { buildActionRequest, isActionKind, CHAT_SYSTEM } from './prompts';
 import { planChatTurn, type ChatTurn } from './chatContext';
 import { planDocumentSummary, type DocumentPlan } from './documentPlan';
 import { runDocumentSummary } from './documentRun';
-import { CHAT_HISTORY_BUDGET_TOKENS, CHAT_SECTION_BUDGET_TOKENS, MAP_STEP_BUDGET_TOKENS, MAX_MAP_STEPS, PROVIDERS } from './types';
+import { CHAT_HISTORY_BUDGET_TOKENS, CHAT_SECTION_BUDGET_TOKENS, DEFAULT_AI_CONFIG, MAP_STEP_BUDGET_TOKENS, MAX_MAP_STEPS, PROVIDERS } from './types';
 import type { AiActionKind, AiChunk, AiConfig } from './types';
 import { detectSecrets, maskSecrets } from './secretDetection';
 import { estimateTokens, estimateCost, isPricedModel } from './costEstimate';
+import { describeDestination, destinationKey, isLocalConfig } from '../../shared/destination';
 
 const FIRST_SEND_KEY = 'mdeepen.ai.firstSendConfirmed';
 const CHAT_KEY = 'mdeepen.ai.chatConfirmed';
@@ -44,6 +45,9 @@ export class AiController {
       provider: cfg.provider,
       model: cfg.model,
       configuredProviders: await this.store.configuredProviders(),
+      local: isLocalConfig(cfg.provider, cfg.baseUrl),
+      baseUrl: cfg.baseUrl,
+      keyedOrigins: this.store.keyedOrigins(),
     });
   }
 
@@ -51,11 +55,18 @@ export class AiController {
     switch (msg.type) {
       case 'aiConfigRequest': await this.postConfigState(); break;
       case 'aiSaveConfig': {
-        // Consent is about where content goes. Changing provider revokes it; changing the model
-        // or the token cap does not, because that would be friction with no privacy meaning.
-        const previous = this.store.getConfig().provider;
+        // An endpoint the destination rule cannot classify is refused rather than stored: every
+        // promise the interface makes about where content goes is derived from that rule.
+        if (msg.config.provider === 'compatible' && !describeDestination(msg.config.baseUrl ?? '').ok) {
+          await this.postConfigState();
+          break;
+        }
+        // Consent is about where content goes. Changing the destination — the provider, or a
+        // compatible endpoint's origin — revokes it; changing the model or the token cap does
+        // not, because that would be friction with no privacy meaning.
+        const previous = this.store.getConfig();
         await this.store.setConfig(msg.config);
-        if (msg.config.provider !== previous) {
+        if (destinationKey(msg.config.provider, msg.config.baseUrl) !== destinationKey(previous.provider, previous.baseUrl)) {
           await this.workspaceState.update(FIRST_SEND_KEY, false);
           await this.workspaceState.update(CHAT_KEY, false);
         }
@@ -68,6 +79,9 @@ export class AiController {
         // send. Leaving one standing would let a new key inherit permission it never had.
         this.dispose();
         await this.store.clearAllKeys();
+        // A keyless endpoint would survive the clear and keep sending. Falling back to the
+        // default provider, which now holds no key, keeps Disconnect meaning "nothing is sent".
+        if (this.store.getConfig().provider === 'compatible') await this.store.setConfig(DEFAULT_AI_CONFIG);
         await this.workspaceState.update(FIRST_SEND_KEY, false);
         await this.workspaceState.update(CHAT_KEY, false);
         await this.postConfigState();
@@ -78,18 +92,20 @@ export class AiController {
         await this.postConfigState();
         break;
       case 'aiTestConnection': {
-        const key = await this.store.getKey();
-        if (!key) { this.post({ type: 'aiConnectionResult', ok: false, ms: 0, error: 'No API key set' }); break; }
+        const key = await this.store.getCredential();
+        if (key === undefined) { this.post({ type: 'aiConnectionResult', ok: false, ms: 0, error: 'No API key set' }); break; }
         const result = await createProvider(this.store.getConfig(), key).testConnection();
         this.post({ type: 'aiConnectionResult', ...result });
         break;
       }
       case 'aiListModels': {
         const cfg = this.store.getConfig();
-        const key = await this.store.getKey();
-        if (!key) {
-          // Listing needs a key. Saying so beats an empty list, which reads as 'none available'.
-          this.post({ type: 'aiModelList', provider: cfg.provider, models: [], error: 'Add an API key for this provider first.' });
+        const key = await this.store.getCredential();
+        if (key === undefined) {
+          // Listing needs a key, or for a compatible endpoint a URL. Saying so beats an empty
+          // list, which reads as 'none available'.
+          const error = cfg.provider === 'compatible' ? 'Save a valid base URL first.' : 'Add an API key for this provider first.';
+          this.post({ type: 'aiModelList', provider: cfg.provider, models: [], error });
           break;
         }
         try {
@@ -149,8 +165,8 @@ export class AiController {
     const rawText = req.messages[0].content;
 
     const run = async (masked: boolean) => {
-      const key = await this.store.getKey();
-      if (!key) { this.post({ type: 'aiError', kind: 'auth', message: 'No API key set' }); return; }
+      const key = await this.store.getCredential();
+      if (key === undefined) { this.post({ type: 'aiError', kind: 'auth', message: 'No API key set' }); return; }
       // A second request must not interleave its chunks with a running one.
       this.abort?.abort();
       const abort = new AbortController();
@@ -190,8 +206,8 @@ export class AiController {
     const rawText = plan.steps.map((s) => s.content).join('\n\n');
 
     this.pendingRun = async (masked: boolean) => {
-      const key = await this.store.getKey();
-      if (!key) { this.post({ type: 'aiError', kind: 'auth', message: 'No API key set' }); return; }
+      const key = await this.store.getCredential();
+      if (key === undefined) { this.post({ type: 'aiError', kind: 'auth', message: 'No API key set' }); return; }
       this.abort?.abort();
       const abort = new AbortController();
       this.abort = abort;
@@ -237,8 +253,8 @@ export class AiController {
     const rawText = plan.messages.map((m) => m.content).join('\n\n');
 
     const run = async (masked: boolean) => {
-      const key = await this.store.getKey();
-      if (!key) { this.post({ type: 'aiError', kind: 'auth', message: 'No API key set' }); return; }
+      const key = await this.store.getCredential();
+      if (key === undefined) { this.post({ type: 'aiError', kind: 'auth', message: 'No API key set' }); return; }
       this.abort?.abort();
       const abort = new AbortController();
       this.abort = abort;

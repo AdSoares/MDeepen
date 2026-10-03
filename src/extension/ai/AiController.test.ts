@@ -615,3 +615,113 @@ describe('asking about a selection', () => {
     expect(rec.calls).toHaveLength(0);
   });
 });
+
+describe('a compatible endpoint', () => {
+  const LOCAL = 'http://localhost:11434/v1';
+  const LAN = 'http://192.168.0.50:11434/v1';
+  const compatible = (baseUrl: string, model = 'llama3') =>
+    ({ provider: 'compatible' as const, model, maxTokens: 1024, baseUrl });
+
+  async function makeCompatible(baseUrl: string, ws = fakeMemento()) {
+    const posted: HostToWebview[] = [];
+    const store = new AiConfigStore(fakeSecrets(), fakeMemento());
+    await store.setConfig(compatible(baseUrl));
+    const c = new AiController(store, ws, (m) => posted.push(m), () => [PAGE], () => 'doc.md');
+    return { c, posted, ws, store };
+  }
+  const lastState = (posted: HostToWebview[]) =>
+    posted.filter((m) => m.type === 'aiConfigState').at(-1) as Extract<HostToWebview, { type: 'aiConfigState' }>;
+
+  it('revokes both consents when the origin changes', async () => {
+    const ws = fakeMemento();
+    const { c } = await makeCompatible('https://openrouter.ai/api/v1', ws);
+    await ws.update('mdeepen.ai.firstSendConfirmed', true);
+    await ws.update('mdeepen.ai.chatConfirmed', true);
+
+    await c.handle({ type: 'aiSaveConfig', config: compatible(LAN) });
+
+    expect(ws.get('mdeepen.ai.firstSendConfirmed', false)).toBe(false);
+    expect(ws.get('mdeepen.ai.chatConfirmed', false)).toBe(false);
+  });
+
+  it('keeps consent when only the model changes on the same endpoint', async () => {
+    const ws = fakeMemento();
+    const { c } = await makeCompatible(LAN, ws);
+    await ws.update('mdeepen.ai.firstSendConfirmed', true);
+
+    await c.handle({ type: 'aiSaveConfig', config: compatible(LAN, 'qwen3') });
+
+    expect(ws.get('mdeepen.ai.firstSendConfirmed', false)).toBe(true);
+  });
+
+  it('refuses to save an endpoint it cannot classify', async () => {
+    const { c, store } = await makeCompatible(LOCAL);
+
+    await c.handle({ type: 'aiSaveConfig', config: compatible('ftp://somewhere') });
+
+    expect(store.getConfig().baseUrl).toBe(LOCAL);
+  });
+
+  it('reports local, the base URL and the keyed origins in the config state', async () => {
+    const { c, posted } = await makeCompatible(LOCAL);
+    await c.handle({ type: 'aiConfigRequest' });
+
+    const state = lastState(posted);
+    expect(state.local).toBe(true);
+    expect(state.baseUrl).toBe(LOCAL);
+    expect(state.keyedOrigins).toEqual([]);
+    expect(state.configured).toBe(true);
+  });
+
+  it('reports a fixed provider as not local', async () => {
+    const { c, posted } = makeController();
+    await c.handle({ type: 'aiConfigRequest' });
+    expect(lastState(posted).local).toBe(false);
+  });
+
+  it('lists models without a key', async () => {
+    rec.models.push('llama3', 'qwen3');
+    const { c, posted } = await makeCompatible(LOCAL);
+
+    await c.handle({ type: 'aiListModels' });
+
+    const list = posted.find((m) => m.type === 'aiModelList') as Extract<HostToWebview, { type: 'aiModelList' }>;
+    expect(list.models).toEqual(['llama3', 'qwen3']);
+    expect(list.error).toBeUndefined();
+  });
+
+  it('sends without a key, never stopping at "No API key set"', async () => {
+    const ws = fakeMemento();
+    await ws.update('mdeepen.ai.firstSendConfirmed', true);
+    const { c, posted } = await makeCompatible(LAN, ws);
+    rec.chunks.push({ type: 'done', usage: { inputTokens: 1, outputTokens: 1 } });
+
+    await c.handle({ type: 'aiAction', action: 'summarize', scope: 'section', id: 'p1' });
+
+    expect(rec.calls).toHaveLength(1);
+    expect(rec.calls[0].key).toBe('');
+    expect(posted.some((m) => m.type === 'aiError')).toBe(false);
+  });
+
+  it('stores a key under the new origin even when the save and the key race', async () => {
+    // The webview posts both, and the host does not await one before the other.
+    const { c, store } = await makeCompatible(LOCAL);
+
+    await Promise.all([
+      c.handle({ type: 'aiSaveConfig', config: compatible('https://openrouter.ai/api/v1') }),
+      c.handle({ type: 'aiSaveKey', key: 'sk-or-1' }),
+    ]);
+
+    expect(store.keyedOrigins()).toEqual(['https://openrouter.ai']);
+    expect(await store.getKey()).toBe('sk-or-1');
+  });
+
+  it('disconnecting from a keyless endpoint turns AI off', async () => {
+    const { c, posted, store } = await makeCompatible(LOCAL);
+
+    await c.handle({ type: 'aiClearKey' });
+
+    expect(lastState(posted).configured).toBe(false);
+    expect(store.getConfig().provider).toBe('anthropic');
+  });
+});
