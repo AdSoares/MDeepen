@@ -48,3 +48,8 @@ Fill in after checks 5 and 6:
 - Did the run in check 6 finish with token usage, or with zero tokens? (Zero is harmless: the cost
   of a local run is zero anyway — but record it.) __________
 - Any error text seen: __________
+
+## Result
+
+**Passed on 2026-10-03**, run by the user against a local runtime. Runtime name and version, and
+whether usage arrived in check 6, were not recorded.

@@ -6,21 +6,6 @@ in the spec named beside each entry; this is the index.
 
 ## Deferred by decision
 
-### Local provider — MVP criterion 10, FR-MVP-033
-
-**Deferred indefinitely on 2026-08-25**: not needed for the foreseeable use of the tool.
-
-This leaves the MVP's tenth completion criterion open. It asks for one remote **and one local**
-provider, and the privacy claim behind it — that nothing leaves the machine — is the one thing a
-second remote provider cannot substitute for.
-
-**Groundwork already in place:** `OpenAiProvider` takes an optional `baseUrl`, and `ProviderMeta`
-carries `defaultBaseUrl`. Ollama, LM Studio and most local runtimes expose an OpenAI-compatible
-API, so the remaining work is exposing that field in the configuration card and validating against
-a real runtime — not a new provider.
-
-See `docs/superpowers/specs/2026-08-21-mdeepen-slice2.5-openai-provider-design.md`, §2.2.
-
 ### Retry and backoff
 
 Deferred twice, in Slice 2.3 and again in 2.4, each time in writing.
@@ -78,6 +63,22 @@ answer. The reader would work untrusted, and the two capabilities with consequen
 trust: the AI features, which send content off the machine, and diagram insertion, which writes to
 the file. That split still has to be designed: which UI says why AI is off, and whether
 `isWorkspaceTrusted` is checked in the host, the webview, or both.
+
+### Four minors from the Slice 2.6 review
+
+The final review of 2.6 found these and graded them minor; none breaks the privacy promise on its
+own, and each was left in writing rather than fixed:
+
+- The OpenAI SDK still reads `OPENAI_ORG_ID`, `OPENAI_PROJECT_ID` and `OPENAI_CUSTOM_HEADERS` from
+  the environment and sends them to any compatible host. The first two can be nulled in the
+  constructor; custom headers need a `fetch` wrapper.
+- HTTP redirects are followed. A loopback server answering 307/308 to a remote URL would resend
+  the request body there (the `Authorization` header is stripped). `fetchOptions: { redirect:
+  'error' }` for `compatible` would close it.
+- The compatible provider button's title says "A key is stored for this provider" whenever any
+  origin holds a key or a keyless endpoint is active.
+- The host never checks `isConfigured` before sending. A forged message could drive a compatible
+  endpoint with an empty model; it fails locally, but the guard belongs in the host.
 
 ## Out of the MVP by design
 

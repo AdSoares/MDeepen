@@ -48,8 +48,10 @@ Open any `.md` file and run **MDeepen: Open in Markdown Intelligence Reader**
 Optional, off until you configure it, and designed so that you always know what
 leaves your machine.
 
-- **Bring your own key.** Choose Anthropic or OpenAI and configure it from the AI panel or the
-  `MDeepen: Configure AI…` command. Each provider keeps its own key in the VS Code secret
+- **Bring your own key, or run locally.** Choose Anthropic, OpenAI or any OpenAI-compatible
+  endpoint and configure it from the AI panel or the `MDeepen: Configure AI…` command. Point it at
+  Ollama or LM Studio on this machine and the panel says so: nothing leaves your machine, and no
+  key is needed. Each provider keeps its own key in the VS Code secret
   store, so switching back and forth costs nothing — never in `settings.json`, never in a
   workspace file, never in your Markdown. The model list can be refreshed from the provider,
   and any model id can be typed by hand.
