@@ -3,6 +3,7 @@ import { post } from '../vscodeApi';
 import type { AiState } from '../store';
 import { DEFAULT_AI_CONFIG, PROVIDERS } from '../../extension/ai/types';
 import type { ProviderId } from '../../extension/ai/types';
+import { canRefreshModels, destinationLine, keyStoredFor } from './aiConfigRules';
 
 interface Props {
   ai: AiState;
@@ -11,19 +12,32 @@ interface Props {
 
 export function AiConfig({ ai, onClose }: Props) {
   const [provider, setProvider] = useState<ProviderId>((ai.provider as ProviderId) || DEFAULT_AI_CONFIG.provider);
-  const [model, setModel] = useState(ai.model || DEFAULT_AI_CONFIG.model);
+  // A compatible endpoint saved before a model was chosen has an empty model, and must keep it:
+  // falling back to the default would offer an Anthropic id to Ollama.
+  const [model, setModel] = useState(ai.provider === 'compatible' ? ai.model : (ai.model || DEFAULT_AI_CONFIG.model));
+  const [baseUrl, setBaseUrl] = useState(ai.baseUrl ?? PROVIDERS.compatible.defaultBaseUrl ?? '');
   const [custom, setCustom] = useState('');
   const [maxTokens, setMaxTokens] = useState(DEFAULT_AI_CONFIG.maxTokens);
   const [key, setKey] = useState('');
   const [saved, setSaved] = useState(false);
   const [armed, setArmed] = useState(false);
 
+  const isCompatible = provider === 'compatible';
+  const dest = destinationLine(baseUrl);
+  const hasKey = keyStoredFor(provider, baseUrl, ai.configuredProviders, ai.keyedOrigins);
+  const refreshable = canRefreshModels(provider, baseUrl, { provider: ai.provider, baseUrl: ai.baseUrl, configuredProviders: ai.configuredProviders });
+  // A URL the destination rule cannot read is never saved: the host would refuse it anyway.
+  const savable = !isCompatible || dest.ok;
+
   // Saving must not close the card: `configured` only flips once the host round-trips
   // aiConfigState, and Test connection is gated on it. Closing here made "save then test"
   // impossible without reopening the card.
+  // The config goes first: the host stores a key against the origin of the config active when
+  // the key arrives, so the other order would file a new endpoint's key under the old one.
   const save = () => {
+    if (!savable) return;
+    post({ type: 'aiSaveConfig', config: { provider, model, maxTokens, ...(isCompatible ? { baseUrl: baseUrl.trim() } : {}) } });
     if (key.trim()) post({ type: 'aiSaveKey', key: key.trim() });
-    post({ type: 'aiSaveConfig', config: { provider, model, maxTokens } });
     setKey('');
     setSaved(true);
   };
@@ -64,13 +78,30 @@ export function AiConfig({ ai, onClose }: Props) {
         ))}
       </div>
 
+      {isCompatible && (
+        <>
+          <div class="md-config-row">
+            <label class="md-config-label" for="ai-base-url">Base URL</label>
+            <input id="ai-base-url" type="text" spellcheck={false} value={baseUrl} style={{ flex: 1, minWidth: 0 }}
+              aria-describedby="ai-base-url-dest ai-base-url-hint"
+              onInput={(e) => { setSaved(false); setBaseUrl((e.target as HTMLInputElement).value); }} />
+          </div>
+          <p id="ai-base-url-dest" class="md-config-result" data-ok={String(dest.ok)} role="status">{dest.text}</p>
+          <p id="ai-base-url-hint" class="md-config-hint">
+            Ollama: http://localhost:11434/v1 · LM Studio: http://localhost:1234/v1
+          </p>
+        </>
+      )}
+
       <div class="md-config-row">
         <label class="md-config-label" for="ai-model">Model</label>
         <select id="ai-model" value={model} onChange={(e) => { setSaved(false); setModel((e.target as HTMLSelectElement).value); }}>
-          {[...new Set([...PROVIDERS[provider].models, ...ai.fetchedModels])].map((m) => <option key={m} value={m}>{m}</option>)}
+          {/* The chosen model is always an option: a compatible endpoint has no curated list, so on
+              reopening the card the saved id would otherwise be missing until a refresh. */}
+          {[...new Set([model, ...PROVIDERS[provider].models, ...ai.fetchedModels].filter(Boolean))].map((m) => <option key={m} value={m}>{m}</option>)}
         </select>
-        <button class="md-btn" disabled={!ai.configuredProviders.includes(provider)}
-          title={ai.configuredProviders.includes(provider) ? 'Ask the provider which models it offers' : 'Add a key for this provider first'}
+        <button class="md-btn" disabled={!refreshable}
+          title={refreshable ? 'Ask the endpoint which models it offers' : isCompatible ? 'Save this URL first' : 'Add a key for this provider first'}
           onClick={() => post({ type: 'aiListModels' })}>Refresh models</button>
       </div>
 
@@ -91,10 +122,10 @@ export function AiConfig({ ai, onClose }: Props) {
       </div>
 
       <div class="md-config-row">
-        <label class="md-config-label" for="ai-key">API key</label>
+        <label class="md-config-label" for="ai-key">{isCompatible ? 'API key (optional)' : 'API key'}</label>
         <input id="ai-key" type="password" autocomplete="off" spellcheck={false}
           aria-describedby="ai-key-hint"
-          placeholder={ai.configuredProviders.includes(provider) ? 'Saved for this provider - type to replace' : 'Paste a key'}
+          placeholder={hasKey ? (isCompatible ? 'Saved for this URL - type to replace' : 'Saved for this provider - type to replace') : isCompatible ? 'Leave empty for Ollama or LM Studio' : 'Paste a key'}
           value={key} style={{ flex: 1, minWidth: 0 }}
           onInput={(e) => { setSaved(false); setKey((e.target as HTMLInputElement).value); }} />
       </div>
@@ -103,7 +134,7 @@ export function AiConfig({ ai, onClose }: Props) {
       </p>
 
       <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-        <button class="md-btn primary" onClick={save}>Save</button>
+        <button class="md-btn primary" onClick={save} disabled={!savable}>Save</button>
         <button class="md-btn accent" onClick={test} disabled={!ai.configured}>Test connection</button>
         <button class="md-btn" onClick={onClose}>Close</button>
         <span style={{ flex: 1 }} />
@@ -118,13 +149,13 @@ export function AiConfig({ ai, onClose }: Props) {
 
       {armed && (
         <p class="md-config-result" data-ok="false" role="status">
-          This deletes every stored key, for every provider, and asks for confirmation again before the next send.
+          This deletes every stored key, for every provider and endpoint, and asks for confirmation again before the next send.
         </p>
       )}
 
       {saved && !ai.connection && (
         <p class="md-config-result" data-ok="true" role="status">
-          Saved. {ai.configured ? 'You can test the connection now.' : 'No API key stored yet.'}
+          Saved. {ai.configured ? 'You can test the connection now.' : isCompatible ? 'Choose a model to turn AI on — Refresh models lists them.' : 'No API key stored yet.'}
         </p>
       )}
 
