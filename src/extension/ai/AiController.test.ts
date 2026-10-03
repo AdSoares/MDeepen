@@ -167,7 +167,8 @@ describe('AiController disconnect', () => {
     await ws.update('mdeepen.ai.firstSendConfirmed', true);
     const { c } = makeController(ws);
     const running = c.handle({ type: 'aiAction', action: 'summarize', scope: 'section', id: 'p1' });
-    await Promise.resolve();
+    // Wait for the request to actually start, rather than for a fixed number of microtasks.
+    await vi.waitFor(() => expect(rec.calls).toHaveLength(1));
     await c.handle({ type: 'aiClearKey' });
     await running;
     expect(rec.calls[0].signal.aborted).toBe(true);
@@ -191,7 +192,8 @@ describe('AiController streaming', () => {
     await ws.update('mdeepen.ai.firstSendConfirmed', true);
     const { c } = makeController(ws);
     const running = c.handle({ type: 'aiAction', action: 'summarize', scope: 'section', id: 'p1' });
-    await Promise.resolve();
+    // Wait for the request to actually start, rather than for a fixed number of microtasks.
+    await vi.waitFor(() => expect(rec.calls).toHaveLength(1));
     await c.handle({ type: 'aiStop' });
     await running;
     expect(rec.calls[0].signal.aborted).toBe(true);
@@ -447,23 +449,40 @@ describe('chat', () => {
 
     expect(rec.calls).toHaveLength(0);
   });
-
-  it('revokes the chat consent on disconnect, so a new key cannot inherit it', async () => {
-    const ws = fakeMemento();
-    await ws.update('mdeepen.ai.chatConfirmed', true);
-    await ws.update('mdeepen.ai.firstSendConfirmed', true);
-    const { c, posted } = makeController(ws, PAGES);
-
-    await c.handle({ type: 'aiClearKey' });
-
-    expect(ws.get('mdeepen.ai.chatConfirmed', false)).toBe(false);
-    expect(ws.get('mdeepen.ai.firstSendConfirmed', false)).toBe(false);
-
-    // And a question now asks again rather than sending.
-    await c.handle({ type: 'aiChat', question: 'why?', history: [] });
-    expect(posted.some((m) => m.type === 'aiConfirmNeeded')).toBe(true);
-    expect(rec.calls).toHaveLength(0);
-  });
+
+
+  it('revokes the chat consent on disconnect, so a new key cannot inherit it', async () => {
+
+    const ws = fakeMemento();
+
+    await ws.update('mdeepen.ai.chatConfirmed', true);
+
+    await ws.update('mdeepen.ai.firstSendConfirmed', true);
+
+    const { c, posted } = makeController(ws, PAGES);
+
+
+
+    await c.handle({ type: 'aiClearKey' });
+
+
+
+    expect(ws.get('mdeepen.ai.chatConfirmed', false)).toBe(false);
+
+    expect(ws.get('mdeepen.ai.firstSendConfirmed', false)).toBe(false);
+
+
+
+    // And a question now asks again rather than sending.
+
+    await c.handle({ type: 'aiChat', question: 'why?', history: [] });
+
+    expect(posted.some((m) => m.type === 'aiConfirmNeeded')).toBe(true);
+
+    expect(rec.calls).toHaveLength(0);
+
+  });
+
 });
 
 describe('providers', () => {
