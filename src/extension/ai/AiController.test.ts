@@ -725,3 +725,80 @@ describe('a compatible endpoint', () => {
     expect(store.getConfig().provider).toBe('anthropic');
   });
 });
+
+describe('loopback', () => {
+  const at = (baseUrl: string) => ({ provider: 'compatible' as const, model: 'llama3', maxTokens: 1024, baseUrl });
+
+  async function controllerAt(baseUrl: string, pages: Page[] = [PAGE]) {
+    const posted: HostToWebview[] = [];
+    const store = new AiConfigStore(fakeSecrets(), fakeMemento());
+    await store.setConfig(at(baseUrl));
+    const c = new AiController(store, fakeMemento(), (m) => posted.push(m), () => pages, () => 'doc.md');
+    rec.chunks.push({ type: 'done', usage: { inputTokens: 1, outputTokens: 1 } });
+    return { c, posted };
+  }
+  const confirmOf = (posted: HostToWebview[]) =>
+    posted.find((m) => m.type === 'aiConfirmNeeded') as Extract<HostToWebview, { type: 'aiConfirmNeeded' }> | undefined;
+
+  it('sends a section with no dialog, and unmasked, even when it holds a secret', async () => {
+    const { c, posted } = await controllerAt('http://localhost:11434/v1');
+
+    await c.handle({ type: 'aiAction', action: 'summarize', scope: 'section', id: 'p1' });
+
+    expect(confirmOf(posted)).toBeUndefined();
+    expect(rec.calls).toHaveLength(1);
+    expect(rec.calls[0].text).toContain(SECRET);
+  });
+
+  it('answers a chat turn with no dialog', async () => {
+    const { c, posted } = await controllerAt('http://127.0.0.1:1234/v1');
+
+    await c.handle({ type: 'aiChat', question: 'what is the key?', history: [] });
+
+    expect(confirmOf(posted)).toBeUndefined();
+    expect(rec.calls).toHaveLength(1);
+  });
+
+  it('still confirms a whole document, saying it stays here and costs nothing', async () => {
+    const { c, posted } = await controllerAt('http://localhost:11434/v1');
+
+    await c.handle({ type: 'aiAction', action: 'summarizeShort', scope: 'document' });
+
+    const confirm = confirmOf(posted)!;
+    expect(confirm).toBeDefined();
+    expect(rec.calls).toHaveLength(0);
+    expect(confirm.summary.local).toBe(true);
+    expect(confirm.summary.estCost).toBe(0);
+    expect(confirm.summary.pricedModel).toBe(true);
+    expect(confirm.secrets.count).toBe(0);
+  });
+
+  it('names the host of a remote endpoint and flags plain http', async () => {
+    const { c, posted } = await controllerAt('http://192.168.0.50:11434/v1');
+
+    await c.handle({ type: 'aiAction', action: 'summarize', scope: 'section', id: 'p1' });
+
+    const confirm = confirmOf(posted)!;
+    expect(confirm.summary.provider).toBe('192.168.0.50:11434');
+    expect(confirm.summary.local).toBe(false);
+    expect(confirm.summary.plainHttp).toBe(true);
+    expect(confirm.summary.estCost).toBeUndefined();
+    expect(confirm.secrets.count).toBe(1);
+  });
+
+  it('does not flag a remote https endpoint', async () => {
+    const { c, posted } = await controllerAt('https://openrouter.ai/api/v1');
+    await c.handle({ type: 'aiAction', action: 'summarize', scope: 'section', id: 'p1' });
+    expect(confirmOf(posted)!.summary.plainHttp).toBe(false);
+    expect(confirmOf(posted)!.summary.provider).toBe('openrouter.ai');
+  });
+
+  it('leaves the fixed providers as they were', async () => {
+    const { c, posted } = makeController();
+    await c.handle({ type: 'aiAction', action: 'summarize', scope: 'section', id: 'p1' });
+    const confirm = confirmOf(posted)!;
+    expect(confirm.summary.provider).toBe('Anthropic');
+    expect(confirm.summary.local).toBe(false);
+    expect(confirm.summary.plainHttp).toBe(false);
+  });
+});

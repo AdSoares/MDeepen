@@ -176,7 +176,9 @@ export class AiController {
       if (this.abort === abort) this.abort = undefined;
     };
 
-    if (this.workspaceState.get<boolean>(FIRST_SEND_KEY, false)) {
+    // FR-MVP-032 asks for confirmation before sending to a remote provider. On loopback nothing
+    // leaves the machine, so there is nothing to consent to, and nothing to mask.
+    if (isLocalConfig(cfg.provider, cfg.baseUrl) || this.workspaceState.get<boolean>(FIRST_SEND_KEY, false)) {
       await run(false);
       return;
     }
@@ -188,7 +190,8 @@ export class AiController {
   }
 
   /** Document scope always confirms: the consent recorded for one section was given in front of a
-   *  different order of magnitude of data and money. */
+   *  different order of magnitude of data and money. On loopback it still confirms — not for
+   *  privacy, but because a dozen requests to a local model can take minutes. */
   private async startDocumentAction(action: AiActionKind): Promise<void> {
     const pages = this.getPages();
     if (pages.length === 0) return;
@@ -266,7 +269,7 @@ export class AiController {
 
     const consented = this.workspaceState.get<boolean>(CHAT_KEY, false);
     const secrets = detectSecrets(rawText).length;
-    if (consented && secrets === 0) {
+    if (isLocalConfig(cfg.provider, cfg.baseUrl) || (consented && secrets === 0)) {
       await run(false);
       return;
     }
@@ -285,20 +288,28 @@ export class AiController {
     cfg: AiConfig,
     facts: { sectionTitle: string; scope: 'section' | 'selection' | 'document' | 'chat'; sectionCount: number; truncated: string[]; estTokens: number },
   ): void {
-    const count = detectSecrets(rawText).length;
+    const dest = cfg.provider === 'compatible' ? describeDestination(cfg.baseUrl ?? '') : undefined;
+    const local = dest !== undefined && dest.ok && dest.isLoopback;
+    // A remote compatible endpoint is named by its host: "OpenAI-compatible endpoint" does not
+    // answer the one question this dialog asks, which is where the content is going.
+    const provider = dest !== undefined && dest.ok && !local ? dest.host : (PROVIDERS[cfg.provider] ?? PROVIDERS.anthropic).label;
+    // Nothing leaves the machine on loopback, so masking would only make the answer worse.
+    const count = local ? 0 : detectSecrets(rawText).length;
     this.post({
       type: 'aiConfirmNeeded',
       summary: {
         fileName: this.getFileName(),
-        provider: (PROVIDERS[cfg.provider] ?? PROVIDERS.anthropic).label,
-        pricedModel: isPricedModel(cfg.provider, cfg.model),
+        provider,
+        local,
+        plainHttp: dest !== undefined && dest.ok && !dest.isLoopback && !dest.isTls,
+        pricedModel: local || isPricedModel(cfg.provider, cfg.model),
         sectionTitle: facts.sectionTitle,
         scope: facts.scope,
         sectionCount: facts.sectionCount,
         truncated: facts.truncated,
         model: cfg.model,
         estTokens: facts.estTokens,
-        estCost: estimateCost(facts.estTokens, cfg.provider, cfg.model),
+        estCost: local ? 0 : estimateCost(facts.estTokens, cfg.provider, cfg.model),
       },
       secrets: { label: count ? `${count} possible secret${count > 1 ? 's' : ''} detected` : '', count },
     });

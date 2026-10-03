@@ -8,7 +8,7 @@ export type HostToWebview =
   | { type: 'aiChunk'; text: string }
   | { type: 'aiDone'; usage: { inputTokens: number; outputTokens: number } }
   | { type: 'aiError'; kind: AiErrorKind; message: string }
-  | { type: 'aiConfirmNeeded'; summary: { fileName: string; provider: string; pricedModel: boolean; sectionTitle: string; scope: AiScope | 'chat'; sectionCount: number; truncated: string[]; model: string; estTokens: number; estCost?: number }; secrets: { label: string; count: number } }
+  | { type: 'aiConfirmNeeded'; summary: { fileName: string; provider: string; local: boolean; plainHttp: boolean; pricedModel: boolean; sectionTitle: string; scope: AiScope | 'chat'; sectionCount: number; truncated: string[]; model: string; estTokens: number; estCost?: number }; secrets: { label: string; count: number } }
   | { type: 'aiConfigState'; configured: boolean; provider: string; model: string; configuredProviders: string[]; local: boolean; baseUrl?: string; keyedOrigins: string[] }
   | { type: 'aiConnectionResult'; ok: boolean; ms: number; error?: string }
   | { type: 'aiModelList'; provider: string; models: string[]; error?: string }

@@ -119,7 +119,7 @@ describe('reader store', () => {
 
   it('holds and clears the confirm payload', () => {
     const s = createReaderState();
-    s.aiConfirm({ summary: { fileName: 'a.md', provider: 'Anthropic', pricedModel: true, sectionTitle: 'Retries', scope: 'section', sectionCount: 1, truncated: [], model: 'claude-opus-4-8', estTokens: 10, estCost: 0.00005 }, secrets: { label: '1 possible secret detected', count: 1 } });
+    s.aiConfirm({ summary: { fileName: 'a.md', provider: 'Anthropic', local: false, plainHttp: false, pricedModel: true, sectionTitle: 'Retries', scope: 'section', sectionCount: 1, truncated: [], model: 'claude-opus-4-8', estTokens: 10, estCost: 0.00005 }, secrets: { label: '1 possible secret detected', count: 1 } });
     expect(s.get().ai.confirm?.secrets.count).toBe(1);
     s.aiConfirm(undefined);
     expect(s.get().ai.confirm).toBeUndefined();
