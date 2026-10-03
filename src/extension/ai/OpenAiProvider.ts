@@ -1,7 +1,7 @@
 import OpenAI from 'openai';
 import type { AiChunk, AiProvider, AiRequest, ConnectionResult } from './types';
 import { classifyError } from './errorMap';
-import { toOpenAiRequest } from './openAiRequest';
+import { toOpenAiRequest, type TokenField } from './openAiRequest';
 import type { OpenAiClientLike } from './sdkShapes';
 
 export class OpenAiProvider implements AiProvider {
@@ -9,15 +9,20 @@ export class OpenAiProvider implements AiProvider {
 
   /** `client` exists so tests can supply a fake shaped like the slice of the SDK we use. In
    *  production it is always the real one. */
-  constructor(apiKey: string, private readonly model: string, baseURL?: string, client?: OpenAiClientLike) {
-    // baseURL is what makes an OpenAI-compatible local runtime reachable later without a new
-    // provider. Undefined means the SDK's own default.
+  constructor(
+    apiKey: string,
+    private readonly model: string,
+    baseURL?: string,
+    client?: OpenAiClientLike,
+    private readonly tokenField: TokenField = 'max_completion_tokens',
+  ) {
+    // Undefined baseURL means the SDK's own default; a compatible endpoint always sets one.
     this.client = client ?? (new OpenAI({ apiKey, ...(baseURL ? { baseURL } : {}) }) as unknown as OpenAiClientLike);
   }
 
   async *generate(request: AiRequest, signal: AbortSignal): AsyncIterable<AiChunk> {
     try {
-      const stream = await this.client.chat.completions.create(toOpenAiRequest(request, this.model), { signal });
+      const stream = await this.client.chat.completions.create(toOpenAiRequest(request, this.model, this.tokenField), { signal });
       let inputTokens = 0;
       let outputTokens = 0;
       for await (const chunk of stream) {
@@ -47,7 +52,7 @@ export class OpenAiProvider implements AiProvider {
       await this.client.chat.completions.create({
         model: this.model,
         messages: [{ role: 'user', content: 'ping' }],
-        max_completion_tokens: 1,
+        ...(this.tokenField === 'max_tokens' ? { max_tokens: 1 } : { max_completion_tokens: 1 }),
       });
       return { ok: true, ms: Date.now() - start };
     } catch (err) {
