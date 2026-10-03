@@ -68,6 +68,7 @@ button.md-btn.primary:disabled:hover { background: var(--vscode-button-backgroun
 .md-ai-head { display: flex; align-items: center; gap: 8px; }
 .md-ai-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: var(--vscode-descriptionForeground); }
 .md-ai-badge::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--md-ai); }
+.md-ai-local { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: var(--vscode-testing-iconPassed, var(--vscode-descriptionForeground)); }
 .md-ai-stream { font-size: 13px; white-space: pre-wrap; }
 .md-ai-msg { border-top: 1px solid var(--vscode-panel-border); padding-top: 10px; }
 .md-ai-msg-text { font-size: 13px; white-space: pre-wrap; }

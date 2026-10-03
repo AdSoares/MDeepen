@@ -21,6 +21,11 @@ export interface AiState {
   configured: boolean;
   provider: string;
   configuredProviders: string[];
+  /** The active endpoint is on this machine: nothing is sent anywhere. */
+  local: boolean;
+  baseUrl?: string;
+  /** Compatible origins holding a key, so the card can say whether the URL typed has one. */
+  keyedOrigins: string[];
   fetchedModels: string[];
   modelListError?: string;
   model: string;
@@ -51,7 +56,7 @@ export interface ReaderState {
 }
 
 const initialAi: AiState = {
-  configured: false, provider: 'anthropic', model: '', configuredProviders: [], fetchedModels: [],
+  configured: false, provider: 'anthropic', model: '', configuredProviders: [], local: false, keyedOrigins: [], fetchedModels: [],
   streaming: false, streamText: '',
   pending: { kind: 'action', action: 'summarize', scope: 'section', sectionTitle: '', pageIndex: -1 },
   messages: [],
@@ -112,10 +117,13 @@ export function createReaderState() {
       };
       emit();
     },
-    aiConfigState(configured: boolean, provider: string, model: string, configuredProviders: string[]) {
+    aiConfigState(
+      configured: boolean, provider: string, model: string, configuredProviders: string[],
+      more: { local: boolean; baseUrl?: string; keyedOrigins: string[] } = { local: false, keyedOrigins: [] },
+    ) {
       // Losing the key invalidates any connection result still on screen.
       const connection = configured ? state.ai.connection : undefined;
-      state = { ...state, ai: { ...state.ai, configured, provider, model, configuredProviders, connection } };
+      state = { ...state, ai: { ...state.ai, configured, provider, model, configuredProviders, connection, ...more } };
       emit();
     },
     aiModelList(models: string[], error?: string) {
