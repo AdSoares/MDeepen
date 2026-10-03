@@ -65,6 +65,20 @@ SDK actually returns.
 becomes the target rather than a `.vsix` in the repo, that is a decision to take deliberately —
 it is not an oversight.
 
+### The extension is disabled in Restricted Mode
+
+Found on 2026-10-03 while installing the Slice 2.6 smoke build: in a workspace that is not trusted,
+VS Code disables MDeepen entirely and says nothing. The reason is that `package.json` declares no
+`capabilities.untrustedWorkspaces`, and VS Code treats a missing declaration as "not supported". A
+freshly cloned repository or a folder from a download is exactly where someone opens a README to
+read it, and the reader is not there.
+
+Reading Markdown runs nothing from the workspace, so declaring `supported: "limited"` is the likely
+answer. The reader would work untrusted, and the two capabilities with consequences would need
+trust: the AI features, which send content off the machine, and diagram insertion, which writes to
+the file. That split still has to be designed: which UI says why AI is off, and whether
+`isWorkspaceTrusted` is checked in the host, the webview, or both.
+
 ## Out of the MVP by design
 
 Not backlog so much as scope, recorded here so nobody re-proposes them as gaps: persisted AI
