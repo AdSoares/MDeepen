@@ -109,7 +109,21 @@ never asks for the key again, which is how Anthropic and OpenAI already behave.
 `SecretStorage` cannot enumerate its keys, so the store keeps the list of origins holding a key
 in the memento, under `mdeepen.compatible.keyedOrigins`. `setKey` adds to it; `clearAllKeys`
 walks it, deletes each secret, and empties it, alongside the Anthropic and OpenAI keys.
-Disconnect therefore keeps its meaning: afterwards nothing can be sent anywhere.
+
+**Deleting keys is no longer enough for Disconnect.** A keyless endpoint stays configured after
+every key is gone, so Disconnect would leave AI on. When the active provider is `compatible`,
+Disconnect also resets the config to the default provider, which holds no key after the clear.
+Disconnect therefore keeps its meaning: afterwards nothing can be sent anywhere. *(Amended
+2026-10-03 while writing the plan.)*
+
+### 4.1a Never an absent key
+
+`OpenAI` falls back to the `OPENAI_API_KEY` environment variable when it is constructed without
+a key, and refuses an empty one. A keyless endpoint built with an absent key would therefore
+either fail, or — worse — send the user's real OpenAI key to whatever host the URL names.
+`createProvider` passes a fixed placeholder, `no-key`, whenever the credential is empty, and a
+test pins that the environment key is never picked up. *(Added 2026-10-03 while writing the
+plan.)*
 
 ### 4.2 Configured no longer means "has a key"
 
