@@ -1,4 +1,4 @@
-# MDeepen — Markdown Intelligence Reader
+# MDeepen - Markdown Intelligence Reader
 
 [![CI](https://github.com/AdSoares/MDeepen/actions/workflows/ci.yml/badge.svg)](https://github.com/AdSoares/MDeepen/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/AdSoares/MDeepen)](https://github.com/AdSoares/MDeepen/releases/latest)
