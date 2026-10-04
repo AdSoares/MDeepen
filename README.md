@@ -1,93 +1,124 @@
 # MDeepen — Markdown Intelligence Reader
 
 [![CI](https://github.com/AdSoares/MDeepen/actions/workflows/ci.yml/badge.svg)](https://github.com/AdSoares/MDeepen/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/AdSoares/MDeepen)](https://github.com/AdSoares/MDeepen/releases/latest)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
-Read Markdown, deeper. A paginated, section-based Markdown reader for VS Code —
-built for long documents you actually have to work through, not glance at.
+**Read Markdown, deeper.** A paginated, section-based Markdown reader for VS Code, built for long
+documents you have to work through rather than glance at, with an optional AI layer that never
+sends anything you did not approve and can run entirely on your machine.
 
-VS Code's preview renders a document as one endless scroll. MDeepen turns it into
-sections you move through one at a time, keeps track of what you have read, tells
-you how much is left, and — if you give it an API key — can summarize the section
-in front of you without ever sending anything you did not approve.
+## Why
+
+VS Code's preview renders a document as one endless scroll. That is fine for a README and painful
+for a 40-page spec, a runbook or a design document. MDeepen splits the document into sections you
+move through one at a time, keeps track of what you have read and how much is left, and, if you
+want it to, summarizes, explains or answers questions about the document in front of you.
+
+## Features
+
+**Reading**
+
+- One section at a time, split at the heading level you choose (H1–H6, `##` by default).
+- An outline with a filter, read marks and one-click navigation, plus a breadcrumb of the headings
+  above the current section.
+- Reading progress, estimated time left, and your last position remembered per file.
+- Read marks that mean something: a section counts as read after you stay on it for 5 seconds, so
+  skipping ahead does not mark what you skipped.
+- Full rendering: GFM tables, task lists, code with syntax highlighting and copy, links and Mermaid
+  diagrams.
+- Reading and focus modes, with adjustable font size, column width, line spacing and theme.
+
+**AI (optional)**
+
+- Explain, summarize, simplify, extract key terms or give an example, for a selection or a section.
+- Summarize the whole document in four styles. Long files are read in parts, so the summary covers
+  all of it.
+- Ask questions about the document. The answer names the sections it used, each one a link.
+- Turn a selection into a flowchart, sequence diagram, mind map or state diagram, edit the Mermaid
+  source live and insert it into the file with a single undoable edit.
+- Works with **Anthropic**, **OpenAI**, or **any OpenAI-compatible endpoint**: Ollama, LM Studio, a
+  server on your network, OpenRouter, Groq.
+
+## Privacy
+
+Privacy is the design constraint the AI layer was built around, not a setting.
+
+- **Off until you turn it on.** Reading, navigation and progress never depend on AI.
+- **Run it locally.** Point MDeepen at Ollama or LM Studio on `localhost` and the panel says
+  **Local · nothing leaves this machine**. No key needed, no dialogs, no cost.
+- **Nothing is sent without your say-so.** The first send to a remote provider opens a dialog
+  naming the destination, the file and section, the model, and a token and cost estimate computed
+  locally. Consent is recorded for that destination only; pointing MDeepen somewhere else asks
+  again.
+- **Secrets are caught before they leave.** Text about to be sent is scanned for key-shaped
+  strings (`sk-…`, `AKIA…`, `ghp_…`, JWTs), and masking is pre-selected when any are found. It is a
+  safety net, not a guarantee; see [SECURITY.md](SECURITY.md).
+- **Keys stay in the VS Code secret store.** Never in `settings.json`, a workspace file or your
+  Markdown. A key is stored for the provider or endpoint it was pasted for and is never sent to
+  another one.
+- **No telemetry.** MDeepen collects nothing. All network access happens in the extension host,
+  only to the provider you configured; the reader's webview cannot make network requests at all.
 
 ## Install
 
-Not on the Marketplace yet. Grab the `.vsix` from
-[Releases](https://github.com/AdSoares/MDeepen/releases), then:
+Requires VS Code **1.90** or later. MDeepen is not on the Marketplace yet.
 
-```bash
-code --install-extension mdeepen-0.2.0.vsix
-```
+1. Download the `.vsix` from the [latest release](https://github.com/AdSoares/MDeepen/releases/latest).
+2. Install it:
 
-Or from source: `npm install && npm run package`.
+   ```bash
+   code --install-extension mdeepen-<version>.vsix
+   ```
 
-Open any `.md` file and run **MDeepen: Open in Markdown Intelligence Reader**
-(<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>M</kbd>, or the editor and explorer context menus).
+   or, in VS Code: **Extensions** view → **…** → **Install from VSIX…**
 
-## Reading
+## Quick start
 
-- Section pagination (defaults to `##`, with fallback), Previous/Next, and
-  <kbd>Alt</kbd>+<kbd>←</kbd>/<kbd>→</kbd>. A picker sets the heading level (H1–H6).
-- Outline tree with filter, read marks, and section navigation.
-  <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>O</kbd> focuses the filter.
-- A breadcrumb above the reading pane showing the headings the section sits under, each one a
-  link back to that part of the document.
-- Reading progress and estimated time; last position remembered per file.
-- Read marks are dwell-based (5s) and persisted per file. Skipping ahead does not
-  mark what you skipped, and going back does not unmark.
-- Full Markdown rendering: GFM tables, task lists, code blocks with copy, links,
-  syntax highlighting, and Mermaid diagrams.
-- Reading and focus modes (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F11</kbd>),
-  adjustable font size, column width, line spacing, and theme.
-- Toggleable outline and AI panels with draggable borders; layout and preferences
-  persist across sessions.
+1. Open any `.md` file and press <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>M</kbd>, or right-click it and
+   choose **MDeepen: Open in Markdown Intelligence Reader**.
+2. Move through sections with <kbd>Alt</kbd>+<kbd>←</kbd> / <kbd>Alt</kbd>+<kbd>→</kbd>.
+3. To enable AI, click **Configure AI** in the AI panel, or run **MDeepen: Configure AI…**.
 
-## AI
+### Running AI locally
 
-Optional, off until you configure it, and designed so that you always know what
-leaves your machine.
+| Runtime | Start it | Base URL |
+| --- | --- | --- |
+| [Ollama](https://ollama.com) | `ollama pull llama3.2`, then keep Ollama running | `http://localhost:11434/v1` |
+| [LM Studio](https://lmstudio.ai) | Load a model, then **Developer → Start Server** | `http://localhost:1234/v1` |
 
-- **Bring your own key, or run locally.** Choose Anthropic, OpenAI or any OpenAI-compatible
-  endpoint and configure it from the AI panel or the `MDeepen: Configure AI…` command. Point it at
-  Ollama or LM Studio on this machine and the panel says so: nothing leaves your machine, and no
-  key is needed. Each provider keeps its own key in the VS Code secret
-  store, so switching back and forth costs nothing — never in `settings.json`, never in a
-  workspace file, never in your Markdown. The model list can be refreshed from the provider,
-  and any model id can be typed by hand.
-- **Nothing is sent without your say-so.** The first remote send in a workspace
-  opens a confirmation dialog showing the file and section, the model, and a token
-  and cost estimate computed locally — producing it makes no network call.
-  "Don't ask again" is scoped to that workspace.
-- **Secret detection.** The text about to be sent — the selection, or the whole
-  section — is scanned for API-key-shaped strings
-  (`sk-…`, `AKIA…`, `ghp_…`, JWTs) before the dialog appears. If any are found,
-  masking is pre-selected and those spans are redacted before the text is sent.
-  It is a safety net, not a guarantee — see [SECURITY.md](SECURITY.md).
-- **Five actions, one click.** Select any text — or act on the whole section — and ask for a
-  summary, an explanation, a plain-language explanation, the key terms, or a worked example.
-  Answers stream in, cite the section they came from, and can be copied, deleted, or cleared.
-  Stop generating keeps whatever arrived. <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>S</kbd>
-  summarizes the current section without leaving the keyboard.
-- **Summarize the whole document** in four styles — short, executive, technical, or key points.
-  Long documents are read in parts and combined, so the summary covers the whole file rather than
-  the beginning of it. Progress is visible while it runs, and a document always asks before it is
-  sent, however you answered the dialog for a section.
-- **Ask about the document.** Type a question and MDeepen answers from the file in front of you,
-  choosing the relevant sections itself and naming them under the answer, each one a link back to
-  that section. The ranking is local: no embeddings, no index, nothing to rebuild when you edit.
-  <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>A</kbd> jumps to the question field. Select text and choose
-  **Ask about this** to put that excerpt in front of the question.
-- **Diagrams from a selection.** Select text, choose Diagram, and pick a flowchart, sequence
-  diagram, mind map or state diagram. It renders in the panel, the Mermaid source is editable
-  and re-renders as you type, and one click inserts it at the end of the section it came from —
-  as a single edit you can undo.
-- All network access happens in the extension host. The webview makes no requests,
-  and its Content Security Policy carries no `connect-src`.
-- **Reading never depends on AI.** With no key configured, everything above still
-  works, and every AI error is recoverable.
+In **Configure AI**, choose **OpenAI-compatible endpoint**, enter the base URL, **Save**, click
+**Refresh models**, pick one and **Save** again. Leave the key empty.
 
-Coming in later slices: chat with the document and generated diagrams.
+## Keyboard shortcuts
+
+| Shortcut | Action |
+| --- | --- |
+| <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>M</kbd> | Open the current Markdown file in the reader |
+| <kbd>Alt</kbd>+<kbd>→</kbd> / <kbd>Alt</kbd>+<kbd>←</kbd> | Next / previous section |
+| <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>O</kbd> | Focus the outline filter |
+| <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>A</kbd> | Focus the question field |
+| <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>S</kbd> | Summarize the current section |
+| <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F11</kbd> | Toggle focus mode |
+
+All of them can be remapped in **Keyboard Shortcuts**.
+
+## Known limitations
+
+- **Restricted Mode.** In a workspace VS Code does not trust, the extension is disabled. Trust the
+  folder to use it. Making the reader available untrusted is on the [backlog](docs/BACKLOG.md).
+- **Loopback is decided from the URL.** Only `localhost`, `127.x.x.x` and `[::1]` count as this
+  machine. A hostname that resolves to your machine is treated as remote, so it asks for consent.
+- **Product specifications are in Portuguese.** The three specs under `docs/` predate the
+  project's English-only rule. Everything else, including code, design documents and this README,
+  is in English.
+
+## Status and roadmap
+
+MDeepen **0.9** completes the MVP: every completion criterion of the
+[product specification](docs/01-especificacao-mvp.md) is met. What is deferred, and why, is
+recorded in [docs/BACKLOG.md](docs/BACKLOG.md). Next on the list: availability in Restricted Mode,
+retry with backoff for long document summaries, and a Marketplace release.
 
 ## Develop
 
@@ -99,23 +130,16 @@ npx tsc --noEmit   # type check
 npm run package    # produces a .vsix
 ```
 
-Press <kbd>F5</kbd> for the Extension Development Host.
-
-`npm audit --omit=dev` is clean; all advisories are in dev-tool dependencies and
-none ship in the `.vsix`.
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for architecture, the project's
-non-negotiables, and how changes are reviewed.
+Press <kbd>F5</kbd> for the Extension Development Host. See [CONTRIBUTING.md](CONTRIBUTING.md) for
+the architecture, the project's non-negotiables and how changes are reviewed.
 
 ## Documentation
 
-- [CHANGELOG.md](CHANGELOG.md) — what shipped, by release
-- [CONTRIBUTING.md](CONTRIBUTING.md) — build, test, and review conventions
-- [SECURITY.md](SECURITY.md) — reporting vulnerabilities, and where they would hurt
-- `docs/` — product specifications and per-slice design and implementation plans
-
-Project language is English. Three product specifications under `docs/` predate
-that rule and are still in Portuguese; they are being translated.
+- [CHANGELOG.md](CHANGELOG.md): what shipped, by release
+- [CONTRIBUTING.md](CONTRIBUTING.md): build, test and review conventions
+- [SECURITY.md](SECURITY.md): reporting vulnerabilities, and where they would hurt
+- [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md): licenses of the software bundled in the `.vsix`
+- `docs/`: product specifications, per-slice designs and implementation plans
 
 ## License
 

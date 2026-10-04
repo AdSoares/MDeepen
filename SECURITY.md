@@ -6,8 +6,8 @@ MDeepen is pre-1.0. Only the latest release receives fixes.
 
 | Version | Supported |
 | ------- | --------- |
-| 0.2.x   | yes       |
-| < 0.2   | no        |
+| 0.9.x   | yes       |
+| < 0.9   | no        |
 
 ## Reporting a vulnerability
 
@@ -23,18 +23,32 @@ Please give a reasonable window for a fix before disclosing publicly.
 
 ## What matters most in this project
 
-MDeepen handles two things worth attacking: an Anthropic API key, and the content
+MDeepen handles two things worth attacking: provider API keys, and the content
 of your documents. The areas below are where a bug would hurt most, and are the
 most useful places to look.
 
-- **API key exposure.** The key must exist only in VS Code `SecretStorage` under
-  `mdeepen.anthropic.apiKey`. Any path that writes it to `settings.json`, a
-  workspace file, `globalState`, a log line, an error message, or the webview is a
-  vulnerability. The key is deliberately sent in its own `aiSaveKey` message so it
-  never rides inside the config object that is persisted.
-- **Unconsented data egress.** Document content must never reach the network
-  before the user confirms the first send in a workspace. A path that skips or
-  bypasses that gate is a vulnerability, even if the content looks harmless.
+- **API key exposure.** Keys must exist only in VS Code `SecretStorage`:
+  `mdeepen.anthropic.apiKey`, `mdeepen.openai.apiKey`, and one
+  `mdeepen.compatible.apiKey:<origin>` per OpenAI-compatible endpoint. Any path
+  that writes a key to `settings.json`, a workspace file, `globalState`, a log
+  line, an error message, or the webview is a vulnerability. A key is sent in its
+  own `aiSaveKey` message so it never rides inside the config object that is
+  persisted.
+- **A key reaching the wrong host.** A key is stored for the provider, or the
+  endpoint origin, it was pasted for. Any path that sends it to a different
+  destination — another provider, another origin, or a host reached through a
+  redirect — is a vulnerability. So is anything that makes the OpenAI SDK fall
+  back to `OPENAI_API_KEY` from the environment for a compatible endpoint.
+- **Unconsented data egress.** Document content must never reach a remote
+  destination before the user confirms sending to that destination. Consent is
+  recorded per destination; a path that skips or bypasses that gate, or reuses
+  consent given for one destination to send to another, is a vulnerability, even
+  if the content looks harmless.
+- **The "local" claim.** On a loopback endpoint (`localhost`, `127.0.0.0/8`,
+  `[::1]`, decided from the URL with no DNS) the consent dialog is skipped and the
+  panel says nothing leaves the machine. Any URL that is classified as loopback
+  but reaches another host is a vulnerability: the classifier lives in
+  `src/shared/destination.ts`.
 - **Secret leakage through masking.** `src/extension/ai/secretDetection.ts` is
   best-effort pattern matching, not a guarantee — it recognises common shapes
   (`sk-…`, `AKIA…`, `ghp_…`, JWTs) and will miss others. Reports of shapes it

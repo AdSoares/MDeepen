@@ -2,7 +2,7 @@
   "name": "mdeepen",
   "displayName": "MDeepen — Markdown Intelligence Reader",
   "description": "Read Markdown, deeper. Paginated, section-based Markdown reader for VS Code.",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "publisher": "codartia",
   "private": true,
   "license": "Apache-2.0",
@@ -18,7 +18,25 @@
     "vscode": "^1.90.0"
   },
   "categories": [
-    "Other"
+    "Other",
+    "AI"
+  ],
+  "keywords": [
+    "markdown",
+    "reader",
+    "documentation",
+    "pagination",
+    "outline",
+    "mermaid",
+    "ai",
+    "llm",
+    "ollama",
+    "lm studio",
+    "local llm",
+    "anthropic",
+    "openai",
+    "summarize",
+    "privacy"
   ],
   "main": "./dist/extension.js",
   "contributes": {
