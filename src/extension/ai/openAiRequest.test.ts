@@ -35,4 +35,15 @@ describe('toOpenAiRequest', () => {
     expect(out.stream).toBe(true);
     expect(out.stream_options).toEqual({ include_usage: true });
   });
+  it('sends max_tokens when asked to, and only that field', () => {
+    // Ollama and most compatible runtimes know only the older field.
+    const out = toOpenAiRequest(REQ, 'llama3', 'max_tokens');
+    expect(out.max_tokens).toBe(1024);
+    expect('max_completion_tokens' in out).toBe(false);
+  });
+
+  it('keeps max_completion_tokens as the default, for OpenAI itself', () => {
+    const out = toOpenAiRequest(REQ, 'some-model');
+    expect('max_tokens' in out).toBe(false);
+  });
 });

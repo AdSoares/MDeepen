@@ -19,7 +19,8 @@ export interface OpenAiStreamChunk {
 export interface OpenAiPingRequest {
   model: string;
   messages: { role: 'user'; content: string }[];
-  max_completion_tokens: number;
+  max_tokens?: number;
+  max_completion_tokens?: number;
 }
 
 export interface OpenAiClientLike {

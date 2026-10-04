@@ -6,21 +6,6 @@ in the spec named beside each entry; this is the index.
 
 ## Deferred by decision
 
-### Local provider — MVP criterion 10, FR-MVP-033
-
-**Deferred indefinitely on 2026-08-25**: not needed for the foreseeable use of the tool.
-
-This leaves the MVP's tenth completion criterion open. It asks for one remote **and one local**
-provider, and the privacy claim behind it — that nothing leaves the machine — is the one thing a
-second remote provider cannot substitute for.
-
-**Groundwork already in place:** `OpenAiProvider` takes an optional `baseUrl`, and `ProviderMeta`
-carries `defaultBaseUrl`. Ollama, LM Studio and most local runtimes expose an OpenAI-compatible
-API, so the remaining work is exposing that field in the configuration card and validating against
-a real runtime — not a new provider.
-
-See `docs/superpowers/specs/2026-08-21-mdeepen-slice2.5-openai-provider-design.md`, §2.2.
-
 ### Retry and backoff
 
 Deferred twice, in Slice 2.3 and again in 2.4, each time in writing.
@@ -64,6 +49,20 @@ SDK actually returns.
 `package.json` carries `"private": true`, which blocks `vsce publish`. If the Marketplace ever
 becomes the target rather than a `.vsix` in the repo, that is a decision to take deliberately —
 it is not an oversight.
+
+### The extension is disabled in Restricted Mode
+
+Found on 2026-10-03 while installing the Slice 2.6 smoke build: in a workspace that is not trusted,
+VS Code disables MDeepen entirely and says nothing. The reason is that `package.json` declares no
+`capabilities.untrustedWorkspaces`, and VS Code treats a missing declaration as "not supported". A
+freshly cloned repository or a folder from a download is exactly where someone opens a README to
+read it, and the reader is not there.
+
+Reading Markdown runs nothing from the workspace, so declaring `supported: "limited"` is the likely
+answer. The reader would work untrusted, and the two capabilities with consequences would need
+trust: the AI features, which send content off the machine, and diagram insertion, which writes to
+the file. That split still has to be designed: which UI says why AI is off, and whether
+`isWorkspaceTrusted` is checked in the host, the webview, or both.
 
 ## Out of the MVP by design
 

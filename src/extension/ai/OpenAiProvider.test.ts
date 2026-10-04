@@ -117,3 +117,25 @@ describe('OpenAiProvider.listModels', () => {
     expect(await p.listModels()).toEqual(['m-1', 'm-2']);
   });
 });
+
+describe('OpenAiProvider with max_tokens', () => {
+  it('streams a request carrying max_tokens', async () => {
+    const { client, seen } = fakeClient([text('x'), usage(1, 1)]);
+    const p = new OpenAiProvider('no-key', 'llama3', 'http://localhost:11434/v1', client, 'max_tokens');
+
+    await collect(p.generate(REQ, new AbortController().signal));
+
+    expect(seen[0].body).toMatchObject({ max_tokens: 64 });
+    expect(seen[0].body).not.toHaveProperty('max_completion_tokens');
+  });
+
+  it('pings with max_tokens too', async () => {
+    const { client, seen } = fakeClient([]);
+    const p = new OpenAiProvider('no-key', 'llama3', 'http://localhost:11434/v1', client, 'max_tokens');
+
+    await p.testConnection();
+
+    expect(seen[0].body).toMatchObject({ max_tokens: 1 });
+    expect(seen[0].body).not.toHaveProperty('max_completion_tokens');
+  });
+});

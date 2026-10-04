@@ -117,9 +117,26 @@ describe('reader store', () => {
     expect(s.get().ai.messages).toHaveLength(0);
   });
 
+  it('keeps whether the endpoint is local, its base URL and the keyed origins', () => {
+    const s = createReaderState();
+    s.aiConfigState(true, 'compatible', 'llama3', ['compatible'], {
+      local: true, baseUrl: 'http://localhost:11434/v1', keyedOrigins: ['https://openrouter.ai'],
+    });
+    expect(s.get().ai.local).toBe(true);
+    expect(s.get().ai.baseUrl).toBe('http://localhost:11434/v1');
+    expect(s.get().ai.keyedOrigins).toEqual(['https://openrouter.ai']);
+  });
+
+  it('is not local until told so', () => {
+    const s = createReaderState();
+    s.aiConfigState(true, 'anthropic', 'claude-opus-4-8', ['anthropic']);
+    expect(s.get().ai.local).toBe(false);
+    expect(s.get().ai.keyedOrigins).toEqual([]);
+  });
+
   it('holds and clears the confirm payload', () => {
     const s = createReaderState();
-    s.aiConfirm({ summary: { fileName: 'a.md', provider: 'Anthropic', pricedModel: true, sectionTitle: 'Retries', scope: 'section', sectionCount: 1, truncated: [], model: 'claude-opus-4-8', estTokens: 10, estCost: 0.00005 }, secrets: { label: '1 possible secret detected', count: 1 } });
+    s.aiConfirm({ summary: { fileName: 'a.md', provider: 'Anthropic', local: false, plainHttp: false, pricedModel: true, sectionTitle: 'Retries', scope: 'section', sectionCount: 1, truncated: [], model: 'claude-opus-4-8', estTokens: 10, estCost: 0.00005 }, secrets: { label: '1 possible secret detected', count: 1 } });
     expect(s.get().ai.confirm?.secrets.count).toBe(1);
     s.aiConfirm(undefined);
     expect(s.get().ai.confirm).toBeUndefined();

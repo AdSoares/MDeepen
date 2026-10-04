@@ -95,14 +95,20 @@ export class ReaderPanel {
       () => this.pages,
       () => this.uri.path.split('/').pop() ?? 'document.md',
       () => this.activeIndex,
+      // Every open reader shows the same config; the one that changed it is not the only one
+      // whose badge would otherwise claim the old destination.
+      () => { for (const p of ReaderPanel.panels.values()) if (p !== this) void p.ai.postConfigState(); },
     );
     this.panel.webview.html = this.html();
     this.panel.webview.onDidReceiveMessage((m) => { if (isWebviewToHost(m)) void this.onMessage(m); }, null, this.disposables);
     this.panel.onDidDispose(() => this.dispose(), null, this.disposables);
     ReaderPanel.active = this;
     this.panel.onDidChangeViewState((e) => {
-      if (e.webviewPanel.active) ReaderPanel.active = this;
-      else if (ReaderPanel.active === this) ReaderPanel.active = undefined;
+      if (e.webviewPanel.active) {
+        ReaderPanel.active = this;
+        // Another window may have changed the shared config while this one was in the background.
+        void this.ai.postConfigState();
+      } else if (ReaderPanel.active === this) ReaderPanel.active = undefined;
     }, null, this.disposables);
 
     vscode.workspace.onDidChangeTextDocument((e) => {

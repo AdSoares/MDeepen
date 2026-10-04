@@ -14,6 +14,7 @@ export function AiConfirm({ confirm, onSend, onCancel }: Props) {
   const hasSecrets = confirm.secrets.count > 0;
   const isDocument = confirm.summary.scope === 'document';
   const isChat = confirm.summary.scope === 'chat';
+  const isLocal = confirm.summary.local;
   // Default to masking whenever something looks like a secret: the safe choice is the pre-selected one.
   const [masked, setMasked] = useState(hasSecrets);
   const [dontAskAgain, setDontAskAgain] = useState(false);
@@ -50,12 +51,16 @@ export function AiConfirm({ confirm, onSend, onCancel }: Props) {
   return (
     <div class="md-modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) onCancel(); }}>
       <div class="md-modal-card" ref={cardRef} role="dialog" aria-modal="true" aria-labelledby="ai-confirm-title">
-        <h2 id="ai-confirm-title" class="md-modal-title">Send content to {confirm.summary.provider}?</h2>
+        <h2 id="ai-confirm-title" class="md-modal-title">
+          {isLocal ? 'Run on the local model?' : `Send content to ${confirm.summary.provider}?`}
+        </h2>
         <p class="md-modal-lede">
           {isChat
             ? `Answering a question sends the sections MDeepen picks as relevant to ${confirm.summary.provider}, and it will do this for every question from now on.`
             : isDocument
-              ? `The whole document leaves your machine, one part at a time, and is sent to ${confirm.summary.provider}.`
+              ? isLocal
+                ? `The whole document is processed by the model on this machine, one part at a time. Nothing leaves it, but a large document can take a while.`
+                : `The whole document leaves your machine, one part at a time, and is sent to ${confirm.summary.provider}.`
               : `This section leaves your machine and is sent to ${confirm.summary.provider}.`}
         </p>
 
@@ -74,17 +79,23 @@ export function AiConfirm({ confirm, onSend, onCancel }: Props) {
           <dd>~{confirm.summary.estTokens.toLocaleString()}{isDocument ? ' (input, projected)' : ''}</dd>
           <dt>Estimated cost</dt>
           <dd>
-            {typeof confirm.summary.estCost === 'number'
-              ? formatCost(confirm.summary.estCost)
-              : 'not known for this model'}
+            {isLocal
+              ? 'local, no cost'
+              : typeof confirm.summary.estCost === 'number'
+                ? formatCost(confirm.summary.estCost)
+                : 'not known for this model'}
             <span class="md-config-hint">
-              {typeof confirm.summary.estCost === 'number' ? ` · table of ${PRICE_TABLE_DATE}` : ''}
+              {!isLocal && typeof confirm.summary.estCost === 'number' ? ` · table of ${PRICE_TABLE_DATE}` : ''}
             </span>
           </dd>
         </dl>
 
         {confirm.summary.truncated.length > 0 && (
           <p class="md-ai-truncated">Too large to send whole, will be truncated: {confirm.summary.truncated.join(', ')}</p>
+        )}
+
+        {confirm.summary.plainHttp && (
+          <p class="md-ai-alert" role="alert">No TLS — the content travels over the network in clear text.</p>
         )}
 
         {hasSecrets && (

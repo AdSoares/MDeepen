@@ -52,6 +52,12 @@ export function AiPanel({ ai, activePageId, onConfigure, onCite, onAction, onAsk
     <div class="md-ai-panel">
       <div class="md-ai-head">
         <span class="md-ai-badge">{ai.provider} &middot; {ai.model}</span>
+        {ai.local && (
+          // FR-MVP-033: with a local provider, the interface says nothing is sent to a remote service.
+          <span class="md-ai-local" title="This endpoint is on this machine. Nothing is sent to a remote service.">
+            <span class="codicon codicon-lock" aria-hidden="true" /> Local &middot; nothing leaves this machine
+          </span>
+        )}
         <span style={{ flex: 1 }} />
         {ai.messages.length > 0 && (
           <button class="md-btn" onClick={onClear} aria-label="Clear all answers">Clear all</button>

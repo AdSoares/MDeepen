@@ -26,11 +26,17 @@ export interface AiProvider {
   testConnection(): Promise<ConnectionResult>;
 }
 
-export type ProviderId = 'anthropic' | 'openai';
+import type { TokenField } from './openAiRequest';
+
+export type ProviderId = 'anthropic' | 'openai' | 'compatible';
 
 export interface ProviderMeta {
   label: string;
+  /** For `compatible`, a prefix: the stored name carries the origin, so a key never travels to a
+   *  host it was not pasted for. */
   secretKey: string;
+  /** A compatible endpoint works without one: Ollama and LM Studio take no key. */
+  requiresKey: boolean;
   models: readonly string[];
   defaultModel: string;
   /** USD per 1M input tokens. A model may be absent: the estimate then reports the cost as
@@ -38,6 +44,8 @@ export interface ProviderMeta {
   inputPricePerM: Record<string, number>;
   /** Undefined means the SDK's own default. Set it to reach an OpenAI-compatible runtime. */
   defaultBaseUrl?: string;
+  /** Which field carries the token cap, for the OpenAI-shaped providers. */
+  tokenField?: TokenField;
 }
 
 export interface AiConfig {
@@ -51,6 +59,7 @@ export const PROVIDERS: Record<ProviderId, ProviderMeta> = {
   anthropic: {
     label: 'Anthropic',
     secretKey: 'mdeepen.anthropic.apiKey',
+    requiresKey: true,
     models: ['claude-opus-4-8', 'claude-sonnet-5', 'claude-haiku-4-5'],
     defaultModel: 'claude-opus-4-8',
     inputPricePerM: { 'claude-opus-4-8': 5, 'claude-sonnet-5': 3, 'claude-haiku-4-5': 1 },
@@ -58,11 +67,26 @@ export const PROVIDERS: Record<ProviderId, ProviderMeta> = {
   openai: {
     label: 'OpenAI',
     secretKey: 'mdeepen.openai.apiKey',
+    requiresKey: true,
     // Curated from the account's own /v1/models listing on 2026-08-23. Prices are not filled in:
     // none were looked up, and an invented figure would be shown to the user as a cost.
     models: ['gpt-5.5', 'gpt-5.4-mini', 'gpt-5.4-nano', 'gpt-5.3-chat-latest', 'gpt-4o-mini'],
     defaultModel: 'gpt-5.5',
     inputPricePerM: {},
+    tokenField: 'max_completion_tokens',
+  },
+  compatible: {
+    label: 'OpenAI-compatible endpoint',
+    secretKey: 'mdeepen.compatible.apiKey',
+    requiresKey: false,
+    // No curated list: the endpoint is whatever the user points at. Models come from /models or
+    // are typed by hand; prices are unknown for a remote one and zero for a local one.
+    models: [],
+    defaultModel: '',
+    inputPricePerM: {},
+    defaultBaseUrl: 'http://localhost:11434/v1',
+    // A guess about runtimes this extension has not been run against until the 2.6 smoke.
+    tokenField: 'max_tokens',
   },
 };
 

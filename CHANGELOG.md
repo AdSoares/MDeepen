@@ -7,6 +7,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-10-03
+
+### Added
+
+- An **OpenAI-compatible endpoint** provider: Ollama or LM Studio on this machine, a server on
+  the network, or a hosted service such as OpenRouter or Groq. The base URL is free and the key is
+  optional.
+- When the endpoint is on this machine — `localhost`, `127.x.x.x` or `[::1]` — the panel says
+  **nothing leaves this machine**, sections and chat send without a consent dialog, nothing is
+  masked, and the cost reads as none. A whole-document run still confirms, because it can take a
+  while.
+
+### Changed
+
+- Consent is recorded against the destination it was given for: the provider, or a compatible
+  endpoint's origin. Pointing the extension at a different host asks again, including when the
+  change was made in another window. Consent stored by 0.8 is asked for once more.
+- A remote compatible endpoint is named by its host in the confirmation dialog, which also warns
+  when the connection has no TLS.
+- Keys for compatible endpoints are stored per origin, so a key pasted for one host is never sent
+  to another. A key typed but not yet saved is cleared when the provider or the origin changes.
+- Disconnect also switches a compatible endpoint off, since without a key it would otherwise keep
+  sending.
+- Every open reader updates when the AI configuration changes in one of them.
+- A compatible endpoint receives only the headers a request needs. The organization, project and
+  `OPENAI_CUSTOM_HEADERS` the OpenAI SDK reads from the environment are meant for OpenAI and are
+  no longer sent to other hosts, and a redirect is refused rather than followed to a host the user
+  never chose.
+- The extension host itself refuses to send to a compatible endpoint with no model, instead of
+  trusting the panel to have checked.
+- The compatible provider's button says whether keys are stored, or that none is needed, instead
+  of always claiming a key.
+
+### Fixed
+
+- A confirmation dialog left open while the provider changed in another panel sent the new
+  provider's key to the dialog's destination. A send now always uses the key of the destination it
+  was built for.
+
+### Note
+
+- This closes MVP completion criterion 10 and FR-MVP-033. Every completion criterion of the MVP is
+  now met.
+- Loopback is decided from the URL alone, without DNS: a name that resolves to 127.0.0.1 is
+  treated as remote. It can only err towards asking for consent it did not need.
+
 ## [0.8.0] - 2026-09-01
 
 ### Added
