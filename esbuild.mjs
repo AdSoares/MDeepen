@@ -1,7 +1,11 @@
 import * as esbuild from 'esbuild';
-import { cpSync, mkdirSync } from 'node:fs';
+import { cpSync, mkdirSync, rmSync } from 'node:fs';
 
 const watch = process.argv.includes('--watch');
+
+// Start from an empty dist. Chunk names carry a content hash, so every build that changes a chunk
+// leaves the old one behind, and vsce packages whatever dist holds.
+rmSync('dist', { recursive: true, force: true });
 
 // Copy codicon assets next to the webview bundle so the .vsix ships them
 // without .vscodeignore negation tricks.
