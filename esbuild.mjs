@@ -1,5 +1,6 @@
 import * as esbuild from 'esbuild';
-import { cpSync, mkdirSync, rmSync } from 'node:fs';
+import { cpSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { packageRootOf, readPackage, renderNotices } from './scripts/third-party-notices.mjs';
 
 const watch = process.argv.includes('--watch');
 
@@ -15,6 +16,18 @@ function copyCodicons() {
   cpSync('node_modules/@vscode/codicons/dist/codicon.ttf', 'dist/webview/codicons/codicon.ttf');
 }
 
+// Every package the bundles pulled code from, plus the codicons copied beside them as files.
+function writeNotices(results) {
+  const roots = new Set(['node_modules/@vscode/codicons']);
+  for (const r of results) {
+    for (const input of Object.keys(r.metafile.inputs)) {
+      const root = packageRootOf(input);
+      if (root) roots.add(root);
+    }
+  }
+  writeFileSync('THIRD_PARTY_NOTICES.md', renderNotices([...roots].map(readPackage)));
+}
+
 const extension = {
   entryPoints: ['src/extension/extension.ts'],
   bundle: true,
@@ -22,6 +35,7 @@ const extension = {
   format: 'cjs',
   external: ['vscode'],
   outfile: 'dist/extension.js',
+  metafile: true,
   sourcemap: true,
   target: 'node18',
 };
@@ -36,6 +50,7 @@ const webview = {
   format: 'esm',
   splitting: true,
   outdir: 'dist/webview',
+  metafile: true,
   entryNames: '[name]',
   chunkNames: 'chunks/[name]-[hash]',
   sourcemap: true,
@@ -53,6 +68,7 @@ if (watch) {
   console.log('esbuild watching…');
 } else {
   copyCodicons();
-  await Promise.all([esbuild.build(extension), esbuild.build(webview)]);
+  const results = await Promise.all([esbuild.build(extension), esbuild.build(webview)]);
+  writeNotices(results);
   console.log('esbuild build complete.');
 }

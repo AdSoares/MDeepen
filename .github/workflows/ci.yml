@@ -33,6 +33,9 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Third-party notices are up to date
+        run: git diff --exit-code THIRD_PARTY_NOTICES.md || (echo "::error::THIRD_PARTY_NOTICES.md is stale. Run npm run build and commit it." && exit 1)
+
       - name: Package
         run: npx vsce package --no-dependencies --out mdeepen-ci.vsix
 
