@@ -48,7 +48,9 @@ export function renderNotices(packages) {
       lines.push('No license file is shipped with this package.', '');
       continue;
     }
-    for (const f of p.files) lines.push('```text', f.text, '```', '');
+    // Some packages publish CRLF license files; git stores this file with LF, so CRLF here would
+    // make the generated copy differ from the committed one on every CI run.
+    for (const f of p.files) lines.push('```text', f.text.replace(/\r\n?/g, '\n'), '```', '');
   }
   return lines.join('\n');
 }
