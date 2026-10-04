@@ -41,12 +41,14 @@ of them needs a very good reason.
 - **The reader never depends on AI.** With no API key configured, pagination,
   outline, read marks, progress, and navigation all work. Every AI error is
   recoverable and never blocks reading.
-- **Nothing leaves the machine without consent.** The first remote send in a
-  workspace is gated by a confirmation dialog. Content is scanned for
+- **Nothing leaves the machine without consent.** The first send to each remote
+  destination in a workspace is gated by a confirmation dialog. Only a loopback
+  endpoint skips it, because nothing leaves. Content is scanned for
   secret-shaped strings first, and masking is pre-selected when any are found.
-- **The API key lives only in VS Code `SecretStorage`.** Never in `settings.json`,
-  never in a workspace file, never in the message contract's config object, never
-  in a log line.
+- **API keys live only in VS Code `SecretStorage`**, each one bound to the
+  provider or endpoint origin it was pasted for. Never in `settings.json`, never
+  in a workspace file, never in the message contract's config object, never in a
+  log line.
 - **All network I/O happens in the extension host.**
 - **Rendered Markdown is sanitized** and dangerous link schemes are blocked at the
   webview boundary.
