@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- The build now starts from an empty `dist`. Webview chunks are named by content hash, so every
+  build that changed one left the old file behind, and the package shipped it: the 0.9.0 `.vsix`
+  carries three such chunks, never loaded, that a clean build does not produce.
+
 ## [0.9.0] - 2026-10-03
 
 ### Added
