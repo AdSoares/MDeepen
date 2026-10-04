@@ -46,6 +46,14 @@ describe('renderNotices', () => {
     expect(out).toContain('No license file is shipped with this package.');
   });
 
+  it('writes every license with LF line endings, whatever the package shipped', () => {
+    // Some packages publish their LICENSE with CRLF; git normalises the committed copy to LF, so a
+    // CRLF in the generated file makes the CI freshness check fail on every run.
+    const out = renderNotices([pkg('crlf', { files: [{ name: 'LICENSE', text: 'line one' + String.fromCharCode(13, 10) + 'line two' }] })]);
+    expect(out).not.toContain(String.fromCharCode(13));
+    expect(out).toContain('line one' + String.fromCharCode(10) + 'line two');
+  });
+
   it('is deterministic, so CI can check it is up to date', () => {
     const a = renderNotices([pkg('b'), pkg('a')]);
     const b = renderNotices([pkg('a'), pkg('b')]);
